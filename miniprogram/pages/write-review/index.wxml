@@ -18,8 +18,8 @@
       </view>
     </view>
     <view class="section"><text class="field-label">选择印象标签</text><view class="tag-options"><view wx:for="{{tagOptions}}" wx:key="text" class="chip {{item.selected ? 'chip--active' : ''}}" data-tag="{{item.text}}" bindtap="toggleTag">{{item.text}}</view></view></view>
-    <view class="field section"><text class="field-label">评价内容</text><textarea class="textarea review-textarea" maxlength="800" placeholder="说说课堂节奏、考核方式和学习建议（至少20字）" value="{{body}}" bindinput="inputBody"></textarea></view>
-    <view class="anonymous-row"><view><view class="anonymous-title">匿名发布</view><view class="micro">公开页面不会显示微信信息</view></view><switch color="#4B1F6F" checked="{{anonymous}}" bindchange="toggleAnonymous"></switch></view>
+    <view class="field section"><view class="field-label-row"><text class="field-label">评价内容</text><text class="micro">{{bodyLength}} / 800</text></view><textarea class="textarea review-textarea" maxlength="800" placeholder="说说课堂节奏、考核方式和学习建议（至少20字）" value="{{body}}" bindinput="inputBody"></textarea></view>
+    <view class="anonymous-row"><view><view class="anonymous-title">固定匿名发布</view><view class="micro">公开页面不会显示微信信息，审核人员仅处理内容合规</view></view><text class="anonymous-badge">匿名</text></view>
     <button class="button button--primary section" loading="{{submitting}}" disabled="{{submitting}}" bindtap="submit">提交审核</button>
   </block>
 </view>

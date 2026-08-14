@@ -16,7 +16,7 @@ API 前缀为 `/api/v1`，所有 JSON 响应统一为：
 | GET | `/courses` | 支持 `query`、`category`、`requirement_type`、`sort`、分页 |
 | GET | `/courses/{course_id}` | 课程概览、开课教师与聚合评分 |
 | GET | `/courses/{course_id}/resources` | 已发布资料；列表不返回网盘链接 |
-| GET | `/courses/{course_id}/reviews` | 已发布评价；支持 `offering_id` |
+| GET | `/courses/{course_id}/reviews` | 已发布评价；支持 `offering_id`、`teacher_id`、`academic_year`、`semester` 筛选 |
 | GET | `/resources/{resource_id}` | 资料详情和网盘分享信息 |
 | GET | `/search-index` | 课程、教师、资料、指南紧凑索引 |
 | GET | `/guides` | 指南列表 |
@@ -26,7 +26,7 @@ API 前缀为 `/api/v1`，所有 JSON 响应统一为：
 
 | 方法 | 路径 | 说明 |
 |---|---|---|
-| POST | `/auth/wechat` | 使用 `wx.login()` 的临时 code 换取内部登录态 |
+| POST | `/auth/wechat` | 使用 `wx.login()` 的临时 code 换取内部登录态，返回 `token`、`expires_at` 和内部用户 |
 | POST | `/favorites` | 收藏课程 |
 | DELETE | `/favorites/{course_id}` | 取消收藏 |
 | POST | `/resource-submissions` | 提交网盘链接，默认 `pending` |

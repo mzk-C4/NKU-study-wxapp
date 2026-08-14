@@ -74,11 +74,11 @@ function resourceView(data, resource, includeSensitive = false) {
   return base
 }
 
-function reviewView(data, review) {
+function reviewView(data, review, includeModeration = false) {
   const offering = data.offerings.find(item => item.id === review.offering_id)
   const teacher = offering ? data.teachers.find(item => item.id === offering.teacher_id) : null
   const course = offering ? data.courses.find(item => item.id === offering.course_id) : null
-  return {
+  const view = {
     id: review.id,
     offering_id: review.offering_id,
     course_id: course ? course.id : null,
@@ -94,8 +94,11 @@ function reviewView(data, review) {
     anonymous: true,
     helpful_count: review.helpful_count || 0,
     status: review.status,
-    created_at: review.created_at
+    created_at: review.created_at,
+    updated_at: review.updated_at
   }
+  if (includeModeration) view.review_note = review.review_note || ''
+  return view
 }
 
 function guideView(data, guide, includeDetails = false) {

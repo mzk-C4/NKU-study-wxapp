@@ -1,8 +1,10 @@
 const api = require('../../utils/request')
+const auth = require('../../utils/auth')
 
 Page({
   data: { id: '', loading: true, error: '', course: null, favorite: false },
   onLoad(options) { this.setData({ id: options.id || '' }); this.loadCourse() },
+  onShow() { if (this.data.id) this.refreshFavorite() },
 
   async loadCourse() {
     if (!this.data.id) return this.setData({ loading: false, error: '缺少课程编号' })
@@ -14,7 +16,21 @@ Page({
       wx.setStorageSync('browse_history', next)
       this.setData({ course, loading: false })
       wx.setNavigationBarTitle({ title: course.name })
+      this.refreshFavorite()
     } catch (error) { this.setData({ loading: false, error: error.message }) }
+  },
+
+  async refreshFavorite() {
+    if (!auth.getStoredUser()) {
+      this.setData({ favorite: false })
+      return
+    }
+    try {
+      const data = await api.get('/me/favorites')
+      this.setData({ favorite: data.items.some(item => item.id === this.data.id) })
+    } catch (_) {
+      this.setData({ favorite: false })
+    }
   },
 
   openTab(event) {
