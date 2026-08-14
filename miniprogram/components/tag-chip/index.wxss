@@ -1,0 +1,5 @@
+.tag { display: inline-flex; align-items: center; height: 44rpx; padding: 0 16rpx; border-radius: 12rpx; font-size: 20rpx; font-weight: 600; box-sizing: border-box; }
+.tag--purple { color: #4B1F6F; background: #EFE8F4; }
+.tag--gold { color: #795514; background: #F8EFD9; }
+.tag--green { color: #27865F; background: #E8F5EF; }
+.tag--gray { color: #6F6972; background: #F0EDF1; }

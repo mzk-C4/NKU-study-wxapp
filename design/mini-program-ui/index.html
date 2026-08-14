@@ -1,0 +1,551 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>NKUStudy 微信小程序界面示意</title>
+  <style>
+    :root {
+      --purple: #4b1f6f;
+      --purple-deep: #2b123e;
+      --purple-soft: #efe8f4;
+      --gold: #d7a63c;
+      --gold-soft: #f8efd9;
+      --paper: #fffdf8;
+      --bg: #f6f3f7;
+      --ink: #211c24;
+      --muted: #6f6972;
+      --line: #e8e2ec;
+      --green: #27865f;
+      --red: #bf4b55;
+      --shadow: 0 18px 48px rgba(43, 18, 62, .16);
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: #e9e3ec; color: var(--ink); }
+    body {
+      min-width: 1680px;
+      font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    svg { display: block; }
+    .sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
+    .board-head {
+      width: 1680px;
+      margin: 0 auto;
+      padding: 42px 42px 28px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+    }
+    .board-kicker { color: var(--purple); font-size: 15px; font-weight: 700; letter-spacing: .08em; }
+    .board-head h1 { margin: 6px 0 6px; font-family: Georgia, "Microsoft YaHei", serif; font-size: 36px; letter-spacing: -.02em; }
+    .board-head p { margin: 0; color: #68616b; font-size: 15px; }
+    .palette { display: flex; gap: 8px; align-items: center; }
+    .swatch { width: 34px; height: 34px; border-radius: 50%; border: 3px solid rgba(255,255,255,.75); box-shadow: 0 3px 10px rgba(0,0,0,.12); }
+    .swatch:nth-child(1) { background: var(--purple); }
+    .swatch:nth-child(2) { background: var(--purple-deep); }
+    .swatch:nth-child(3) { background: var(--gold); }
+    .swatch:nth-child(4) { background: var(--paper); }
+    .board {
+      width: 1680px;
+      margin: 0 auto;
+      padding: 0 42px 70px;
+      display: grid;
+      grid-template-columns: repeat(4, 375px);
+      column-gap: 32px;
+      row-gap: 30px;
+    }
+    .screen-wrap { width: 375px; }
+    .screen-label { height: 38px; display: flex; align-items: center; gap: 10px; padding-left: 8px; font-size: 14px; font-weight: 700; color: var(--purple-deep); }
+    .screen-no { display: grid; place-items: center; width: 23px; height: 23px; border-radius: 7px; background: var(--purple); color: white; font: 700 12px Georgia, serif; }
+    .phone {
+      position: relative;
+      width: 375px;
+      height: 812px;
+      overflow: hidden;
+      border-radius: 34px;
+      background: var(--bg);
+      border: 7px solid var(--purple-deep);
+      box-shadow: var(--shadow);
+    }
+    .phone::after { content: ""; position: absolute; inset: 0; border-radius: 26px; box-shadow: inset 0 0 0 1px rgba(255,255,255,.4); pointer-events: none; z-index: 20; }
+    .status {
+      height: 24px;
+      padding: 5px 16px 0;
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      font-weight: 700;
+      background: var(--paper);
+      position: relative;
+      z-index: 3;
+    }
+    .status.dark { color: white; background: var(--purple); }
+    .status-icons { letter-spacing: 2px; }
+    .nav {
+      height: 48px;
+      padding: 0 13px 0 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--paper);
+      border-bottom: 1px solid rgba(75,31,111,.07);
+      position: relative;
+      z-index: 3;
+    }
+    .nav.dark { color: white; background: var(--purple); border-bottom-color: rgba(255,255,255,.12); }
+    .brand { display: flex; align-items: center; gap: 9px; min-width: 0; }
+    .brand img { width: 31px; height: 31px; border-radius: 9px; }
+    .brand-name { font-family: Georgia, "Microsoft YaHei", serif; font-size: 17px; line-height: 1; font-weight: 800; color: var(--purple-deep); }
+    .brand-sub { font-size: 9px; color: var(--muted); margin-top: 3px; }
+    .nav-title { position: absolute; left: 62px; right: 88px; text-align: center; font-size: 16px; font-weight: 700; }
+    .back { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 10px; }
+    .back svg { width: 20px; height: 20px; }
+    .wx-capsule { width: 72px; height: 29px; border: 1px solid rgba(30,20,32,.2); border-radius: 16px; display: flex; align-items: center; justify-content: space-around; padding: 0 6px; }
+    .dark .wx-capsule { border-color: rgba(255,255,255,.45); }
+    .wx-capsule b { font-size: 11px; letter-spacing: 1px; transform: translateY(-2px); }
+    .wx-capsule i { width: 9px; height: 9px; border: 2px solid currentColor; border-radius: 50%; }
+    .app {
+      position: absolute;
+      left: 0; right: 0; top: 72px; bottom: 62px;
+      overflow: hidden;
+      background: var(--bg);
+    }
+    .app.no-tab { bottom: 0; }
+    .scroll { height: 100%; overflow: hidden; padding: 14px 16px 22px; }
+    .tabbar {
+      position: absolute;
+      left: 0; right: 0; bottom: 0;
+      height: 62px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-around;
+      padding: 8px 7px 6px;
+      background: rgba(255,253,248,.98);
+      border-top: 1px solid var(--line);
+      z-index: 10;
+    }
+    .tab { width: 70px; text-align: center; color: #817a84; font-size: 10px; }
+    .tab svg { width: 20px; height: 20px; margin: 0 auto 3px; }
+    .tab.active { color: var(--purple); font-weight: 700; }
+    .icon { width: 18px; height: 18px; }
+    .section { margin-top: 18px; }
+    .section:first-child { margin-top: 0; }
+    .section-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .section-title { font-size: 17px; font-weight: 700; }
+    .section-link { color: var(--purple); font-size: 12px; font-weight: 600; }
+    .micro { color: var(--muted); font-size: 11px; line-height: 1.5; }
+    .muted { color: var(--muted); }
+    .card { background: var(--paper); border: 1px solid rgba(75,31,111,.08); border-radius: 14px; padding: 14px; }
+    .paper-card { background: var(--paper); border-radius: 13px; padding: 13px; box-shadow: 0 5px 16px rgba(43,18,62,.05); }
+    .rule-title { display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 700; }
+    .rule-title::before { content: ""; width: 4px; height: 18px; border-radius: 2px; background: var(--gold); }
+    .search {
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 0 13px;
+      color: #7c7580;
+      font-size: 13px;
+      background: white;
+      border: 1px solid var(--line);
+    }
+    .search svg { width: 17px; height: 17px; }
+    .chip-row { display: flex; gap: 8px; overflow: hidden; white-space: nowrap; }
+    .chip { height: 30px; display: inline-flex; align-items: center; justify-content: center; padding: 0 12px; border-radius: 16px; background: white; border: 1px solid var(--line); color: #635d66; font-size: 11px; }
+    .chip.active { background: var(--purple); border-color: var(--purple); color: white; font-weight: 700; }
+    .tag { display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 6px; background: var(--purple-soft); color: var(--purple); font-size: 10px; font-weight: 600; }
+    .tag.gold { background: var(--gold-soft); color: #795514; }
+    .tag.green { background: #e8f5ef; color: var(--green); }
+    .tag.gray { background: #f0edf1; color: #6f6972; }
+    .btn { height: 42px; border-radius: 11px; border: 0; display: flex; align-items: center; justify-content: center; gap: 7px; font-family: inherit; font-size: 13px; font-weight: 700; }
+    .btn.primary { color: white; background: var(--purple); }
+    .btn.secondary { color: var(--purple); background: var(--purple-soft); }
+    .btn.ghost { color: var(--purple); border: 1px solid var(--line); background: white; }
+    .btn.gold { color: var(--purple-deep); background: var(--gold); }
+    .hero {
+      margin: -14px -16px 0;
+      padding: 16px 16px 17px;
+      color: white;
+      background-color: var(--purple);
+      background-image: linear-gradient(rgba(255,255,255,.045) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.045) 1px, transparent 1px);
+      background-size: 20px 20px;
+      border-radius: 0 0 24px 24px;
+    }
+    .hero-eyebrow { color: #e8cf96; font-size: 11px; font-weight: 700; letter-spacing: .06em; }
+    .hero h2 { margin: 5px 0 13px; font-size: 23px; line-height: 1.28; font-weight: 700; }
+    .hero .search { border: 0; box-shadow: 0 8px 22px rgba(20,5,32,.18); }
+    .quick-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-top: 15px; }
+    .quick { text-align: center; font-size: 11px; color: #514b54; }
+    .quick-icon { width: 43px; height: 43px; margin: 0 auto 6px; display: grid; place-items: center; border-radius: 14px; color: var(--purple); background: var(--purple-soft); }
+    .quick:nth-child(2) .quick-icon { color: #77550e; background: var(--gold-soft); }
+    .quick:nth-child(3) .quick-icon { color: #266e5a; background: #e7f3ee; }
+    .quick:nth-child(4) .quick-icon { color: #9b4951; background: #f9e9ea; }
+    .quick-icon svg { width: 20px; height: 20px; }
+    .season-card { position: relative; overflow: hidden; padding: 14px 72px 14px 14px; color: white; border-radius: 14px; background: var(--purple-deep); }
+    .season-card::after { content: "选"; position: absolute; right: 16px; top: -14px; font: 700 76px Georgia, "Microsoft YaHei", serif; color: rgba(215,166,60,.2); }
+    .season-card strong { display: block; font-size: 14px; margin-bottom: 5px; }
+    .season-card p { margin: 0; color: rgba(255,255,255,.72); font-size: 10px; line-height: 1.5; }
+    .course-mini { display: grid; grid-template-columns: 1fr auto; gap: 6px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+    .course-mini:last-child { border-bottom: 0; padding-bottom: 0; }
+    .course-mini:first-child { padding-top: 0; }
+    .course-name { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+    .course-meta { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+    .course-stats { align-self: center; text-align: right; color: var(--muted); font-size: 10px; line-height: 1.7; }
+    .update-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--gold); }
+    .abcde { display: grid; grid-template-columns: repeat(6,1fr); background: white; border-radius: 12px; padding: 4px; border: 1px solid var(--line); }
+    .abcde span { display: grid; place-items: center; height: 32px; border-radius: 9px; color: #6f6872; font-size: 12px; }
+    .abcde span.active { background: var(--purple); color: white; font-weight: 700; }
+    .filter-line { margin-top: 10px; display: flex; gap: 8px; }
+    .filter-btn { flex: 1; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 5px; background: white; border: 1px solid var(--line); color: #5f5962; font-size: 11px; }
+    .course-card { background: var(--paper); border-radius: 14px; padding: 13px; margin-top: 10px; border: 1px solid rgba(75,31,111,.08); }
+    .course-card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+    .zone { width: 30px; height: 30px; display: grid; place-items: center; flex: 0 0 auto; border-radius: 9px; color: white; background: var(--purple); font: 700 12px Georgia, serif; }
+    .course-card h3 { flex: 1; margin: 1px 0 4px; font-size: 15px; }
+    .course-card .sub { color: var(--muted); font-size: 10px; }
+    .course-card .tags { display: flex; gap: 5px; margin-top: 10px; }
+    .statline { display: flex; gap: 15px; margin-top: 11px; padding-top: 10px; border-top: 1px dashed var(--line); color: var(--muted); font-size: 10px; }
+    .fab { position: absolute; right: 16px; bottom: 16px; width: 46px; height: 46px; border-radius: 15px; display: grid; place-items: center; background: var(--purple); color: white; box-shadow: 0 8px 18px rgba(75,31,111,.28); z-index: 4; }
+    .fab svg { width: 21px; height: 21px; }
+    .search-head { display: flex; gap: 9px; align-items: center; }
+    .search-head .search { flex: 1; color: var(--ink); }
+    .search-head .cancel { color: var(--purple); font-size: 12px; font-weight: 700; }
+    .result-tabs { height: 42px; display: grid; grid-template-columns: repeat(4,1fr); align-items: end; border-bottom: 1px solid var(--line); }
+    .result-tabs span { position: relative; padding-bottom: 10px; text-align: center; color: var(--muted); font-size: 12px; }
+    .result-tabs span.active { color: var(--purple); font-weight: 700; }
+    .result-tabs span.active::after { content: ""; position: absolute; width: 20px; height: 3px; border-radius: 2px; background: var(--purple); left: 50%; bottom: 0; transform: translateX(-50%); }
+    mark { color: var(--purple); background: var(--gold-soft); border-radius: 3px; padding: 0 2px; }
+    .detail-head { padding: 4px 16px 15px; color: white; background: var(--purple); }
+    .detail-head h2 { margin: 2px 0 6px; font-size: 24px; }
+    .detail-head .meta { color: rgba(255,255,255,.75); font-size: 11px; }
+    .detail-head .detail-row { display: flex; justify-content: space-between; align-items: end; }
+    .save-round { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 12px; background: rgba(255,255,255,.13); }
+    .save-round svg { width: 18px; height: 18px; }
+    .detail-tabs { height: 45px; display: grid; grid-template-columns: repeat(3,1fr); align-items: end; background: var(--paper); border-bottom: 1px solid var(--line); }
+    .detail-tabs span { position: relative; height: 45px; display: grid; place-items: center; color: var(--muted); font-size: 12px; }
+    .detail-tabs span.active { color: var(--purple); font-weight: 700; }
+    .detail-tabs span.active::after { content: ""; position: absolute; bottom: 0; left: 28%; right: 28%; height: 3px; border-radius: 3px 3px 0 0; background: var(--purple); }
+    .metric-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+    .metric { padding: 12px 7px; text-align: center; border-radius: 12px; background: var(--paper); border: 1px solid var(--line); }
+    .metric strong { display: block; color: var(--purple); font: 700 19px Georgia, serif; }
+    .metric span { color: var(--muted); font-size: 10px; }
+    .teacher-row { display: flex; align-items: center; gap: 10px; padding: 11px 0; border-bottom: 1px solid var(--line); }
+    .teacher-row:last-child { border-bottom: 0; }
+    .avatar { width: 33px; height: 33px; flex: 0 0 auto; border-radius: 50%; display: grid; place-items: center; color: white; background: var(--purple); font-size: 12px; font-weight: 700; }
+    .teacher-row .grow { flex: 1; }
+    .teacher-row strong { display: block; font-size: 13px; }
+    .teacher-row small { color: var(--muted); font-size: 9px; }
+    .resource-card { margin-top: 10px; padding: 13px; border-radius: 13px; background: var(--paper); border: 1px solid var(--line); }
+    .resource-top { display: flex; gap: 10px; align-items: flex-start; }
+    .file-icon { width: 38px; height: 42px; flex: 0 0 auto; border-radius: 9px; display: grid; place-items: center; background: var(--purple-soft); color: var(--purple); }
+    .file-icon svg { width: 19px; height: 19px; }
+    .resource-info { flex: 1; min-width: 0; }
+    .resource-info h4 { margin: 0 0 5px; font-size: 13px; line-height: 1.35; }
+    .resource-info p { margin: 0; color: var(--muted); font-size: 9px; }
+    .resource-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding-top: 9px; border-top: 1px dashed var(--line); }
+    .link-ok { display: inline-flex; align-items: center; gap: 4px; color: var(--green); font-size: 10px; }
+    .resource-action { color: var(--purple); font-size: 11px; font-weight: 700; }
+    .score-main { display: flex; gap: 13px; align-items: center; }
+    .score-number { font: 700 38px Georgia, serif; color: var(--purple); }
+    .stars { color: var(--gold); letter-spacing: 1px; font-size: 14px; }
+    .score-note { margin-top: 3px; color: var(--muted); font-size: 9px; }
+    .bars { flex: 1; }
+    .bar-row { display: grid; grid-template-columns: 45px 1fr 23px; gap: 6px; align-items: center; margin: 5px 0; font-size: 9px; color: var(--muted); }
+    .bar { height: 5px; border-radius: 3px; background: #ece7ee; overflow: hidden; }
+    .bar i { display: block; height: 100%; border-radius: 3px; background: var(--purple); }
+    .review-card { margin-top: 10px; padding: 13px; border-radius: 13px; background: var(--paper); border: 1px solid var(--line); }
+    .review-head { display: flex; justify-content: space-between; align-items: center; }
+    .review-user { display: flex; align-items: center; gap: 8px; }
+    .review-user .avatar { width: 27px; height: 27px; font-size: 9px; background: var(--gold); color: var(--purple-deep); }
+    .review-user strong { display: block; font-size: 11px; }
+    .review-user small { color: var(--muted); font-size: 8px; }
+    .review-card p { margin: 10px 0 9px; font-size: 11px; line-height: 1.65; color: #484248; }
+    .review-foot { display: flex; justify-content: space-between; color: var(--muted); font-size: 9px; }
+    .sticky-action { position: absolute; bottom: 12px; left: 16px; right: 16px; height: 44px; z-index: 5; }
+    .resource-detail-icon { width: 58px; height: 64px; margin: 4px auto 12px; display: grid; place-items: center; border-radius: 15px; color: var(--purple); background: var(--purple-soft); }
+    .resource-detail-icon svg { width: 30px; height: 30px; }
+    .resource-title { text-align: center; font-size: 17px; line-height: 1.4; font-weight: 700; }
+    .resource-subtitle { margin-top: 5px; text-align: center; color: var(--muted); font-size: 10px; }
+    .info-list { margin-top: 18px; background: var(--paper); border-radius: 13px; padding: 0 13px; border: 1px solid var(--line); }
+    .info-row { min-height: 44px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); font-size: 11px; }
+    .info-row:last-child { border-bottom: 0; }
+    .info-row span:first-child { color: var(--muted); }
+    .notice { display: flex; gap: 9px; padding: 11px; border-radius: 11px; background: var(--gold-soft); color: #6f5014; font-size: 10px; line-height: 1.55; }
+    .notice svg { flex: 0 0 auto; width: 16px; height: 16px; margin-top: 1px; }
+    .guide-hero { margin: -14px -16px 0; padding: 16px 16px 20px; color: white; background: var(--purple); border-radius: 0 0 24px 24px; }
+    .guide-hero h2 { margin: 2px 0 5px; font-size: 23px; }
+    .guide-hero p { margin: 0; color: rgba(255,255,255,.72); font-size: 10px; }
+    .guide-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 9px; margin-top: 14px; }
+    .guide-cat { min-height: 72px; padding: 12px; border-radius: 13px; background: var(--paper); border: 1px solid var(--line); }
+    .guide-cat b { display: block; font-size: 13px; margin-bottom: 5px; }
+    .guide-cat span { color: var(--muted); font-size: 9px; }
+    .guide-cat:nth-child(1) { border-top: 3px solid var(--purple); }
+    .guide-cat:nth-child(2) { border-top: 3px solid var(--gold); }
+    .guide-cat:nth-child(3) { border-top: 3px solid #4d8f77; }
+    .guide-cat:nth-child(4) { border-top: 3px solid #b85a62; }
+    .article-row { display: flex; gap: 10px; align-items: center; padding: 11px 0; border-bottom: 1px solid var(--line); }
+    .article-row:last-child { border-bottom: 0; }
+    .article-index { width: 27px; height: 27px; flex: 0 0 auto; display: grid; place-items: center; border-radius: 8px; color: var(--purple); background: var(--purple-soft); font: 700 11px Georgia, serif; }
+    .article-row .grow { flex: 1; }
+    .article-row strong { display: block; font-size: 12px; margin-bottom: 4px; }
+    .article-row small { color: var(--muted); font-size: 9px; }
+    .article { background: var(--paper); }
+    .article-title { margin: 2px 0 9px; font-size: 22px; line-height: 1.35; }
+    .article-meta { display: flex; gap: 12px; color: var(--muted); font-size: 9px; }
+    .article-lead { margin: 16px 0; padding: 12px; border-left: 4px solid var(--gold); border-radius: 0 10px 10px 0; background: var(--gold-soft); color: #5e471c; font-size: 11px; line-height: 1.65; }
+    .step { display: grid; grid-template-columns: 27px 1fr; gap: 10px; margin: 12px 0; }
+    .step-no { width: 27px; height: 27px; display: grid; place-items: center; border-radius: 50%; background: var(--purple); color: white; font: 700 11px Georgia, serif; }
+    .step strong { display: block; font-size: 12px; margin-bottom: 3px; }
+    .step p { margin: 0; color: var(--muted); font-size: 10px; line-height: 1.55; }
+    .progress { display: flex; align-items: center; justify-content: center; margin-bottom: 15px; }
+    .progress span { width: 23px; height: 23px; display: grid; place-items: center; border-radius: 50%; color: #817982; background: #eee9f0; font: 700 10px Georgia, serif; }
+    .progress span.active { color: white; background: var(--purple); }
+    .progress i { width: 45px; height: 2px; background: var(--line); }
+    .field { margin-bottom: 12px; }
+    .field label { display: block; margin-bottom: 6px; color: #4c464f; font-size: 11px; font-weight: 700; }
+    .field-box { min-height: 42px; padding: 0 12px; border: 1px solid var(--line); border-radius: 10px; display: flex; align-items: center; justify-content: space-between; color: #928b94; background: white; font-size: 11px; }
+    .field-box.filled { color: var(--ink); }
+    .field-box.textarea { min-height: 78px; align-items: flex-start; padding-top: 11px; line-height: 1.55; }
+    .form-actions { display: grid; grid-template-columns: 1fr 2fr; gap: 9px; margin-top: 14px; }
+    .rating-row { display: grid; grid-template-columns: 64px 1fr 22px; gap: 8px; align-items: center; min-height: 34px; border-bottom: 1px solid var(--line); font-size: 10px; }
+    .rating-row:last-child { border-bottom: 0; }
+    .rating-dots { display: flex; gap: 5px; }
+    .rating-dots i { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--gold); background: var(--gold); }
+    .rating-dots i.off { background: transparent; }
+    .switch-row { height: 45px; display: flex; justify-content: space-between; align-items: center; font-size: 11px; }
+    .switch { width: 38px; height: 22px; padding: 2px; border-radius: 12px; background: var(--purple); }
+    .switch::after { content: ""; display: block; width: 18px; height: 18px; margin-left: 16px; border-radius: 50%; background: white; }
+    .profile-hero { margin: -14px -16px 0; padding: 18px 16px 20px; color: white; background: var(--purple); border-radius: 0 0 24px 24px; }
+    .profile-row { display: flex; gap: 12px; align-items: center; }
+    .profile-avatar { width: 52px; height: 52px; display: grid; place-items: center; border-radius: 17px; color: var(--purple); background: var(--gold); font-size: 20px; font-weight: 700; }
+    .profile-row h3 { margin: 0 0 4px; font-size: 17px; }
+    .profile-row p { margin: 0; color: rgba(255,255,255,.7); font-size: 10px; }
+    .profile-login { margin-top: 13px; height: 39px; border-radius: 10px; display: grid; place-items: center; color: var(--purple-deep); background: var(--gold); font-size: 12px; font-weight: 700; }
+    .profile-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 1px; overflow: hidden; margin-top: 14px; border-radius: 13px; background: var(--line); }
+    .profile-stat { padding: 13px 5px; text-align: center; background: var(--paper); }
+    .profile-stat strong { display: block; color: var(--purple); font: 700 16px Georgia, serif; }
+    .profile-stat span { color: var(--muted); font-size: 9px; }
+    .menu { margin-top: 14px; padding: 0 13px; background: var(--paper); border: 1px solid var(--line); border-radius: 13px; }
+    .menu-row { min-height: 46px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--line); font-size: 12px; }
+    .menu-row:last-child { border-bottom: 0; }
+    .menu-icon { width: 29px; height: 29px; display: grid; place-items: center; border-radius: 9px; color: var(--purple); background: var(--purple-soft); }
+    .menu-icon svg { width: 15px; height: 15px; }
+    .menu-row .grow { flex: 1; }
+    .menu-row small { color: var(--muted); font-size: 9px; }
+    .status-badge { color: #8a621a; background: var(--gold-soft); border-radius: 6px; padding: 3px 6px; font-size: 8px; }
+    .safe-bottom { padding-bottom: 56px; }
+    body.single-view { min-width: 0; width: 425px; min-height: 890px; background: #e9e3ec; }
+    body.single-view .board-head { display: none; }
+    body.single-view .board { width: 425px; padding: 20px 25px; display: block; }
+    body.single-view .screen-wrap { display: none; }
+    body.single-view .screen-wrap.single-active { display: block; }
+  </style>
+</head>
+<body>
+  <svg class="sprite" xmlns="http://www.w3.org/2000/svg">
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="m16.2 16.2 4 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="m3 11 9-8 9 8v9a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+    <symbol id="i-book" viewBox="0 0 24 24"><path d="M3 5.5A4.5 4.5 0 0 1 7.5 1H11v18H7.5A4.5 4.5 0 0 0 3 23zM21 5.5A4.5 4.5 0 0 0 16.5 1H13v18h3.5A4.5 4.5 0 0 1 21 23z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+    <symbol id="i-guide" viewBox="0 0 24 24"><path d="M5 3h12a2 2 0 0 1 2 2v16H7a2 2 0 0 1-2-2z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 7h8M8 11h8M8 15h5M5 19a2 2 0 0 1 2-2h12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M4 21a8 8 0 0 1 16 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M6 2h8l4 4v16H6z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M14 2v5h5M9 12h6M9 16h6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24"><path d="m12 2 3 6.1 6.7 1-4.9 4.7 1.2 6.7-6-3.1-6 3.1 1.2-6.7-4.9-4.7 6.7-1z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V3m0 0L7 8m5-5 5 5M4 15v5h16v-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-pen" viewBox="0 0 24 24"><path d="m4 20 4.5-1 10-10-3.5-3.5-10 10zM14.5 6l3.5 3.5M4 20h16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-filter" viewBox="0 0 24 24"><path d="M4 6h16M7 12h10M10 18h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+    <symbol id="i-left" viewBox="0 0 24 24"><path d="m15 5-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-right" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 11v6M12 7.5v.1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  </svg>
+
+  <header class="board-head">
+    <div>
+      <div class="board-kicker">NKUSTUDY · WECHAT MINI PROGRAM</div>
+      <h1>课程资料与选课参考 · 界面示意</h1>
+      <p>以课程为中心串联资料、评价与指南｜游客直接浏览，收藏与贡献时再登录</p>
+    </div>
+    <div class="palette" aria-label="品牌配色"><i class="swatch"></i><i class="swatch"></i><i class="swatch"></i><i class="swatch"></i></div>
+  </header>
+
+  <main class="board">
+    <!-- 01 首页 -->
+    <section class="screen-wrap"><div class="screen-label"><b class="screen-no">01</b>首页</div><div class="phone">
+      <div class="status"><span>9:41</span><span class="status-icons">● ◔ ▰</span></div>
+      <div class="nav"><div class="brand"><img src="../../assets/branding/nkustudy-avatar-v2-nankai-128.png" alt=""><div><div class="brand-name">NKUStudy</div><div class="brand-sub">课程资料与选课参考</div></div></div><div class="wx-capsule"><b>•••</b><i></i></div></div>
+      <div class="app"><div class="scroll">
+        <div class="hero"><div class="hero-eyebrow">南开学生共建</div><h2>选课前，先来查一查</h2><div class="search"><svg><use href="#i-search"/></svg><span>搜索课程、教师或关键词</span></div></div>
+        <div class="quick-grid">
+          <div class="quick"><div class="quick-icon"><svg><use href="#i-book"/></svg></div>找课程</div>
+          <div class="quick"><div class="quick-icon"><svg><use href="#i-file"/></svg></div>找资料</div>
+          <div class="quick"><div class="quick-icon"><svg><use href="#i-star"/></svg></div>看评价</div>
+          <div class="quick"><div class="quick-icon"><svg><use href="#i-guide"/></svg></div>选课指南</div>
+        </div>
+        <div class="section"><div class="season-card"><strong>选课季 · 开始前先确认</strong><p>培养方案、课程容量、时间冲突与退补选安排</p></div></div>
+        <div class="section"><div class="section-head"><div class="section-title">大家在看</div><div class="section-link">查看全部</div></div><div class="paper-card">
+          <div class="course-mini"><div><div class="course-name">概率论与数理统计</div><div class="course-meta"><span class="tag">A区</span><span class="tag gold">数学</span></div></div><div class="course-stats">18份资料<br>12条评价</div></div>
+          <div class="course-mini"><div><div class="course-name">有机化学</div><div class="course-meta"><span class="tag">C区</span><span class="tag green">专业必修</span></div></div><div class="course-stats">12份资料<br>7条评价</div></div>
+          <div class="course-mini"><div><div class="course-name">数据结构</div><div class="course-meta"><span class="tag">D区</span><span class="tag gray">专业核心</span></div></div><div class="course-stats">20份资料<br>14条评价</div></div>
+        </div></div>
+      </div></div>
+      <div class="tabbar"><div class="tab active"><svg><use href="#i-home"/></svg>首页</div><div class="tab"><svg><use href="#i-book"/></svg>课程</div><div class="tab"><svg><use href="#i-guide"/></svg>指南</div><div class="tab"><svg><use href="#i-user"/></svg>我的</div></div>
+    </div></section>
+
+    <!-- 02 课程库 -->
+    <section class="screen-wrap"><div class="screen-label"><b class="screen-no">02</b>课程库</div><div class="phone">
+      <div class="status"><span>9:41</span><span class="status-icons">● ◔ ▰</span></div><div class="nav"><div class="nav-title">找课程</div><div></div><div class="wx-capsule"><b>•••</b><i></i></div></div>
+      <div class="app"><div class="scroll">
+        <div class="search"><svg><use href="#i-search"/></svg><span>搜索课程、教师或标签</span></div>
+        <div class="section"><div class="abcde"><span class="active">全部</span><span>A</span><span>B</span><span>C</span><span>D</span><span>E</span></div><div class="filter-line"><div class="filter-btn"><svg class="icon"><use href="#i-filter"/></svg>课程属性</div><div class="filter-btn">热门标签</div><div class="filter-btn">综合排序</div></div></div>
+        <div class="section"><div class="section-head"><div class="section-title">全部课程</div><div class="micro">共 126 门</div></div>
+          <div class="course-card"><div class="course-card-top"><div class="zone">A</div><div style="flex:1"><h3>概率论与数理统计</h3><div class="sub">数学科学学院 · 建议大二修读</div></div><svg class="icon muted"><use href="#i-heart"/></svg></div><div class="tags"><span class="tag">数学</span><span class="tag gold">公共必修</span><span class="tag gray">期末</span></div><div class="statline"><span>18 份资料</span><span>12 条评价</span><span>3 位教师</span></div></div>
+          <div class="course-card"><div class="course-card-top"><div class="zone" style="background:#6f3f83">C</div><div style="flex:1"><h3>有机化学</h3><div class="sub">化学学院 · 建议大二修读</div></div><svg class="icon muted"><use href="#i-heart"/></svg></div><div class="tags"><span class="tag">化学</span><span class="tag green">专业必修</span><span class="tag gray">实验</span></div><div class="statline"><span>12 份资料</span><span>7 条评价</span><span>2 位教师</span></div></div>
+          <div class="course-card"><div class="course-card-top"><div class="zone" style="background:#80591b">D</div><div style="flex:1"><h3>数据结构</h3><div class="sub">计算机学院 · 建议大二修读</div></div><svg class="icon muted"><use href="#i-heart"/></svg></div><div class="tags"><span class="tag">计算机</span><span class="tag gold">专业核心</span></div><div class="statline"><span>20 份资料</span><span>14 条评价</span><span>4 位教师</span></div></div>
+        </div>
+      </div><div class="fab"><svg><use href="#i-pen"/></svg></div></div>
+      <div class="tabbar"><div class="tab"><svg><use href="#i-home"/></svg>首页</div><div class="tab active"><svg><use href="#i-book"/></svg>课程</div><div class="tab"><svg><use href="#i-guide"/></svg>指南</div><div class="tab"><svg><use href="#i-user"/></svg>我的</div></div>
+    </div></section>
+
+    <!-- 03 搜索结果 -->
+    <section class="screen-wrap"><div class="screen-label"><b class="screen-no">03</b>搜索结果</div><div class="phone">
+      <div class="status"><span>9:41</span><span class="status-icons">● ◔ ▰</span></div><div class="nav"><div class="nav-title">搜索</div><div class="back"><svg><use href="#i-left"/></svg></div><div class="wx-capsule"><b>•••</b><i></i></div></div>
+      <div class="app no-tab"><div class="scroll">
+        <div class="search-head"><div class="search"><svg><use href="#i-search"/></svg><span>化学</span></div><span class="cancel">取消</span></div>
+        <div class="result-tabs"><span class="active">课程 8</span><span>教师 3</span><span>资料 21</span><span>指南 2</span></div>
+        <div class="section"><div class="chip-row"><span class="chip active">全部</span><span class="chip">A–E 分类</span><span class="chip">教师</span><span class="chip">学期</span></div></div>
+        <div class="section"><div class="section-head"><div class="micro">找到 8 门相关课程</div><div class="section-link">筛选</div></div>
+          <div class="course-card"><div class="course-card-top"><div class="zone" style="background:#6f3f83">C</div><div style="flex:1"><h3>有机<mark>化学</mark></h3><div class="sub">化学学院 · 专业必修</div></div><svg class="icon muted"><use href="#i-right"/></svg></div><div class="tags"><span class="tag"><mark>化学</mark></span><span class="tag green">实验</span></div><div class="statline"><span>12 份资料</span><span>7 条评价</span></div></div>
+          <div class="course-card"><div class="course-card-top"><div class="zone">A</div><div style="flex:1"><h3>大学<mark>化学</mark></h3><div class="sub">化学学院 · 公共必修</div></div><svg class="icon muted"><use href="#i-right"/></svg></div><div class="tags"><span class="tag"><mark>化学</mark></span><span class="tag gold">公共必修</span></div><div class="statline"><span>9 份资料</span><span>11 条评价</span></div></div>
+          <div class="course-card"><div class="course-card-top"><div class="zone" style="background:#80591b">E</div><div style="flex:1"><h3>环境<mark>化学</mark></h3><div class="sub">环境科学与工程学院 · 专业选修</div></div><svg class="icon muted"><use href="#i-right"/></svg></div><div class="tags"><span class="tag"><mark>化学</mark></span><span class="tag gray">专业选修</span></div><div class="statline"><span>6 份资料</span><span>4 条评价</span></div></div>
+        </div>
+        <div class="notice"><svg><use href="#i-info"/></svg><span>没有找到？可尝试课程简称，或申请补充课程。</span></div>
+      </div></div>
+    </div></section>
+
+    <!-- 04 课程概览 -->
+    <section class="screen-wrap"><div class="screen-label"><b class="screen-no">04</b>课程详情 · 概览</div><div class="phone">
+      <div class="status dark"><span>9:41</span><span class="status-icons">● ◔ ▰</span></div><div class="nav dark"><div class="back"><svg><use href="#i-left"/></svg></div><div class="nav-title">课程详情</div><div class="wx-capsule"><b>•••</b><i></i></div></div>
+      <div class="app no-tab"><div class="detail-head"><div class="detail-row"><div><h2>概率论与数理统计</h2><div class="meta">A区 · 公共必修 · 数学</div></div><div class="save-round"><svg><use href="#i-heart"/></svg></div></div></div><div class="detail-tabs"><span class="active">概览</span><span>资料 18</span><span>评价 12</span></div><div class="scroll" style="height:calc(100% - 110px)">
+        <div class="metric-grid"><div class="metric"><strong>4.2</strong><span>课程难度</span></div><div class="metric"><strong>3.8</strong><span>作业量</span></div><div class="metric"><strong>4.5</strong><span>收获程度</span></div></div>
+        <div class="section card"><div class="rule-title">课程概览</div><p class="micro" style="font-size:11px;color:#4f4951;margin:10px 0 0">内容涵盖随机事件、概率分布、数字特征与参数估计，是多门专业课程的数学基础。</p></div>
+        <div class="section card"><div class="section-head"><div class="rule-title">开课与教师</div><div class="section-link">全部</div></div><div class="teacher-row"><div class="avatar">王</div><div class="grow"><strong>王老师</strong><small>2025–2026 秋 · 八里台校区</small></div><span class="tag green">8条评价</span></div><div class="teacher-row"><div class="avatar" style="background:#77550e">李</div><div class="grow"><strong>李老师</strong><small>2025–2026 春 · 津南校区</small></div><span class="tag gold">4条评价</span></div></div>
+        <div class="section card"><div class="rule-title">常见标签</div><div class="chip-row" style="margin-top:11px"><span class="tag">重视基础</span><span class="tag">习题重要</span><span class="tag gold">节奏较快</span><span class="tag gray">需预习</span></div></div>
+        <div class="notice section"><svg><use href="#i-info"/></svg><span>课程信息与评价仅供参考，请以当学期教学安排为准。</span></div>
+      </div></div>
+    </div></section>
+
+    <!-- 05 课程资料 -->
+    <section class="screen-wrap"><div class="screen-label"><b class="screen-no">05</b>课程详情 · 资料</div><div class="phone">
+      <div class="status dark"><span>9:41</span><span class="status-icons">● ◔ ▰</span></div><div class="nav dark"><div class="back"><svg><use href="#i-left"/></svg></div><div class="nav-title">概率论与数理统计</div><div class="wx-capsule"><b>•••</b><i></i></div></div>
+      <div class="app no-tab"><div class="detail-tabs"><span>概览</span><span class="active">资料 18</span><span>评价 12</span></div><div class="scroll safe-bottom" style="height:calc(100% - 45px)">
+        <div class="chip-row"><span class="chip active">全部</span><span class="chip">试卷</span><span class="chip">笔记</span><span class="chip">课件</span><span class="chip">作业</span></div>
+        <div class="filter-line"><div class="filter-btn">全部学期</div><div class="filter-btn">最近更新</div></div>
+        <div class="resource-card"><div class="resource-top"><div class="file-icon"><svg><use href="#i-file"/></svg></div><div class="resource-info"><h4>2025 秋期中试题（回忆版）</h4><p>试卷 · PDF · 2.8 MB · 更新于 3 天前</p></div></div><div class="resource-foot"><span class="link-ok"><svg width="12" height="12"><use href="#i-check"/></svg>链接正常</span><span class="resource-action">打开网盘</span></div></div>
+        <div class="resource-card"><div class="resource-top"><div class="file-icon"><svg><use href="#i-file"/></svg></div><div class="resource-info"><h4>第一至四章复习笔记</h4><p>笔记 · PDF · 6.1 MB · 32 人收藏</p></div></div><div class="resource-foot"><span class="link-ok"><svg width="12" height="12"><use href="#i-check"/></svg>链接正常</span><span class="resource-action">打开网盘</span></div></div>
+        <div class="resource-card"><div class="resource-top"><div class="file-icon" style="background:var(--gold-soft);color:#795514"><svg><use href="#i-file"/></svg></div><div class="resource-info"><h4>习题课重点题型整理</h4><p>作业 · PDF · 4.4 MB · 最近更新</p></div></div><div class="resource-foot"><span class="link-ok"><svg width="12" height="12"><use href="#i-check"/></svg>链接正常</span><span class="resource-action">打开网盘</span></div></div>
+        <div class="resource-card"><div class="resource-top"><div class="file-icon"><svg><use href="#i-file"/></svg></div><div class="resource-info"><h4>历年期末试题与参考答案</h4><p>试卷 · ZIP · 18.6 MB · 2021–2024</p></div></div><div class="resource-foot"><span class="link-ok"><svg width="12" height="12"><use href="#i-check"/></svg>链接正常</span><span class="resource-action">打开网盘</span></div></div>
+      </div><button class="btn primary sticky-action"><svg class="icon"><use href="#i-upload"/></svg>分享这门课的资料</button></div>
+    </div></section>
+
+    <!-- 06 课程评价 -->
+    <section class="screen-wrap"><div class="screen-label"><b class="screen-no">06</b>课程详情 · 评价</div><div class="phone">
+      <div class="status dark"><span>9:41</span><span class="status-icons">● ◔ ▰</span></div><div class="nav dark"><div class="back"><svg><use href="#i-left"/></svg></div><div class="nav-title">概率论与数理统计</div><div class="wx-capsule"><b>•••</b><i></i></div></div>
+      <div class="app no-tab"><div class="detail-tabs"><span>概览</span><span>资料 18</span><span class="active">评价 12</span></div><div class="scroll safe-bottom" style="height:calc(100% - 45px)">
+        <div class="card score-main"><div><div class="score-number">4.4</div><div class="stars">★★★★★</div><div class="score-note">基于 12 条评价</div></div><div class="bars"><div class="bar-row"><span>课程难度</span><div class="bar"><i style="width:84%"></i></div><b>4.2</b></div><div class="bar-row"><span>作业量</span><div class="bar"><i style="width:76%"></i></div><b>3.8</b></div><div class="bar-row"><span>收获程度</span><div class="bar"><i style="width:90%"></i></div><b>4.5</b></div></div></div>
+        <div class="section"><div class="chip-row"><span class="chip active">全部教师</span><span class="chip">王老师</span><span class="chip">李老师</span><span class="chip">2025 秋</span></div></div>
+        <div class="section"><div class="chip-row"><span class="tag">讲解清楚</span><span class="tag gold">作业偏多</span><span class="tag green">考试常规</span><span class="tag gray">需要预习</span></div></div>
+        <div class="review-card"><div class="review-head"><div class="review-user"><div class="avatar">同</div><div><strong>匿名同学</strong><small>王老师 · 2025 秋</small></div></div><span class="tag green">已修读</span></div><p>课堂节奏稍快，建议课前看一遍定义。作业和考试题型比较接近，认真完成习题帮助很大。</p><div class="review-foot"><span>有帮助 23</span><span>举报</span></div></div>
+        <div class="review-card"><div class="review-head"><div class="review-user"><div class="avatar">同</div><div><strong>匿名同学</strong><small>李老师 · 2025 春</small></div></div><span class="tag">重视基础</span></div><p>前半学期比较平稳，级数部分建议尽早复习。老师会补充一些例题，期末前整理错题很有用。</p><div class="review-foot"><span>有帮助 16</span><span>举报</span></div></div>
+      </div><button class="btn primary sticky-action"><svg class="icon"><use href="#i-pen"/></svg>写课程评价</button></div>
+    </div></section>
+
+    <!-- 07 资料领取 -->
+    <section class="screen-wrap"><div class="screen-label"><b class="screen-no">07</b>资料领取</div><div class="phone">
+      <div class="status"><span>9:41</span><span class="status-icons">● ◔ ▰</span></div><div class="nav"><div class="back"><svg><use href="#i-left"/></svg></div><div class="nav-title">资料详情</div><div class="wx-capsule"><b>•••</b><i></i></div></div>
+      <div class="app no-tab"><div class="scroll">
+        <div class="resource-detail-icon"><svg><use href="#i-file"/></svg></div><div class="resource-title">2025 秋期中试题<br>（回忆版）</div><div class="resource-subtitle">概率论与数理统计 · 试卷</div>
+        <div class="info-list"><div class="info-row"><span>文件格式</span><b>PDF · 2.8 MB</b></div><div class="info-row"><span>适用学期</span><b>2025–2026 秋</b></div><div class="info-row"><span>网盘平台</span><b>夸克网盘</b></div><div class="info-row"><span>链接状态</span><span class="tag green">正常</span></div><div class="info-row"><span>贡献者</span><b>匿名同学</b></div></div>
+        <div class="notice section"><svg><use href="#i-info"/></svg><span>点击主按钮后复制分享链接与提取码，再前往对应网盘打开。</span></div>
+        <div class="section"><button class="btn primary" style="width:100%">复制链接及提取码</button><button class="btn ghost" style="width:100%;margin-top:9px">反馈链接失效</button></div>
+        <div class="section card"><div class="section-head"><div class="rule-title">同课程其他资料</div><div class="section-link">查看全部</div></div><div class="article-row"><div class="article-index">PDF</div><div class="grow"><strong>第一至四章复习笔记</strong><small>6.1 MB · 32 人收藏</small></div><svg class="icon muted"><use href="#i-right"/></svg></div><div class="article-row"><div class="article-index">ZIP</div><div class="grow"><strong>历年期末试题与答案</strong><small>18.6 MB · 2021–2024</small></div><svg class="icon muted"><use href="#i-right"/></svg></div></div>
+      </div></div>
+    </div></section>
+
+    <!-- 08 指南列表 -->
+    <section class="screen-wrap"><div class="screen-label"><b class="screen-no">08</b>选课指南</div><div class="phone">
+      <div class="status"><span>9:41</span><span class="status-icons">● ◔ ▰</span></div><div class="nav"><div class="nav-title">指南</div><div></div><div class="wx-capsule"><b>•••</b><i></i></div></div>
+      <div class="app"><div class="scroll">
+        <div class="guide-hero"><h2>少走弯路，安心选课</h2><p>流程与规则请始终以教务系统最新通知为准</p></div>
+        <div class="guide-grid"><div class="guide-cat"><b>选课流程</b><span>从培养方案到确认课表</span></div><div class="guide-cat"><b>培养方案</b><span>学分、必修与限选说明</span></div><div class="guide-cat"><b>退补选</b><span>时间节点与常见问题</span></div><div class="guide-cat"><b>考试成绩</b><span>考试、重修与成绩相关</span></div></div>
+        <div class="section card"><div class="section-head"><div class="rule-title">选课必读</div><div class="section-link">全部文章</div></div><div class="article-row"><div class="article-index">01</div><div class="grow"><strong>第一次选课怎么操作？</strong><small>约 4 分钟 · 更新于 8 月 10 日</small></div><svg class="icon muted"><use href="#i-right"/></svg></div><div class="article-row"><div class="article-index">02</div><div class="grow"><strong>A–E 分类怎么找？</strong><small>约 3 分钟 · 基础说明</small></div><svg class="icon muted"><use href="#i-right"/></svg></div><div class="article-row"><div class="article-index">03</div><div class="grow"><strong>如何参考课程评价？</strong><small>约 2 分钟 · 阅读建议</small></div><svg class="icon muted"><use href="#i-right"/></svg></div><div class="article-row"><div class="article-index">04</div><div class="grow"><strong>退补选前要确认什么？</strong><small>约 3 分钟 · 流程提醒</small></div><svg class="icon muted"><use href="#i-right"/></svg></div></div>
+      </div></div>
+      <div class="tabbar"><div class="tab"><svg><use href="#i-home"/></svg>首页</div><div class="tab"><svg><use href="#i-book"/></svg>课程</div><div class="tab active"><svg><use href="#i-guide"/></svg>指南</div><div class="tab"><svg><use href="#i-user"/></svg>我的</div></div>
+    </div></section>
+
+    <!-- 09 指南详情 -->
+    <section class="screen-wrap"><div class="screen-label"><b class="screen-no">09</b>指南详情</div><div class="phone">
+      <div class="status"><span>9:41</span><span class="status-icons">● ◔ ▰</span></div><div class="nav"><div class="back"><svg><use href="#i-left"/></svg></div><div class="nav-title">指南详情</div><div class="wx-capsule"><b>•••</b><i></i></div></div>
+      <div class="app no-tab article"><div class="scroll">
+        <span class="tag gold">选课流程</span><h1 class="article-title">第一次选课<br>怎么操作？</h1><div class="article-meta"><span>约 4 分钟</span><span>更新于 2026-08-10</span></div>
+        <div class="article-lead">建议先整理培养方案和必修课程，再查看课表时间。课程资料与评价只能辅助判断，最终请以教务系统为准。</div>
+        <div class="rule-title">选课前的五步检查</div>
+        <div class="step"><div class="step-no">1</div><div><strong>查看培养方案</strong><p>确认所在专业、年级对应的培养要求。</p></div></div>
+        <div class="step"><div class="step-no">2</div><div><strong>列出必修与限选</strong><p>优先安排有先修关系或仅特定学期开设的课程。</p></div></div>
+        <div class="step"><div class="step-no">3</div><div><strong>确认时间与容量</strong><p>排除时间冲突，准备一至两门备选课程。</p></div></div>
+        <div class="step"><div class="step-no">4</div><div><strong>参考资料与评价</strong><p>重点查看同一教师、相近学期的真实体验。</p></div></div>
+        <div class="step"><div class="step-no">5</div><div><strong>回到教务系统选课</strong><p>提交后再次检查课表，并留意退补选通知。</p></div></div>
+        <div class="notice section"><svg><use href="#i-info"/></svg><span>发现内容有误？可以提交纠错，审核后会更新。</span></div>
+        <button class="btn secondary" style="width:100%;margin-top:12px">查看相关课程</button>
+      </div></div>
+    </div></section>
+
+    <!-- 10 投稿资料 -->
+    <section class="screen-wrap"><div class="screen-label"><b class="screen-no">10</b>分享资料</div><div class="phone">
+      <div class="status"><span>9:41</span><span class="status-icons">● ◔ ▰</span></div><div class="nav"><div class="back"><svg><use href="#i-left"/></svg></div><div class="nav-title">分享资料</div><div class="wx-capsule"><b>•••</b><i></i></div></div>
+      <div class="app no-tab"><div class="scroll">
+        <div class="progress"><span class="active">1</span><i></i><span>2</span><i></i><span>3</span></div>
+        <div class="notice"><svg><use href="#i-info"/></svg><span>请先删除资料中的姓名、学号等个人信息，并确认拥有分享权限。</span></div>
+        <div class="section"><div class="field"><label>选择课程</label><div class="field-box filled"><span>概率论与数理统计</span><svg class="icon"><use href="#i-right"/></svg></div></div><div class="field"><label>资料标题</label><div class="field-box"><span>例如：2025 秋期中试题</span></div></div><div class="field"><label>资料类型</label><div class="field-box"><span>请选择资料类型</span><svg class="icon"><use href="#i-right"/></svg></div></div><div class="field"><label>网盘平台</label><div class="field-box"><span>请选择网盘平台</span><svg class="icon"><use href="#i-right"/></svg></div></div><div class="field"><label>分享链接</label><div class="field-box"><span>粘贴可正常访问的链接</span></div></div><div class="field"><label>提取码（选填）</label><div class="field-box"><span>请输入提取码</span></div></div><div class="field"><label>补充说明（选填）</label><div class="field-box textarea"><span>说明资料范围或使用方法</span></div></div></div>
+        <div class="form-actions"><button class="btn ghost">保存草稿</button><button class="btn primary">下一步：确认信息</button></div>
+      </div></div>
+    </div></section>
+
+    <!-- 11 写评价 -->
+    <section class="screen-wrap"><div class="screen-label"><b class="screen-no">11</b>写课程评价</div><div class="phone">
+      <div class="status"><span>9:41</span><span class="status-icons">● ◔ ▰</span></div><div class="nav"><div class="back"><svg><use href="#i-left"/></svg></div><div class="nav-title">写课程评价</div><div class="wx-capsule"><b>•••</b><i></i></div></div>
+      <div class="app no-tab"><div class="scroll">
+        <div class="card"><div class="course-card-top"><div class="zone">A</div><div style="flex:1"><h3 style="margin:1px 0 4px;font-size:15px">概率论与数理统计</h3><div class="micro">评价会绑定具体教师与学期</div></div></div></div>
+        <div class="section"><div class="field"><label>开课学期</label><div class="field-box filled"><span>2025–2026 秋</span><svg class="icon"><use href="#i-right"/></svg></div></div><div class="field"><label>任课教师</label><div class="field-box filled"><span>王老师</span><svg class="icon"><use href="#i-right"/></svg></div></div></div>
+        <div class="section card"><div class="rule-title">课程感受</div><div style="margin-top:8px"><div class="rating-row"><span>课程难度</span><div class="rating-dots"><i></i><i></i><i></i><i></i><i class="off"></i></div><b>4</b></div><div class="rating-row"><span>作业量</span><div class="rating-dots"><i></i><i></i><i></i><i></i><i class="off"></i></div><b>4</b></div><div class="rating-row"><span>收获程度</span><div class="rating-dots"><i></i><i></i><i></i><i></i><i></i></div><b>5</b></div></div></div>
+        <div class="section"><div class="field"><label>选择印象标签</label><div class="chip-row" style="flex-wrap:wrap;white-space:normal"><span class="chip active">讲解清楚</span><span class="chip">作业偏多</span><span class="chip active">考试常规</span><span class="chip">需要预习</span></div></div><div class="field"><label>评价内容</label><div class="field-box textarea"><span>说说课堂节奏、考核方式和学习建议</span></div></div></div>
+        <div class="switch-row"><div><b>匿名发布</b><div class="micro">公开页面不会显示微信信息</div></div><div class="switch"></div></div>
+        <button class="btn primary" style="width:100%;margin-top:8px">提交审核</button>
+      </div></div>
+    </div></section>
+
+    <!-- 12 我的 -->
+    <section class="screen-wrap"><div class="screen-label"><b class="screen-no">12</b>我的</div><div class="phone">
+      <div class="status"><span>9:41</span><span class="status-icons">● ◔ ▰</span></div><div class="nav"><div class="nav-title">我的</div><div></div><div class="wx-capsule"><b>•••</b><i></i></div></div>
+      <div class="app"><div class="scroll">
+        <div class="profile-hero"><div class="profile-row"><div class="profile-avatar">N</div><div><h3>你好，南开同学</h3><p>浏览无需登录，登录后同步收藏与投稿</p></div></div><div class="profile-login">微信登录</div></div>
+        <div class="profile-stats"><div class="profile-stat"><strong>6</strong><span>本机浏览</span></div><div class="profile-stat"><strong>—</strong><span>收藏课程</span></div><div class="profile-stat"><strong>—</strong><span>我的贡献</span></div></div>
+        <div class="menu"><div class="menu-row"><div class="menu-icon"><svg><use href="#i-heart"/></svg></div><div class="grow">我的收藏</div><small>登录后查看</small><svg class="icon muted"><use href="#i-right"/></svg></div><div class="menu-row"><div class="menu-icon"><svg><use href="#i-upload"/></svg></div><div class="grow">我的投稿</div><span class="status-badge">2 条审核中</span><svg class="icon muted"><use href="#i-right"/></svg></div><div class="menu-row"><div class="menu-icon"><svg><use href="#i-pen"/></svg></div><div class="grow">我的评价</div><svg class="icon muted"><use href="#i-right"/></svg></div><div class="menu-row"><div class="menu-icon"><svg><use href="#i-guide"/></svg></div><div class="grow">浏览记录</div><svg class="icon muted"><use href="#i-right"/></svg></div></div>
+        <div class="menu"><div class="menu-row"><div class="menu-icon"><svg><use href="#i-info"/></svg></div><div class="grow">意见反馈</div><svg class="icon muted"><use href="#i-right"/></svg></div><div class="menu-row"><div class="menu-icon"><svg><use href="#i-user"/></svg></div><div class="grow">关于 NKUStudy</div><svg class="icon muted"><use href="#i-right"/></svg></div></div>
+        <div class="micro" style="text-align:center;margin-top:14px">无需实名，不公开微信信息<br>学生共建 · 非南开大学官方平台</div>
+      </div></div>
+      <div class="tabbar"><div class="tab"><svg><use href="#i-home"/></svg>首页</div><div class="tab"><svg><use href="#i-book"/></svg>课程</div><div class="tab"><svg><use href="#i-guide"/></svg>指南</div><div class="tab active"><svg><use href="#i-user"/></svg>我的</div></div>
+    </div></section>
+  </main>
+  <script>
+    const screenNumber = Number(new URLSearchParams(location.search).get('screen'));
+    if (screenNumber >= 1 && screenNumber <= 12) {
+      document.body.classList.add('single-view');
+      const screens = document.querySelectorAll('.screen-wrap');
+      screens[screenNumber - 1].classList.add('single-active');
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+{
+  "name": "nkustudy-wxapp",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "check:miniprogram": "node scripts/check-miniprogram.js",
+    "test": "npm --prefix server test && npm run check:miniprogram"
+  },
+  "engines": { "node": ">=18" }
+}

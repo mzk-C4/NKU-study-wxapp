@@ -1,0 +1,43 @@
+{
+  "pages": [
+    "pages/home/index",
+    "pages/courses/index",
+    "pages/guides/index",
+    "pages/profile/index",
+    "pages/search/index",
+    "pages/course-overview/index",
+    "pages/course-resources/index",
+    "pages/course-reviews/index",
+    "pages/resource-detail/index",
+    "pages/guide-detail/index",
+    "pages/submit-resource/index",
+    "pages/write-review/index"
+  ],
+  "window": {
+    "navigationBarTitleText": "NKUStudy",
+    "navigationBarBackgroundColor": "#FFFDF8",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#F6F3F7",
+    "backgroundTextStyle": "dark"
+  },
+  "tabBar": {
+    "color": "#817A84",
+    "selectedColor": "#4B1F6F",
+    "backgroundColor": "#FFFDF8",
+    "borderStyle": "white",
+    "list": [
+      { "pagePath": "pages/home/index", "text": "首页" },
+      { "pagePath": "pages/courses/index", "text": "课程" },
+      { "pagePath": "pages/guides/index", "text": "指南" },
+      { "pagePath": "pages/profile/index", "text": "我的" }
+    ]
+  },
+  "usingComponents": {
+    "state-view": "/components/state-view/index",
+    "course-card": "/components/course-card/index",
+    "tag-chip": "/components/tag-chip/index"
+  },
+  "style": "v2",
+  "lazyCodeLoading": "requiredComponents",
+  "sitemapLocation": "sitemap.json"
+}

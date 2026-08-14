@@ -1,0 +1,21 @@
+{
+  "appid": "wx4fe2a7554180e903",
+  "compileType": "miniprogram",
+  "miniprogramRoot": "miniprogram/",
+  "setting": {
+    "es6": true,
+    "postcss": true,
+    "minified": true,
+    "minifyWXML": true,
+    "enhance": true,
+    "packNpmManually": false
+  },
+  "packOptions": {
+    "ignore": [
+      { "type": "folder", "value": "design" },
+      { "type": "folder", "value": "server" },
+      { "type": "folder", "value": "admin" },
+      { "type": "folder", "value": "docs" }
+    ]
+  }
+}

@@ -1,0 +1,10 @@
+.detail-tabs { display: grid; grid-template-columns: repeat(3, 1fr); height: 90rpx; background: #FFFDF8; border-bottom: 1rpx solid #E8E2EC; }
+.detail-tab { position: relative; display: flex; align-items: center; justify-content: center; color: #6F6972; font-size: 24rpx; }
+.detail-tab--active { color: #4B1F6F; font-weight: 700; }
+.detail-tab--active::after { content: ""; position: absolute; left: 34%; right: 34%; bottom: 0; height: 6rpx; background: #4B1F6F; }
+.resource-card { display: flex; gap: 20rpx; margin-top: 20rpx; padding: 26rpx; border: 1rpx solid #E8E2EC; border-radius: 26rpx; background: #FFFDF8; }
+.file-icon { width: 76rpx; height: 84rpx; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; border-radius: 18rpx; color: #4B1F6F; background: #EFE8F4; font-size: 18rpx; font-weight: 700; }
+.resource-main { flex: 1; min-width: 0; }
+.resource-title { margin-bottom: 10rpx; font-size: 27rpx; line-height: 1.45; font-weight: 700; }
+.resource-foot { display: flex; justify-content: space-between; margin-top: 20rpx; padding-top: 18rpx; border-top: 1rpx dashed #E8E2EC; font-size: 21rpx; }
+.link-ok { color: #27865F; }.open-link { color: #4B1F6F; font-weight: 700; }

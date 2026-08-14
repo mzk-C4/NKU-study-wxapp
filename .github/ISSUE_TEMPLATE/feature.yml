@@ -1,0 +1,38 @@
+name: 功能任务
+description: 页面、接口、内容或联调任务
+title: "[任务] "
+labels: ["feature"]
+body:
+  - type: input
+    id: owner
+    attributes:
+      label: 负责人
+    validations:
+      required: true
+  - type: input
+    id: deadline
+    attributes:
+      label: 截止日期
+      placeholder: YYYY-MM-DD
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: 工作范围
+      description: 写清页面、接口及不包含的内容。
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: 验收条件
+      value: |
+        - [ ]
+        - [ ]
+    validations:
+      required: true
+  - type: textarea
+    id: dependency
+    attributes:
+      label: 依赖与协作人

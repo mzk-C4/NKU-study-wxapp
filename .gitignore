@@ -1,0 +1,20 @@
+# WeChat DevTools
+project.private.config.json
+miniprogram/miniprogram_npm/
+miniprogram/node_modules/
+
+# Runtime and dependencies
+node_modules/
+*.log
+.DS_Store
+Thumbs.db
+
+# Secrets
+.env
+.env.*
+!.env.example
+miniprogram/config.local.js
+
+# Runtime data
+server/data/runtime*.json
+server/data/*.tmp
