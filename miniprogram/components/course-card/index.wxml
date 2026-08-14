@@ -1,0 +1,9 @@
+<view class="course" bindtap="select">
+  <view class="course-head">
+    <view class="zone">{{course.category_code}}</view>
+    <view class="course-main"><view class="course-name">{{course.name}}</view><view class="course-sub">{{course.department}} · {{course.recommended_stage}}</view></view>
+    <view class="arrow">›</view>
+  </view>
+  <view class="tags"><tag-chip wx:for="{{course.tags}}" wx:key="*this" text="{{item}}"></tag-chip></view>
+  <view class="stats"><text>{{course.resource_count}} 份资料</text><text>{{course.review_count}} 条评价</text><text>{{course.offering_count}} 位教师</text></view>
+</view>

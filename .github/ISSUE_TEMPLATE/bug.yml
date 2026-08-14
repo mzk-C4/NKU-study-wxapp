@@ -1,0 +1,29 @@
+name: 缺陷报告
+description: 记录可复现的小程序、接口或管理端问题
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+      placeholder: 1. 打开… 2. 点击… 3. 出现…
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 预期与实际结果
+    validations:
+      required: true
+  - type: dropdown
+    id: environment
+    attributes:
+      label: 环境
+      options: [微信开发者工具, iPhone 真机, Android 真机, API, 管理端]
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: 截图或脱敏日志

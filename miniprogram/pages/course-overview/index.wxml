@@ -1,0 +1,14 @@
+<view class="course-detail">
+  <state-view loading="{{loading}}" error="{{error}}" bindretry="loadCourse"></state-view>
+  <block wx:if="{{course}}">
+    <view class="detail-hero"><view class="detail-row"><view><view class="detail-title">{{course.name}}</view><view class="detail-meta">{{course.category_code}}区 · {{course.requirement_type}} · {{course.scope}}</view></view><view class="favorite" bindtap="toggleFavorite">{{favorite ? '♥' : '♡'}}</view></view></view>
+    <view class="detail-tabs"><view class="detail-tab detail-tab--active">概览</view><view class="detail-tab" data-tab="resources" bindtap="openTab">资料 {{course.resource_count}}</view><view class="detail-tab" data-tab="reviews" bindtap="openTab">评价 {{course.review_count}}</view></view>
+    <view class="page detail-body">
+      <view class="metric-grid"><view class="metric"><text class="metric-value">{{course.ratings.difficulty || '—'}}</text><text>课程难度</text></view><view class="metric"><text class="metric-value">{{course.ratings.workload || '—'}}</text><text>作业量</text></view><view class="metric"><text class="metric-value">{{course.ratings.gain || '—'}}</text><text>收获程度</text></view></view>
+      <view class="card section"><view class="rule-title">课程概览</view><view class="description">{{course.description}}</view></view>
+      <view class="card section"><view class="section-head"><view class="rule-title">开课与教师</view></view><view class="offering" wx:for="{{course.offerings}}" wx:key="id"><view class="teacher-avatar">{{item.teacher_name_short}}</view><view class="offering-main"><view class="teacher-name">{{item.teacher_name}}</view><view class="micro">{{item.academic_year}} {{item.semester_label}} · {{item.campus}}</view></view><tag-chip text="{{item.review_count}}条评价" tone="green"></tag-chip></view></view>
+      <view class="card section"><view class="rule-title">常见标签</view><view class="tag-list"><tag-chip wx:for="{{course.tags}}" wx:key="*this" text="{{item}}"></tag-chip></view></view>
+      <view class="notice section"><view class="notice-mark">i</view><text>课程信息与评价仅供参考，请以当学期教学安排为准。</text></view>
+    </view>
+  </block>
+</view>
