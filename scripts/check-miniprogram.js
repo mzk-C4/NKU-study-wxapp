@@ -57,6 +57,15 @@ for (const file of walk(miniRoot)) {
 
 if (!fs.existsSync(path.join(miniRoot, 'lib/fuse.js'))) fail('缺少本地 Fuse.js 搜索库')
 
+const miniConfig = require(path.join(miniRoot, 'config.js'))
+const trialApiBaseUrl = miniConfig.resolveApiBaseUrl('trial')
+const releaseApiBaseUrl = miniConfig.resolveApiBaseUrl('release')
+if (!trialApiBaseUrl.startsWith('https://')) fail('体验版 API 必须使用 HTTPS')
+if (!releaseApiBaseUrl.startsWith('https://')) fail('正式版 API 必须使用 HTTPS')
+if (/127\.0\.0\.1|localhost|\d+\.\d+\.\d+\.\d+/.test(`${trialApiBaseUrl}${releaseApiBaseUrl}`)) {
+  fail('体验版和正式版 API 不得使用 localhost 或服务器 IP')
+}
+
 const trackedText = walk(root).filter(file => !file.includes(`${path.sep}.git${path.sep}`) && !/\.(png|jpg|jpeg|gif|ico)$/i.test(file) && !file.endsWith('runtime.json'))
 const secretPatterns = [
   { name: '服务器明文密码', pattern: /pwd\s*[:=]\s*\S+/i },
