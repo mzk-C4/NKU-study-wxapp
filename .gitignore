@@ -14,7 +14,3 @@ Thumbs.db
 .env.*
 !.env.example
 miniprogram/config.local.js
-
-# Runtime data
-server/data/runtime*.json
-server/data/*.tmp

@@ -15,8 +15,6 @@
   "packOptions": {
     "ignore": [
       { "type": "folder", "value": "design" },
-      { "type": "folder", "value": "server" },
-      { "type": "folder", "value": "admin" },
       { "type": "folder", "value": "docs" }
     ]
   }

@@ -1,7 +1,7 @@
 <view class="course" bindtap="select">
   <view class="course-head">
-    <view class="zone">{{course.category_name || course.scope || course.category_code || '课程'}}</view>
-    <view class="course-main"><view class="course-name">{{course.name}}</view><view class="course-sub">{{course.term || course.recommended_stage}}{{course.department ? ' · ' + course.department : ''}}</view></view>
+    <view class="zone">{{course.group || '课程'}}</view>
+    <view class="course-main"><view class="course-name">{{course.name}}</view><view class="course-sub">{{course.term}}{{course.assessment ? ' · ' + course.assessment : ''}}</view></view>
     <view class="arrow">›</view>
   </view>
   <view class="tags"><tag-chip wx:for="{{course.tags}}" wx:key="*this" text="{{item}}"></tag-chip></view>

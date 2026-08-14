@@ -9,7 +9,9 @@
     "devtools:preview": "node scripts/wechat-devtools.js preview --project . --lang zh",
     "release:check": "npm test && node scripts/release-preflight.js",
     "devtools:upload": "npm run release:check && node scripts/wechat-devtools.js upload --project . --lang zh",
-    "test": "npm --prefix server test && npm run check:miniprogram"
+    "test:contract": "node --test test/public-api-contract.test.js",
+    "test:pages": "node --test test/page-state.test.js",
+    "test": "npm run test:contract && npm run test:pages && npm run check:miniprogram"
   },
   "engines": { "node": ">=18" }
 }

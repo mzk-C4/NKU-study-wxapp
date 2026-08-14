@@ -8,7 +8,7 @@
 
   <view class="quick-grid">
     <view class="quick" data-url="/pages/courses/index" bindtap="openPage"><view class="quick-icon">课</view><text>找课程</text></view>
-    <view class="quick" data-url="/pages/search/index?type=resource" bindtap="openPage"><view class="quick-icon quick-icon--gold">资</view><text>找资料</text></view>
+    <view class="quick" data-url="/pages/courses/index" bindtap="openPage"><view class="quick-icon quick-icon--gold">资</view><text>找资料</text></view>
     <view class="quick" data-url="/pages/search/index?type=review" bindtap="openPage"><view class="quick-icon quick-icon--green">评</view><text>看评价</text></view>
     <view class="quick" data-url="/pages/guides/index" bindtap="openPage"><view class="quick-icon quick-icon--red">指</view><text>选课指南</text></view>
   </view>
@@ -17,16 +17,18 @@
   <block wx:if="{{!loading && !error && home}}">
     <view class="season-card section" bindtap="openPage" data-url="/pages/guides/index">
       <view class="season-title">选课季 · 开始前先确认</view>
-      <view class="season-text">培养方案、课程容量、时间冲突与退补选安排</view><view class="season-mark">选</view>
+      <view class="season-text">小程序指南建设中，请以教务系统最新通知为准</view><view class="season-mark">选</view>
     </view>
     <view class="section">
       <view class="section-head"><view class="section-title">大家在看</view><view class="section-link" bindtap="openPage" data-url="/pages/courses/index">查看全部</view></view>
+      <state-view wx:if="{{hotCourses.length === 0}}" empty="{{true}}" emptyText="暂时没有热门课程"></state-view>
       <course-card wx:for="{{hotCourses}}" wx:key="id" course="{{item}}" bindselect="openCourse"></course-card>
     </view>
     <view class="section" wx:if="{{home.latest_updates.length}}">
       <view class="section-head"><view class="section-title">最近更新</view></view>
       <view class="card update-row" wx:for="{{home.latest_updates}}" wx:key="id"><view class="update-dot"></view><view><view class="update-title">{{item.title}}</view><view class="micro">{{item.summary}}</view></view></view>
     </view>
+    <view class="notice section" wx:if="{{home.announcement}}"><view class="notice-mark">i</view><text>{{home.announcement}}</text></view>
     <view class="build-note">学生共建 · 非南开大学官方平台</view>
   </block>
 </view>

@@ -1,21 +1,24 @@
-const api = require('../../utils/request')
+const { publicApi } = require('../../services/public-api')
 
-Page({
+function createWriteReviewPage(api = publicApi) {
+  return {
   data: {
     courseId: '', loading: true, submitting: false, course: null,
+    error: '',
     teacher: '', scoreOptions: [1, 2, 3, 4, 5], rating: 0,
-    tagOptions: ['讲解清晰', '作业适中', '考核常规', '需要预习', '资料齐全', '适合自学'].map(text => ({ text, selected: false })),
+    tagOptions: [],
     selectedTags: [], body: '', anonymous: true
   },
   onLoad(options) { this.setData({ courseId: options.course_id || '' }); this.prepare() },
   async prepare() {
+    this.setData({ loading: true, error: '' })
     try {
-      await getApp().ensureLogin()
-      const course = await api.get(`/courses/${this.data.courseId}`)
-      this.setData({ course, loading: false })
+      const course = await api.getCourse(this.data.courseId)
+      const groups = await api.getCourseReviewGroups(course)
+      const tagOptions = [...new Set(groups.flatMap(group => (group.items || []).flatMap(review => review.tags)))].map(text => ({ text, selected: false }))
+      this.setData({ course, tagOptions, loading: false, error: '' })
     } catch (error) {
-      this.setData({ loading: false })
-      wx.showModal({ title: '暂时无法评价', content: error.message, showCancel: false })
+      this.setData({ loading: false, error: error.message || '暂时无法加载评价页面' })
     }
   },
   inputTeacher(event) { this.setData({ teacher: event.detail.value }) },
@@ -36,7 +39,7 @@ Page({
     }
     this.setData({ submitting: true })
     try {
-      await api.post('/reviews', { course_id: course.id, teacher: teacher.trim(), rating, tags: selectedTags, body: body.trim(), anonymous })
+      await api.submitReview({ course_id: course.id, teacher: teacher.trim(), rating, tags: selectedTags, body: body.trim(), anonymous })
       wx.showModal({ title: '提交成功', content: '评价已进入审核，公开页面将保持匿名。', showCancel: false, success: () => wx.navigateBack() })
     } catch (error) {
       wx.showToast({ title: error.message, icon: 'none' })
@@ -44,4 +47,9 @@ Page({
       this.setData({ submitting: false })
     }
   }
-})
+  }
+}
+
+Page(createWriteReviewPage())
+
+module.exports = { createWriteReviewPage }

@@ -1,43 +1,47 @@
-# NKUStudy API 契约
+# NKUStudy 小程序公开 API 契约
 
-API 前缀为 `/api/v1`，所有 JSON 响应统一为：
+API 前缀为 `https://nkustudy.top/api/v1`。成功响应统一为：
 
 ```json
-{ "code": 0, "message": "ok", "data": {} }
+{ "code": 0, "data": {} }
 ```
 
-分页数据位于 `data.items`，同时返回 `page`、`page_size` 和 `total`。写入接口使用 `Authorization: Bearer <token>`；管理端使用 `x-admin-key`，两者都不得出现在日志或前端仓库中。
+错误响应为 `{ "code": "ERROR_CODE", "message": "说明" }`，可能使用 HTTP 400、404、409、429 或 500。小程序统一展示服务器错误；网络失败和超时可重试。
 
-## 公开读取
+## 本阶段唯一允许的路由
 
-| 方法 | 路径 | 说明 |
+| 方法 | 路径 | 客户端用途 |
 |---|---|---|
-| GET | `/home` | 热门课程、最近更新和选课季提示 |
-| GET | `/courses` | 支持 `query`、`category`、`requirement_type`、`sort`、分页 |
-| GET | `/courses/{course_id}` | 课程概览、开课教师与聚合评分 |
-| GET | `/courses/{course_id}/resources` | 已发布资料；列表不返回网盘链接 |
-| GET | `/courses/{course_id}/reviews` | 已发布评价；支持 `offering_id` |
-| GET | `/resources/{resource_id}` | 资料详情和网盘分享信息 |
-| GET | `/search-index` | 课程、教师、资料、指南紧凑索引 |
-| GET | `/guides` | 指南列表 |
-| GET | `/guides/{guide_id}` | 指南步骤和相关课程 |
+| GET | `/health` | 发布与运维检查 |
+| GET | `/home` | 公告、热门课程、最近更新 |
+| GET | `/courses` | 课程列表和搜索 |
+| GET | `/courses/{courseUid}` | 课程详情 |
+| GET | `/courses/{courseUid}/resources` | 课程资源与 R2 下载地址 |
+| GET | `/review-groups` | 网站评价分组；未匹配分组正常保留 |
+| GET | `/review-groups/{groupKey}` | 评价分组详情 |
+| POST | `/reviews` | 匿名评价投稿，进入网站现有审核队列 |
 
-## 登录与用户写入
+`GET /courses` 只发送 `page`、`page_size`、`q`、`term`、`group`、`tag`、`assessment`。`page_size` 不超过 100；不发送 `category`、`sort`、学年或校区。筛选项直接读取 `facets.groups/terms/tags/assessments`，没有客户端枚举。
 
-| 方法 | 路径 | 说明 |
-|---|---|---|
-| POST | `/auth/wechat` | 使用 `wx.login()` 的临时 code 换取内部登录态 |
-| POST | `/favorites` | 收藏课程 |
-| DELETE | `/favorites/{course_id}` | 取消收藏 |
-| POST | `/resource-submissions` | 提交网盘链接，默认 `pending` |
-| POST | `/resources/{resource_id}/reports` | 报告链接失效 |
-| POST | `/reviews` | 提交匿名评价，默认 `pending` |
-| GET | `/me/favorites` | 我的收藏 |
-| GET | `/me/submissions` | 我的投稿及审核状态 |
-| GET | `/me/reviews` | 我的评价及审核状态 |
+课程 `id` 是服务器不可变 UUID。页面只使用服务端 `teacher_groups`，不建立本地教师或开课安排模型。评价只使用 `rating`、`body` 和 `tags`，没有多维评分。
 
-同一用户对同一 `CourseOffering` 只能保留一条待审核或已发布评价。综合分只有在不少于 3 条已发布评价时才计算并展示。
+评价提交正文：
 
-## 管理端
+```json
+{
+  "course_id": "immutable-course-uuid",
+  "teacher": "教师姓名",
+  "rating": 5,
+  "tags": ["网站已有评价标签"],
+  "body": "评价正文",
+  "anonymous": true
+}
+```
 
-管理 UI 位于 `/admin/`。课程支持草稿、发布和归档；资料投稿支持通过、需修改和不通过；评价支持发布、不通过和隐藏。资料投稿通过后由服务端生成 `Resource`，客户端从不接触网盘管理账号。
+资源字段只读取 `id`、`course_id`、`course_name`、`title`、`size`、`size_label`、`description`、`section`、`type`、`term_label`、`extension`、`download_url`。点击资源后用 `wx.downloadFile` 下载并用 `wx.openDocument` 打开；客户端不拼接 `basePath`、文件路径或 R2 地址。
+
+## 明确不调用
+
+本阶段不调用 `/search-index`、`/guides*`、`/auth/wechat`、`/favorites*`、`/me/*`、`/resource-submissions`、`/resources/{id}`、`/resources/{id}/reports`、`/courses/{id}/reviews`。也不调用任何 `/admin-api/*`。
+
+request 合法域名为 `https://nkustudy.top`，downloadFile 合法域名为 `https://resources.nkustudy.top`。

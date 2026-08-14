@@ -1,7 +1,7 @@
 <view class="course-detail">
   <state-view loading="{{loading}}" error="{{error}}" bindretry="loadCourse"></state-view>
   <block wx:if="{{course}}">
-    <view class="detail-hero"><view class="detail-row"><view><view class="detail-title">{{course.name}}</view><view class="detail-meta">{{course.category_name || course.scope || '分类待补充'}} · {{course.term || course.recommended_stage || '学期待补充'}}</view></view><view class="favorite" bindtap="toggleFavorite">{{favorite ? '♥' : '♡'}}</view></view></view>
+    <view class="detail-hero"><view class="detail-row"><view><view class="detail-title">{{course.name}}</view><view class="detail-meta">{{course.group || '分类待补充'}} · {{course.term || '学期待补充'}}{{course.assessment ? ' · ' + course.assessment : ''}}</view></view><view class="favorite" bindtap="toggleFavorite">♡</view></view></view>
     <view class="detail-tabs"><view class="detail-tab detail-tab--active">概览</view><view class="detail-tab" data-tab="resources" bindtap="openTab">资料 {{course.resource_count}}</view><view class="detail-tab" data-tab="reviews" bindtap="openTab">评价 {{course.review_count}}</view></view>
     <view class="page detail-body">
       <view class="metric-grid"><view class="metric"><text class="metric-value">{{course.ratings.show_aggregate ? course.ratings.average : '—'}}</text><text>总体评分</text></view><view class="metric"><text class="metric-value">{{course.resource_count}}</text><text>课程资料</text></view><view class="metric"><text class="metric-value">{{course.review_count}}</text><text>公开评价</text></view></view>

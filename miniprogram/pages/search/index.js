@@ -1,61 +1,58 @@
-const Fuse = require('../../lib/fuse')
-const api = require('../../utils/request')
+const { publicApi } = require('../../services/public-api')
 const navigation = require('../../utils/navigation')
-
-function escapeHtml(value) {
-  return String(value || '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]))
-}
-
-function highlight(value, query) {
-  const safe = escapeHtml(value)
-  if (!query) return safe
-  const index = safe.toLowerCase().indexOf(escapeHtml(query).toLowerCase())
-  if (index < 0) return safe
-  return `${safe.slice(0, index)}<span style="color:#4B1F6F;background:#F8EFD9;font-weight:700">${safe.slice(index, index + query.length)}</span>${safe.slice(index + query.length)}`
-}
+const { createRequestGeneration } = require('../../utils/request-generation')
 
 Page({
-  data: { query: '', type: 'course', types: [{ key: 'course', label: '课程', count: 0 }, { key: 'teacher', label: '教师', count: 0 }, { key: 'resource', label: '资料', count: 0 }, { key: 'guide', label: '指南', count: 0 }], loading: true, error: '', results: [] },
-  fuse: null,
-  indexItems: [],
+  data: { query: '', type: 'course', types: [{ key: 'course', label: '课程', count: 0 }, { key: 'review', label: '评价', count: 0 }], loading: true, error: '', results: [] },
+  courseItems: [],
+  reviewItems: [],
+  requestGeneration: createRequestGeneration(),
 
   onLoad(options) {
-    this.setData({ query: options.q || '', type: options.type === 'resource' ? 'resource' : 'course' })
-    this.loadIndex()
+    this.setData({ query: options.q || '', type: options.type === 'review' ? 'review' : 'course' })
+    this.loadResults()
   },
 
-  async loadIndex() {
+  async loadResults() {
+    const token = this.requestGeneration.begin({ newQuery: true })
     this.setData({ loading: true, error: '' })
     try {
-      const data = await api.get('/search-index')
-      this.indexItems = data.items || []
-      this.fuse = new Fuse(this.indexItems, { includeScore: true, ignoreLocation: true, threshold: 0.38, keys: [{ name: 'name', weight: 0.35 }, { name: 'aliases', weight: 0.2 }, { name: 'tags', weight: 0.2 }, { name: 'teachers', weight: 0.15 }, { name: 'search_text', weight: 0.1 }] })
-      this.search()
+      const query = this.data.query.trim()
+      const [courses, reviews] = await Promise.all([publicApi.getCourses({ q: query, page: 1, page_size: 100 }), publicApi.getReviewGroups()])
+      if (!this.requestGeneration.isLatest(token)) return
+      this.courseItems = courses.items.map(item => ({
+        id: item.id, type: 'course', name: item.name, badge: item.group || '课程',
+        subtitle: [item.term, item.assessment, item.teachers.join('、')].filter(Boolean).join(' · '), tags: item.tags
+      }))
+      const normalized = query.toLocaleLowerCase('zh-CN')
+      this.reviewItems = reviews.items.filter(item => !normalized || `${item.course_name}\n${item.teacher_name}`.toLocaleLowerCase('zh-CN').includes(normalized)).map(item => ({
+        id: item.group_key, type: 'review', group_key: item.group_key, course_id: item.course_id,
+        name: `${item.course_name} · ${item.teacher_name}`, badge: item.matched ? '评' : '未匹配',
+        subtitle: `${item.review_count} 条评价${item.rating_average == null ? '' : ` · ${item.rating_average} 分`}`, tags: []
+      }))
+      this.renderResults(token)
     } catch (error) {
-      this.setData({ loading: false, error: error.message })
+      if (this.requestGeneration.isLatest(token)) this.setData({ loading: false, error: error.message })
     }
   },
 
-  input(event) { this.setData({ query: event.detail.value }, () => this.search()) },
-  submit() { this.search() },
-  chooseType(event) { this.setData({ type: event.currentTarget.dataset.type }, () => this.search()) },
-  clear() { this.setData({ query: '' }, () => this.search()) },
+  input(event) { this.setData({ query: event.detail.value }) },
+  submit() { this.loadResults() },
+  chooseType(event) { this.setData({ type: event.currentTarget.dataset.type }, () => this.renderResults()) },
+  clear() { this.setData({ query: '' }, () => this.loadResults()) },
 
-  search() {
-    if (!this.fuse) return
-    const query = this.data.query.trim()
-    const source = query ? this.fuse.search(query).map(result => result.item) : this.indexItems
-    const counts = {}
-    source.forEach(item => { counts[item.type] = (counts[item.type] || 0) + 1 })
-    const results = source.filter(item => item.type === this.data.type).slice(0, 40).map(item => ({ ...item, highlighted_name: highlight(item.name, query) }))
-    const types = this.data.types.map(item => ({ ...item, count: counts[item.key] || 0 }))
+  renderResults(token) {
+    if (token && !this.requestGeneration.isLatest(token)) return
+    const source = this.data.type === 'review' ? this.reviewItems : this.courseItems
+    const results = source
+    const counts = { course: this.courseItems.length, review: this.reviewItems.length }
+    const types = this.data.types.map(item => ({ ...item, count: counts[item.key] }))
     this.setData({ types, results, loading: false, error: '' })
   },
 
   openResult(event) {
     const item = event.currentTarget.dataset.item
     if (item.type === 'course') navigation.openCourse(item.id)
-    else if (item.type === 'guide') wx.navigateTo({ url: `/pages/guide-detail/index?id=${item.id}` })
-    else if (item.course_id) navigation.openCourse(item.course_id)
+    else wx.navigateTo({ url: `/pages/course-reviews/index?group_key=${encodeURIComponent(item.group_key)}` })
   }
 })

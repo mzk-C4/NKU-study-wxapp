@@ -1,14 +1,16 @@
-const api = require('../../utils/request')
+const { publicApi } = require('../../services/public-api')
+const { downloadResource } = require('../../utils/resource-download')
 
 Page({
-  data: { id: '', loading: true, error: '', course: null, resources: [], visibleResources: [], types: ['全部', '试卷', '笔记', '课件', '作业', '教材'], type: '全部' },
+  data: { id: '', loading: true, error: '', course: null, resources: [], visibleResources: [], types: ['全部'], type: '全部' },
   onLoad(options) { this.setData({ id: options.id || '' }); this.loadResources() },
 
   async loadResources() {
     this.setData({ loading: true, error: '' })
     try {
-      const [course, data] = await Promise.all([api.get(`/courses/${this.data.id}`), api.get(`/courses/${this.data.id}/resources`)])
-      this.setData({ course, resources: data.items, visibleResources: data.items, loading: false })
+      const [course, data] = await Promise.all([publicApi.getCourse(this.data.id), publicApi.getCourseResources(this.data.id)])
+      const types = ['全部', ...new Set(data.items.map(item => item.type || item.section).filter(Boolean))]
+      this.setData({ course, resources: data.items, visibleResources: data.items, types, type: '全部', loading: false })
       wx.setNavigationBarTitle({ title: course.name })
     } catch (error) { this.setData({ loading: false, error: error.message }) }
   },
@@ -22,9 +24,6 @@ Page({
     const page = tab === 'overview' ? 'course-overview' : 'course-reviews'
     wx.redirectTo({ url: `/pages/${page}/index?id=${this.data.id}` })
   },
-  openResource(event) { wx.navigateTo({ url: `/pages/resource-detail/index?id=${event.currentTarget.dataset.id}` }) },
-  async submitResource() {
-    try { await getApp().ensureLogin(); wx.navigateTo({ url: `/pages/submit-resource/index?course_id=${this.data.id}` }) }
-    catch (error) { wx.showToast({ title: error.message, icon: 'none' }) }
-  }
+  openResource(event) { downloadResource(this.data.resources.find(item => item.id === event.currentTarget.dataset.id)) },
+  submitResource() { wx.showToast({ title: '资料投稿功能建设中', icon: 'none' }) }
 })

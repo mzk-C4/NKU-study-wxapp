@@ -1,15 +1,4 @@
 <view class="page submit-page">
-  <view class="progress"><view class="progress-dot progress-dot--active">1</view><view class="progress-line"></view><view class="progress-dot">2</view><view class="progress-line"></view><view class="progress-dot">3</view></view>
-  <view class="notice"><view class="notice-mark">i</view><text>请先删除资料中的姓名、学号等个人信息，并确认拥有分享权限。</text></view>
-  <state-view loading="{{loading}}"></state-view>
-  <view wx:if="{{!loading}}" class="form section">
-    <view class="field"><text class="field-label">选择课程</text><picker range="{{courses}}" range-key="name" value="{{courseIndex}}" bindchange="chooseCourse"><view class="picker">{{courseIndex >= 0 ? courses[courseIndex].name : '搜索并选择课程'}} <text>›</text></view></picker></view>
-    <view class="field"><text class="field-label">资料标题</text><input class="input" placeholder="例如：期中复习题" value="{{form.title}}" data-field="title" bindinput="input"/></view>
-    <view class="field"><text class="field-label">资料类型</text><picker range="{{typeOptions}}" value="{{typeIndex}}" bindchange="chooseType"><view class="picker">{{typeIndex >= 0 ? typeOptions[typeIndex] : '请选择资料类型'}} <text>›</text></view></picker></view>
-    <view class="field"><text class="field-label">网盘平台</text><picker range="{{providerOptions}}" value="{{providerIndex}}" bindchange="chooseProvider"><view class="picker">{{providerIndex >= 0 ? providerOptions[providerIndex] : '请选择网盘平台'}} <text>›</text></view></picker></view>
-    <view class="field"><text class="field-label">分享链接</text><input class="input" placeholder="粘贴可正常访问的链接" value="{{form.share_url}}" data-field="share_url" bindinput="input"/></view>
-    <view class="field"><text class="field-label">提取码（选填）</text><input class="input" placeholder="请输入提取码" value="{{form.extraction_code}}" data-field="extraction_code" bindinput="input"/></view>
-    <view class="field"><text class="field-label">补充说明（选填）</text><textarea class="textarea" placeholder="说明资料范围或使用方法" value="{{form.description}}" data-field="description" bindinput="input"></textarea></view>
-    <view class="two-buttons"><button class="button button--ghost" bindtap="saveDraft">保存草稿</button><button class="button button--primary" loading="{{submitting}}" disabled="{{submitting}}" bindtap="submit">提交审核</button></view>
-  </view>
+  <view class="notice"><view class="notice-mark">i</view><text>资料投稿与微信手机号登录将在后续阶段开放。</text></view>
+  <view class="card section"><view class="section-title">投稿功能建设中</view><view class="micro section">现阶段小程序不会提交或暂存服务器数据。管理人员继续在网站后台统一处理内容。</view><button class="button button--secondary section" bindtap="openWebsiteHelp">如何提交资料</button></view>
 </view>

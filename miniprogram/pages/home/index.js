@@ -1,4 +1,4 @@
-const api = require('../../utils/request')
+const { publicApi } = require('../../services/public-api')
 const navigation = require('../../utils/navigation')
 
 Page({
@@ -10,7 +10,7 @@ Page({
   async loadHome() {
     this.setData({ loading: true, error: '' })
     try {
-      const home = await api.get('/home')
+      const home = await publicApi.getHome()
       this.setData({ home, hotCourses: home.hot_courses || [], loading: false })
     } catch (error) {
       this.setData({ loading: false, error: error.message })
