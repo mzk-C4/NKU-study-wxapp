@@ -64,6 +64,8 @@ test('public course, resource, review and guide reads use the shared model', asy
 
   const detail = await request('/api/v1/resources/resource_probability_exam_2024')
   assert.match(detail.body.data.share_url, /^https:/)
+  assert.equal('academic_year' in detail.body.data, false)
+  assert.equal('campus' in detail.body.data, false)
 
   const organic = await request('/api/v1/courses/course_organic_chemistry')
   assert.equal(organic.body.data.review_count, 2)
@@ -94,7 +96,7 @@ test('visitor writes require login, then favorites and submissions are private',
 
   const submission = await request('/api/v1/resource-submissions', {
     method: 'POST', headers,
-    body: JSON.stringify({ course_id: 'course_probability', title: '自测复习提纲', type: '笔记', storage_provider: '阿里云盘', share_url: 'https://example.com/student-a-notes', extraction_code: '', description: '已检查个人信息', academic_year: '2025-2026', semester: 'fall' })
+    body: JSON.stringify({ course_id: 'course_probability', title: '自测复习提纲', type: '笔记', storage_provider: '阿里云盘', share_url: 'https://example.com/student-a-notes', extraction_code: '', description: '已检查个人信息' })
   })
   assert.equal(submission.response.status, 201)
   assert.equal(submission.body.data.status, 'pending')
@@ -104,10 +106,10 @@ test('visitor writes require login, then favorites and submissions are private',
   assert.equal(mine.body.data.items[0].share_url, undefined)
 })
 
-test('one user can submit only one active review per offering', async () => {
+test('one user can submit only one active review per course and teacher', async () => {
   const token = await login('student-reviewer')
   const headers = { authorization: `Bearer ${token}` }
-  const payload = { offering_id: 'offering_ds_chen_2025_fall', rating: 5, tags: ['讲解清楚'], body: '课程结构清楚，作业能帮助理解算法复杂度，建议提前复习递归和指针基础。' }
+  const payload = { course_id: 'course_data_structures', teacher: '陈老师', rating: 5, tags: ['讲解清楚'], body: '课程结构清楚，作业能帮助理解算法复杂度，建议提前复习递归和指针基础。' }
   const first = await request('/api/v1/reviews', { method: 'POST', headers, body: JSON.stringify(payload) })
   assert.equal(first.response.status, 201)
   assert.equal(first.body.data.status, 'pending')

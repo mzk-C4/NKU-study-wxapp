@@ -58,13 +58,18 @@ for (const file of walk(miniRoot)) {
 if (!fs.existsSync(path.join(miniRoot, 'lib/fuse.js'))) fail('缺少本地 Fuse.js 搜索库')
 
 const miniConfig = require(path.join(miniRoot, 'config.js'))
+const developApiBaseUrl = miniConfig.resolveApiBaseUrl('develop')
 const trialApiBaseUrl = miniConfig.resolveApiBaseUrl('trial')
 const releaseApiBaseUrl = miniConfig.resolveApiBaseUrl('release')
-if (!trialApiBaseUrl.startsWith('https://')) fail('体验版 API 必须使用 HTTPS')
-if (!releaseApiBaseUrl.startsWith('https://')) fail('正式版 API 必须使用 HTTPS')
-if (/127\.0\.0\.1|localhost|\d+\.\d+\.\d+\.\d+/.test(`${trialApiBaseUrl}${releaseApiBaseUrl}`)) {
-  fail('体验版和正式版 API 不得使用 localhost 或服务器 IP')
+const apiBaseUrls = [developApiBaseUrl, trialApiBaseUrl, releaseApiBaseUrl]
+if (apiBaseUrls.some(url => !url.startsWith('https://'))) fail('开发版、体验版和正式版 API 必须使用 HTTPS')
+if (new Set(apiBaseUrls).size !== 1) fail('开发版、体验版和正式版必须使用同一个生产 API')
+if (/127\.0\.0\.1|localhost|\d+\.\d+\.\d+\.\d+/.test(apiBaseUrls.join(''))) {
+  fail('所有小程序环境均不得使用 localhost 或服务器 IP')
 }
+
+const projectConfig = JSON.parse(fs.readFileSync(path.join(root, 'project.config.json'), 'utf8'))
+if (projectConfig.setting?.urlCheck !== true) fail('微信开发者工具必须开启合法域名校验')
 
 const trackedText = walk(root).filter(file => !file.includes(`${path.sep}.git${path.sep}`) && !/\.(png|jpg|jpeg|gif|ico)$/i.test(file) && !file.endsWith('runtime.json'))
 const secretPatterns = [

@@ -3,94 +3,114 @@ function round(value) {
 }
 
 function average(items, key) {
-  const values = items
-    .map(item => item[key])
-    .filter(value => value !== null && value !== undefined && value !== '')
-    .map(Number)
-    .filter(Number.isFinite)
+  const values = items.map(item => item[key]).filter(value => value !== null && value !== undefined && value !== '').map(Number).filter(Number.isFinite)
   if (!values.length) return null
   return round(values.reduce((sum, value) => sum + value, 0) / values.length)
 }
 
 function termLabel(offering) {
-  if (!offering) return '学期未知'
-  const labels = { fall: '秋', spring: '春', summer: '夏' }
-  return `${offering.academic_year} ${labels[offering.semester] || offering.semester}`
+  if (!offering) return '学期待补充'
+  return offering.term || offering.source_term || offering.semester || '学期待补充'
 }
 
 function offeringView(data, offering) {
   const teacher = data.teachers.find(item => item.id === offering.teacher_id)
   const reviewCount = data.reviews.filter(item => item.offering_id === offering.id && item.status === 'published').length
   const teacherName = teacher ? teacher.name : '教师待补充'
+  const { academic_year, semester, campus, ...publicOffering } = offering
   return {
-    ...offering,
+    ...publicOffering,
     teacher_name: teacherName,
     teacher_name_short: teacherName.slice(0, 1),
-    semester_label: { fall: '秋', spring: '春', summer: '夏' }[offering.semester] || offering.semester,
-    display_name: `${teacherName} · ${termLabel(offering)}`,
+    display_name: teacherName,
     review_count: reviewCount
   }
 }
 
+function legacyCourseId(data, review) {
+  const offering = review.offering_id && data.offerings.find(item => item.id === review.offering_id)
+  return offering?.course_id || null
+}
+
 function courseReviews(data, courseId) {
-  const offeringIds = new Set(data.offerings.filter(item => item.course_id === courseId).map(item => item.id))
-  return data.reviews.filter(item => offeringIds.has(item.offering_id) && item.status === 'published')
+  return data.reviews.filter(review => {
+    if (review.status !== 'published') return false
+    return review.course_id === courseId || legacyCourseId(data, review) === courseId
+  })
+}
+
+function teacherGroups(data, course) {
+  const groups = new Map()
+  for (const review of courseReviews(data, course.id)) {
+    const legacyOffering = review.offering_id && data.offerings.find(item => item.id === review.offering_id)
+    const legacyTeacher = legacyOffering && data.teachers.find(item => item.id === legacyOffering.teacher_id)
+    const teacherName = review.teacher || legacyTeacher?.name || '教师待补充'
+    const key = teacherName
+    if (!groups.has(key)) {
+      groups.set(key, {
+        id: review.review_group_id || legacyOffering?.id || `teacher:${teacherName}`,
+        course_id: course.id,
+        teacher_name: teacherName,
+        teacher_name_short: teacherName.slice(0, 1),
+        display_name: teacherName,
+        review_count: 0
+      })
+    }
+    groups.get(key).review_count += 1
+  }
+  return Array.from(groups.values()).sort((a, b) => b.review_count - a.review_count || a.teacher_name.localeCompare(b.teacher_name, 'zh-CN'))
 }
 
 function ratingsView(reviews) {
   const showAggregate = reviews.length >= 3
   const normalized = reviews.map(review => ({ rating: review.rating ?? review.recommend }))
   const rating = showAggregate ? average(normalized, 'rating') : null
-  return {
-    show_aggregate: showAggregate,
-    average: rating,
-    rating,
-    recommend: rating
-  }
+  return { show_aggregate: showAggregate, average: rating, rating, recommend: rating }
 }
 
 function courseView(data, course, includeDetails = false) {
   const resources = data.resources.filter(item => item.course_id === course.id && item.status === 'published')
   const reviews = courseReviews(data, course.id)
-  const offerings = data.offerings.filter(item => item.course_id === course.id).map(item => offeringView(data, item))
+  const groups = teacherGroups(data, course)
   const base = {
     ...course,
     resource_count: resources.length,
     review_count: reviews.length,
-    offering_count: offerings.length,
+    offering_count: groups.length,
     ratings: ratingsView(reviews)
   }
-  return includeDetails ? { ...base, offerings } : base
+  return includeDetails ? { ...base, teacher_groups: groups, offerings: groups } : base
 }
 
 function resourceView(data, resource, includeSensitive = false) {
   const course = data.courses.find(item => item.id === resource.course_id)
-  const offering = resource.offering_id ? data.offerings.find(item => item.id === resource.offering_id) : null
+  const { academic_year, semester, campus, offering_id, ...publicResource } = resource
   const base = {
-    ...resource,
+    ...publicResource,
     course_name: course ? course.name : '课程待补充',
-    term_label: resource.academic_year ? `${resource.academic_year} ${{ fall: '秋', spring: '春', summer: '夏' }[resource.semester] || ''}`.trim() : termLabel(offering),
+    term_label: resource.source_term || course?.term || course?.recommended_stage || '',
     size_label: resource.size_label || '大小未知',
     contributor: resource.contributor || '匿名同学'
   }
   if (!includeSensitive) {
-    const { share_url, extraction_code, ...publicBase } = base
-    return publicBase
+    const { share_url, extraction_code, ...listView } = base
+    return listView
   }
   return base
 }
 
 function reviewView(data, review) {
-  const offering = data.offerings.find(item => item.id === review.offering_id)
-  const teacher = offering ? data.teachers.find(item => item.id === offering.teacher_id) : null
-  const course = offering ? data.courses.find(item => item.id === offering.course_id) : null
+  const offering = review.offering_id && data.offerings.find(item => item.id === review.offering_id)
+  const legacyTeacher = offering && data.teachers.find(item => item.id === offering.teacher_id)
+  const courseId = review.course_id || offering?.course_id || null
+  const course = courseId && data.courses.find(item => item.id === courseId)
   return {
     id: review.id,
-    offering_id: review.offering_id,
-    course_id: course ? course.id : null,
-    course_name: course ? course.name : '课程待补充',
-    teacher_name: teacher ? teacher.name : '教师待补充',
-    term_label: termLabel(offering),
+    course_id: courseId,
+    course_name: review.course_title || course?.name || '课程待补充',
+    teacher_name: review.teacher || legacyTeacher?.name || '教师待补充',
+    teacher_group_id: review.review_group_id || offering?.id || null,
+    term_label: course?.term || course?.recommended_stage || '',
     rating: review.rating ?? review.recommend,
     tags: review.tags || [],
     body: review.body,
@@ -117,15 +137,18 @@ function guideView(data, guide, includeDetails = false) {
 function buildSearchIndex(data) {
   const items = []
   data.courses.filter(course => course.status === 'published').forEach(course => {
-    const offerings = data.offerings.filter(item => item.course_id === course.id)
-    const teachers = offerings.map(offering => data.teachers.find(teacher => teacher.id === offering.teacher_id)).filter(Boolean).map(teacher => teacher.name)
+    const teachers = teacherGroups(data, course).map(group => group.teacher_name)
     items.push({ id: course.id, type: 'course', type_label: '课', badge: course.category_name || course.scope || course.requirement_type || course.category_code, name: course.name, aliases: course.aliases || [], tags: course.tags || [], teachers, search_text: [course.name, ...(course.aliases || []), ...(course.tags || []), ...teachers].join(' '), subtitle: [course.term || course.recommended_stage, course.department].filter(Boolean).join(' · ') })
   })
-  data.teachers.forEach(teacher => {
-    const offering = data.offerings.find(item => item.teacher_id === teacher.id)
-    const course = offering && data.courses.find(item => item.id === offering.course_id)
-    items.push({ id: teacher.id, course_id: course && course.id, type: 'teacher', type_label: '师', badge: '师', name: teacher.name, aliases: [], tags: teacher.tags || [], teachers: [teacher.name], search_text: `${teacher.name} ${(teacher.tags || []).join(' ')}`, subtitle: course ? `教授课程：${course.name}` : teacher.department })
-  })
+  const seenTeachers = new Set()
+  for (const course of data.courses) {
+    for (const group of teacherGroups(data, course)) {
+      const key = `${course.id}\u0000${group.teacher_name}`
+      if (seenTeachers.has(key)) continue
+      seenTeachers.add(key)
+      items.push({ id: group.id, course_id: course.id, type: 'teacher', type_label: '师', badge: '师', name: group.teacher_name, aliases: [], tags: [], teachers: [group.teacher_name], search_text: `${group.teacher_name} ${course.name}`, subtitle: `评价课程：${course.name}` })
+    }
+  }
   data.resources.filter(item => item.status === 'published').forEach(resource => {
     const course = data.courses.find(item => item.id === resource.course_id)
     items.push({ id: resource.id, course_id: resource.course_id, type: 'resource', type_label: '资', badge: '资', name: resource.title, aliases: [], tags: [resource.type, ...(course ? course.tags : [])], teachers: [], search_text: `${resource.title} ${resource.type} ${course ? course.name : ''}`, subtitle: `${course ? course.name : '课程待补充'} · ${resource.type}` })
@@ -134,4 +157,4 @@ function buildSearchIndex(data) {
   return items
 }
 
-module.exports = { courseView, offeringView, resourceView, reviewView, guideView, buildSearchIndex, termLabel }
+module.exports = { courseView, courseReviews, teacherGroups, offeringView, resourceView, reviewView, guideView, buildSearchIndex, termLabel }

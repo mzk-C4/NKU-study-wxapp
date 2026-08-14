@@ -4,6 +4,7 @@
   "compileType": "miniprogram",
   "miniprogramRoot": "miniprogram/",
   "setting": {
+    "urlCheck": true,
     "es6": true,
     "postcss": true,
     "minified": true,

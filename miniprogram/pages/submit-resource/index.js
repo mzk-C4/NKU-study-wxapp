@@ -5,10 +5,9 @@ Page({
     loading: true, submitting: false, courses: [], courseIndex: -1,
     typeOptions: ['试卷', '笔记', '课件', '作业', '教材'], typeIndex: -1,
     providerOptions: ['夸克网盘', '百度网盘', '阿里云盘', '其他'], providerIndex: -1,
-    form: { title: '', share_url: '', extraction_code: '', description: '', academic_year: '', semester: '' }
+    form: { title: '', share_url: '', extraction_code: '', description: '' }
   },
   presetCourseId: '',
-
   onLoad(options) { this.presetCourseId = options.course_id || ''; this.prepare() },
   async prepare() {
     try {

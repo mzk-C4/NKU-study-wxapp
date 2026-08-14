@@ -69,22 +69,17 @@ function adaptWebsiteData({ manifest, reviews = [], catalogMetadata = {}, guides
   } catch {
     issues.push({ severity: 'error', code: 'RESOURCE_ROOT_NOT_ALLOWED', message: '资源根地址无效。' })
   }
+
   const sourceCourses = Array.isArray(manifest?.courses) ? manifest.courses : []
-  const publicReviews = (Array.isArray(reviews) ? reviews : []).filter(review => !review?.hidden && ['approved', '通过'].includes(clean(review?.status)))
+  const sourceReviews = (Array.isArray(reviews) ? reviews : []).filter(review => !review?.hidden && ['approved', '通过'].includes(clean(review?.status)))
   const courseByTitle = new Map()
   const courseIds = new Set()
   const courses = []
-  const teachers = []
-  const offerings = []
   const resources = []
-  const mappedReviews = []
-  const teacherIds = new Map()
-  const offeringIds = new Map()
 
   for (const source of sourceCourses) {
     const sourceId = clean(source.id || source.title)
     const metadata = catalogMetadata[sourceId] || {}
-    const categoryCode = clean(metadata.category_code).toUpperCase()
     const id = stableId('course', sourceId)
     if (courseIds.has(id)) {
       issues.push({ severity: 'error', code: 'DUPLICATE_COURSE_ID', source_id: sourceId, message: '课程源 ID 重复。' })
@@ -92,7 +87,7 @@ function adaptWebsiteData({ manifest, reviews = [], catalogMetadata = {}, guides
     }
     courseIds.add(id)
     const title = clean(source.title || sourceId)
-    courseByTitle.set(title, { id, source, metadata })
+    courseByTitle.set(title, id)
     courses.push({
       id,
       source_id: sourceId,
@@ -100,12 +95,11 @@ function adaptWebsiteData({ manifest, reviews = [], catalogMetadata = {}, guides
       name: title,
       aliases: unique(metadata.aliases || []),
       category_name: clean(source.group),
-      category_code: /^[A-E]$/.test(categoryCode) ? categoryCode : null,
+      category_code: /^[A-E]$/.test(clean(metadata.category_code).toUpperCase()) ? clean(metadata.category_code).toUpperCase() : null,
       term: clean(source.term),
       tags: unique(source.tags || []),
       extra_tags: unique(metadata.extra_tags || []),
       department: clean(metadata.department),
-      requirement_type: clean(metadata.requirement_type),
       scope: clean(source.group),
       recommended_stage: clean(source.term),
       description: clean(source.summary),
@@ -122,69 +116,70 @@ function adaptWebsiteData({ manifest, reviews = [], catalogMetadata = {}, guides
         resources.push({
           id: stableId('resource', sourceId, section.title, file.path || file.title),
           course_id: id,
-          offering_id: null,
           type: resourceType(section.title, extension),
           source_section: clean(section.title),
+          source_term: clean(source.term),
           title: clean(file.title || file.path),
           description: clean(file.description || section.note),
-          academic_year: '', semester: '', source_term: clean(source.term),
           storage_provider: 'NKUStudy object storage',
           share_url: joinPublicUrl(manifest?.resourceRoot, source.basePath, file.path),
-          extraction_code: '', extension, size_label: formatBytes(file.size),
+          extraction_code: '',
+          extension,
+          size_label: formatBytes(file.size),
           contributor: unique(source.contributors || []).join('、'),
-          status: 'published', created_at: null,
+          status: 'published',
+          created_at: null,
           updated_at: clean(source.updated) || clean(manifest?.updated) || null
         })
       }
     }
   }
 
-  for (const sourceReview of publicReviews) {
-    const course = courseByTitle.get(clean(sourceReview.courseTitle))
-    if (!course) {
-      issues.push({ severity: 'warning', code: 'REVIEW_COURSE_UNMATCHED', review_id: clean(sourceReview.id), course_title: clean(sourceReview.courseTitle), message: '评价课程名未匹配网站课程。' })
-      continue
-    }
-    const teacherName = clean(sourceReview.teacher) || '教师待补充'
-    let teacherId = teacherIds.get(teacherName)
-    if (!teacherId) {
-      teacherId = stableId('teacher', teacherName)
-      teacherIds.set(teacherName, teacherId)
-      teachers.push({ id: teacherId, name: teacherName, department: '', tags: [], status: 'active' })
-    }
-    const offeringKey = `${course.id}\u0000${teacherId}\u0000${clean(course.source.term)}`
-    let offeringId = offeringIds.get(offeringKey)
-    if (!offeringId) {
-      offeringId = stableId('offering', offeringKey)
-      offeringIds.set(offeringKey, offeringId)
-      offerings.push({ id: offeringId, course_id: course.id, teacher_id: teacherId, academic_year: '', semester: clean(course.source.term), campus: '', status: 'published' })
-    }
+  const mappedReviews = sourceReviews.map(sourceReview => {
+    const courseTitle = clean(sourceReview.courseTitle)
+    const teacher = clean(sourceReview.teacher)
     const rating = Number(sourceReview.rating)
-    mappedReviews.push({
-      id: clean(sourceReview.id) || stableId('review', offeringId, sourceReview.createdAt, sourceReview.content),
-      user_id: null, offering_id: offeringId,
+    return {
+      id: clean(sourceReview.id) || stableId('review', courseTitle, teacher, sourceReview.createdAt, sourceReview.content),
+      user_id: null,
+      course_id: courseByTitle.get(courseTitle) || null,
+      course_title: courseTitle,
+      teacher,
+      review_group_id: stableId('review_group', courseTitle, teacher),
       rating: Number.isFinite(rating) ? Math.max(1, Math.min(5, rating)) : null,
-      tags: [], body: clean(sourceReview.content), anonymous: true,
-      status: 'published', helpful_count: 0,
+      tags: [],
+      body: clean(sourceReview.content),
+      anonymous: true,
+      status: 'published',
+      helpful_count: 0,
       created_at: clean(sourceReview.createdAt) || null,
       updated_at: clean(sourceReview.updatedAt || sourceReview.createdAt) || null
-    })
-  }
+    }
+  })
 
   const blockingIssues = issues.filter(issue => issue.severity === 'error')
   if (strict && blockingIssues.length) throw new AdapterValidationError(blockingIssues)
   return {
-    data: { courses, teachers, offerings, resources, reviews: mappedReviews, guides: Array.isArray(guides) ? guides : [] },
+    data: {
+      courses,
+      teachers: [],
+      offerings: [],
+      resources,
+      reviews: mappedReviews,
+      guides: Array.isArray(guides) ? guides : []
+    },
     report: {
       source_updated_at: clean(manifest?.updated) || null,
-      counts: { courses: courses.length, teachers: teachers.length, offerings: offerings.length, resources: resources.length, reviews: mappedReviews.length, guides: Array.isArray(guides) ? guides.length : 0 },
+      counts: { courses: courses.length, resources: resources.length, reviews: mappedReviews.length, guides: Array.isArray(guides) ? guides.length : 0 },
+      unmatched_review_count: mappedReviews.filter(review => !review.course_id).length,
       issues,
       contract_notes: [
-        { code: 'SERVER_CATEGORY_REUSED', message: 'category_name、scope 直接使用网站 group；category_code 仅作可选旧客户端兼容。' },
-        { code: 'SERVER_TAGS_REUSED', message: 'tags 直接使用网站 tags；人工补充标签单列为 extra_tags。' },
+        { code: 'SERVER_CATEGORY_REUSED', message: '课程分组、学期和标签直接使用网站字段。' },
+        { code: 'WEBSITE_REVIEW_GROUPS_REUSED', message: '教师沿用网站做法，作为评价中的文本，并按课程名 + 教师名分组。' },
+        { code: 'UNMATCHED_REVIEWS_ARE_VALID', message: '课程清单外的公开评价正常保留，不视为映射错误。' },
         { code: 'SINGLE_RATING_REUSED', message: 'rating 直接使用网站单一评分，不生成四维评分。' },
-        { code: 'TEACHERS_INFERRED_FROM_REVIEWS', message: '网站没有教师主数据；Teacher 与 CourseOffering 只能从已公开评价推导。' },
-        { code: 'GUIDE_SOURCE_MISSING', message: '网站当前没有 Guide 数据源，不能从课程内容中臆造。' }
+        { code: 'ACADEMIC_YEAR_AND_CAMPUS_OMITTED', message: 'API 不提供学年和校区字段。' },
+        { code: 'GUIDE_SOURCE_MISSING', message: '网站当前没有独立 Guide 数据源，本地指南仅可作为静态占位内容。' }
       ]
     }
   }

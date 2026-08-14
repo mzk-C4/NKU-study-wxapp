@@ -4,7 +4,7 @@ const crypto = require('node:crypto')
 const { URL } = require('node:url')
 const { JsonStore } = require('./store')
 const { signToken, verifyToken, exchangeWechatCode } = require('./auth')
-const { courseView, offeringView, resourceView, reviewView, guideView, buildSearchIndex } = require('./model')
+const { courseView, courseReviews, teacherGroups, resourceView, reviewView, guideView, buildSearchIndex } = require('./model')
 
 class HttpError extends Error {
   constructor(status, message, code = status * 100) { super(message); this.status = status; this.code = code }
@@ -140,12 +140,13 @@ function createApp(options) {
       const courseReviewId = routeParam(pathname, /^\/api\/v1\/courses\/([^/]+)\/reviews$/)
       if (courseReviewId && req.method === 'GET') {
         const data = store.read()
-        const offerings = data.offerings.filter(item => item.course_id === courseReviewId).map(item => offeringView(data, item))
-        const offeringIds = new Set(offerings.map(item => item.id))
-        let reviews = data.reviews.filter(item => offeringIds.has(item.offering_id) && item.status === 'published').map(item => reviewView(data, item))
-        const offeringId = url.searchParams.get('offering_id'); if (offeringId) reviews = reviews.filter(item => item.offering_id === offeringId)
+        const course = data.courses.find(item => item.id === courseReviewId && item.status === 'published')
+        if (!course) throw new HttpError(404, '课程不存在')
+        const groups = teacherGroups(data, course)
+        let reviews = courseReviews(data, courseReviewId).map(item => reviewView(data, item))
+        const teacher = url.searchParams.get('teacher'); if (teacher) reviews = reviews.filter(item => item.teacher_name === teacher)
         reviews.sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))
-        return send(res, 200, { items: reviews, total: reviews.length, offerings })
+        return send(res, 200, { items: reviews, total: reviews.length, teacher_groups: groups, offerings: groups })
       }
 
       const courseId = routeParam(pathname, /^\/api\/v1\/courses\/([^/]+)$/)
@@ -228,7 +229,7 @@ function createApp(options) {
           const user = requireUser(req, data); const courseId = text(body.course_id, '课程编号', 1, 100)
           if (!data.courses.some(item => item.id === courseId && item.status === 'published')) throw new HttpError(404, '课程不存在')
           const shareUrl = text(body.share_url, '分享链接', 8, 1000); try { const parsed = new URL(shareUrl); if (!['http:', 'https:'].includes(parsed.protocol)) throw new Error() } catch { throw new HttpError(400, '分享链接必须是有效的 HTTP 或 HTTPS 地址') }
-          const submission = { id: makeId('submission'), user_id: user.id, course_id: courseId, title: text(body.title, '资料标题', 2, 120), type: text(body.type, '资料类型', 1, 30), storage_provider: text(body.storage_provider, '网盘平台', 1, 30), share_url: shareUrl, extraction_code: text(body.extraction_code, '提取码', 0, 20), description: text(body.description, '补充说明', 0, 500), academic_year: text(body.academic_year, '学年', 0, 20), semester: text(body.semester, '学期', 0, 20), status: 'pending', created_at: now(), updated_at: now() }
+          const submission = { id: makeId('submission'), user_id: user.id, course_id: courseId, title: text(body.title, '资料标题', 2, 120), type: text(body.type, '资料类型', 1, 30), storage_provider: text(body.storage_provider, '网盘平台', 1, 30), share_url: shareUrl, extraction_code: text(body.extraction_code, '提取码', 0, 20), description: text(body.description, '补充说明', 0, 500), status: 'pending', created_at: now(), updated_at: now() }
           data.submissions.push(submission); return { id: submission.id, status: submission.status }
         })
         return send(res, 201, result)
@@ -237,10 +238,16 @@ function createApp(options) {
       if (pathname === '/api/v1/reviews' && req.method === 'POST') {
         const body = await readBody(req)
         const result = await store.mutate(data => {
-          const user = requireUser(req, data); const offeringId = text(body.offering_id, '开课实例', 1, 100)
-          if (!data.offerings.some(item => item.id === offeringId)) throw new HttpError(404, '开课实例不存在')
-          if (data.reviews.some(item => item.user_id === user.id && item.offering_id === offeringId && ['pending', 'published'].includes(item.status))) throw new HttpError(409, '你已经评价过该开课实例')
-          const review = { id: makeId('review'), user_id: user.id, offering_id: offeringId, rating: score(body.rating ?? body.recommend, '评价分数'), tags: Array.isArray(body.tags) ? body.tags.slice(0, 8).map(item => text(item, '标签', 1, 20)) : [], body: text(body.body, '评价内容', 20, 800), anonymous: true, status: 'pending', helpful_count: 0, created_at: now(), updated_at: now() }
+          const user = requireUser(req, data)
+          const legacyOffering = body.offering_id ? data.offerings.find(item => item.id === body.offering_id) : null
+          const courseId = text(body.course_id || legacyOffering?.course_id, '课程编号', 1, 100)
+          const course = data.courses.find(item => item.id === courseId && item.status === 'published')
+          if (!course) throw new HttpError(404, '课程不存在')
+          const legacyTeacher = legacyOffering && data.teachers.find(item => item.id === legacyOffering.teacher_id)
+          const teacher = text(body.teacher || legacyTeacher?.name, '任课教师', 1, 100)
+          if (data.reviews.some(item => item.user_id === user.id && (item.course_id || data.offerings.find(entry => entry.id === item.offering_id)?.course_id) === courseId && (item.teacher || data.teachers.find(entry => entry.id === data.offerings.find(offering => offering.id === item.offering_id)?.teacher_id)?.name) === teacher && ['pending', 'published'].includes(item.status))) throw new HttpError(409, '你已经评价过该课程与教师')
+          const reviewGroupId = `review_group_${crypto.createHash('sha256').update(`${course.name}\u0000${teacher}`, 'utf8').digest('hex').slice(0, 16)}`
+          const review = { id: makeId('review'), user_id: user.id, course_id: courseId, course_title: course.name, teacher, review_group_id: reviewGroupId, rating: score(body.rating ?? body.recommend, '评价分数'), tags: Array.isArray(body.tags) ? body.tags.slice(0, 8).map(item => text(item, '标签', 1, 20)) : [], body: text(body.body, '评价内容', 20, 800), anonymous: true, status: 'pending', helpful_count: 0, created_at: now(), updated_at: now() }
           data.reviews.push(review); return { id: review.id, status: review.status }
         })
         return send(res, 201, result)
@@ -267,7 +274,7 @@ function createApp(options) {
         if (adminCourseId && req.method === 'PATCH') { const body = await readBody(req); const result = await store.mutate(data => { const course = data.courses.find(item => item.id === adminCourseId); if (!course) throw new HttpError(404, '课程不存在'); const allowed = ['name', 'aliases', 'category_code', 'tags', 'department', 'requirement_type', 'scope', 'recommended_stage', 'description', 'status']; allowed.forEach(key => { if (body[key] !== undefined) course[key] = body[key] }); if (!['draft', 'published', 'archived'].includes(course.status)) throw new HttpError(400, '课程状态无效'); if (!/^[A-E]$/.test(course.category_code)) throw new HttpError(400, 'A-E 分类无效'); course.updated_at = now(); return course }); return send(res, 200, result) }
         if (pathname === '/api/v1/admin/submissions' && req.method === 'GET') { const data = store.read(); return send(res, 200, { items: data.submissions.map(item => ({ ...item, course_name: data.courses.find(course => course.id === item.course_id)?.name || '课程待补充' })), total: data.submissions.length }) }
         const adminSubmissionId = routeParam(pathname, /^\/api\/v1\/admin\/submissions\/([^/]+)$/)
-        if (adminSubmissionId && req.method === 'PATCH') { const body = await readBody(req); const result = await store.mutate(data => { const item = data.submissions.find(entry => entry.id === adminSubmissionId); if (!item) throw new HttpError(404, '投稿不存在'); if (!['approved', 'needs_changes', 'rejected'].includes(body.status)) throw new HttpError(400, '审核状态无效'); item.status = body.status; item.review_note = text(body.review_note, '审核说明', 0, 300); item.updated_at = now(); if (item.status === 'approved' && !item.resource_id) { const resource = { id: makeId('resource'), course_id: item.course_id, offering_id: null, type: item.type, title: item.title, description: item.description, academic_year: item.academic_year, semester: item.semester, storage_provider: item.storage_provider, share_url: item.share_url, extraction_code: item.extraction_code, extension: 'LINK', size_label: '网盘资料', contributor: '匿名同学', status: 'published', created_at: now(), updated_at: now() }; data.resources.push(resource); item.resource_id = resource.id } return item }); return send(res, 200, result) }
+        if (adminSubmissionId && req.method === 'PATCH') { const body = await readBody(req); const result = await store.mutate(data => { const item = data.submissions.find(entry => entry.id === adminSubmissionId); if (!item) throw new HttpError(404, '投稿不存在'); if (!['approved', 'needs_changes', 'rejected'].includes(body.status)) throw new HttpError(400, '审核状态无效'); item.status = body.status; item.review_note = text(body.review_note, '审核说明', 0, 300); item.updated_at = now(); if (item.status === 'approved' && !item.resource_id) { const resource = { id: makeId('resource'), course_id: item.course_id, type: item.type, title: item.title, description: item.description, storage_provider: item.storage_provider, share_url: item.share_url, extraction_code: item.extraction_code, extension: 'LINK', size_label: '网盘资料', contributor: '匿名同学', status: 'published', created_at: now(), updated_at: now() }; data.resources.push(resource); item.resource_id = resource.id } return item }); return send(res, 200, result) }
         if (pathname === '/api/v1/admin/reviews' && req.method === 'GET') { const data = store.read(); return send(res, 200, { items: data.reviews.map(item => reviewView(data, item)), total: data.reviews.length }) }
         const adminReviewId = routeParam(pathname, /^\/api\/v1\/admin\/reviews\/([^/]+)$/)
         if (adminReviewId && req.method === 'PATCH') { const body = await readBody(req); const result = await store.mutate(data => { const item = data.reviews.find(entry => entry.id === adminReviewId); if (!item) throw new HttpError(404, '评价不存在'); if (!['published', 'rejected', 'hidden'].includes(body.status)) throw new HttpError(400, '审核状态无效'); item.status = body.status; item.review_note = text(body.review_note, '审核说明', 0, 300); item.updated_at = now(); return reviewView(data, item) }); return send(res, 200, result) }
