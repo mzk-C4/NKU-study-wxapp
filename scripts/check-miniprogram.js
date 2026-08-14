@@ -15,6 +15,20 @@ function walk(directory) {
   })
 }
 
+function checkComponentReferences(file) {
+  const config = JSON.parse(fs.readFileSync(file, 'utf8'))
+  for (const [name, reference] of Object.entries(config.usingComponents || {})) {
+    if (reference.startsWith('/')) {
+      fail(`组件 ${name} 使用了当前开发者工具无法解析的绝对路径：${path.relative(root, file)} -> ${reference}`)
+      continue
+    }
+    const componentConfig = path.resolve(path.dirname(file), `${reference}.json`)
+    if (!fs.existsSync(componentConfig)) {
+      fail(`组件配置缺失：${path.relative(root, file)} -> ${path.relative(root, componentConfig)}`)
+    }
+  }
+}
+
 for (const page of app.pages) {
   for (const extension of ['json', 'js', 'wxml', 'wxss']) {
     const file = path.join(miniRoot, `${page}.${extension}`)
@@ -27,6 +41,7 @@ for (const page of tabPages) if (!app.pages.includes(page)) fail(`TabBar 页面�
 
 for (const file of walk(miniRoot)) {
   const relative = path.relative(root, file)
+  if (file.endsWith('.json')) checkComponentReferences(file)
   if (file.endsWith('.js')) {
     const result = childProcess.spawnSync(process.execPath, ['--check', file], { encoding: 'utf8' })
     if (result.status !== 0) fail(`JavaScript 语法错误：${relative}\n${result.stderr}`)
