@@ -56,6 +56,7 @@ test('public course, resource, review and guide reads use the shared model', asy
   assert.equal(course.body.data.id, 'course_probability')
   assert.equal(course.body.data.offerings.length, 2)
   assert.equal(course.body.data.ratings.show_aggregate, true)
+  assert.equal(course.body.data.ratings.average, 4.3)
 
   const resources = await request('/api/v1/courses/course_probability/resources')
   assert.equal(resources.body.data.total, 2)
@@ -67,6 +68,10 @@ test('public course, resource, review and guide reads use the shared model', asy
   const organic = await request('/api/v1/courses/course_organic_chemistry')
   assert.equal(organic.body.data.review_count, 2)
   assert.equal(organic.body.data.ratings.show_aggregate, false)
+
+  const courseList = await request('/api/v1/courses?category=%E4%B8%93%E4%B8%9A%E5%9F%BA%E7%A1%80')
+  assert.ok(courseList.body.data.facets.categories.includes('专业基础'))
+  assert.ok(courseList.body.data.items.every(item => item.scope === '专业基础'))
 
   const guide = await request('/api/v1/guides/guide_course_selection')
   assert.equal(guide.body.data.steps[0].title, '第 1 步')
@@ -102,10 +107,13 @@ test('visitor writes require login, then favorites and submissions are private',
 test('one user can submit only one active review per offering', async () => {
   const token = await login('student-reviewer')
   const headers = { authorization: `Bearer ${token}` }
-  const payload = { offering_id: 'offering_ds_chen_2025_fall', difficulty: 3, workload: 4, gain: 5, recommend: 5, tags: ['讲解清楚'], body: '课程结构清楚，作业能帮助理解算法复杂度，建议提前复习递归和指针基础。' }
+  const payload = { offering_id: 'offering_ds_chen_2025_fall', rating: 5, tags: ['讲解清楚'], body: '课程结构清楚，作业能帮助理解算法复杂度，建议提前复习递归和指针基础。' }
   const first = await request('/api/v1/reviews', { method: 'POST', headers, body: JSON.stringify(payload) })
   assert.equal(first.response.status, 201)
   assert.equal(first.body.data.status, 'pending')
+  const mine = await request('/api/v1/me/reviews', { headers })
+  assert.equal(mine.body.data.items[0].rating, 5)
+  assert.equal('difficulty' in mine.body.data.items[0], false)
   const duplicate = await request('/api/v1/reviews', { method: 'POST', headers, body: JSON.stringify(payload) })
   assert.equal(duplicate.response.status, 409)
 })

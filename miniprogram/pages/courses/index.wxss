@@ -1,5 +1,6 @@
-.category-bar { display: grid; grid-template-columns: repeat(6, 1fr); padding: 8rpx; border: 1rpx solid #E8E2EC; border-radius: 24rpx; background: #FFFFFF; }
-.category { height: 64rpx; display: flex; align-items: center; justify-content: center; border-radius: 18rpx; color: #6F6872; font-size: 24rpx; }
+.category-scroll { white-space: nowrap; }
+.category-bar { display: inline-flex; gap: 8rpx; min-width: 100%; padding: 8rpx; border: 1rpx solid #E8E2EC; border-radius: 24rpx; background: #FFFFFF; box-sizing: border-box; }
+.category { height: 64rpx; padding: 0 24rpx; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; border-radius: 18rpx; color: #6F6872; font-size: 24rpx; }
 .category--active { color: #FFFFFF; background: #4B1F6F; font-weight: 700; }
 .filters { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14rpx; margin-top: 20rpx; }
 .filter { height: 68rpx; display: flex; align-items: center; justify-content: center; border: 1rpx solid #E8E2EC; border-radius: 20rpx; background: #FFFFFF; color: #5F5962; font-size: 22rpx; }

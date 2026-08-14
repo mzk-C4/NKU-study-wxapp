@@ -5,7 +5,8 @@
   "type": "commonjs",
   "scripts": {
     "start": "node src/server.js",
-    "test": "node --test test/*.test.js"
+    "test": "node --test test/*.test.js",
+    "check:website-data": "node scripts/check-website-data.js"
   },
   "engines": { "node": ">=18" }
 }

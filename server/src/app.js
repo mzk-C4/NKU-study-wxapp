@@ -106,18 +106,25 @@ function createApp(options) {
       if (pathname === '/api/v1/courses' && req.method === 'GET') {
         const data = store.read()
         let courses = data.courses.filter(item => item.status === 'published').map(item => courseView(data, item))
+        const facets = {
+          categories: [...new Set(courses.map(item => item.category_name || item.scope || item.requirement_type || item.category_code).filter(Boolean))],
+          terms: [...new Set(courses.map(item => item.term || item.recommended_stage).filter(Boolean))],
+          tags: [...new Set(courses.flatMap(item => item.tags || []))]
+        }
         const query = String(url.searchParams.get('query') || '').trim().toLowerCase()
         const category = url.searchParams.get('category')
-        const requirementType = url.searchParams.get('requirement_type')
+        const term = url.searchParams.get('term')
+        const tag = url.searchParams.get('tag')
         if (query) courses = courses.filter(item => [item.name, ...(item.aliases || []), ...(item.tags || [])].join(' ').toLowerCase().includes(query))
-        if (category) courses = courses.filter(item => item.category_code === category)
-        if (requirementType) courses = courses.filter(item => item.requirement_type === requirementType)
+        if (category) courses = courses.filter(item => [item.category_name, item.scope, item.requirement_type, item.category_code].includes(category))
+        if (term) courses = courses.filter(item => (item.term || item.recommended_stage) === term)
+        if (tag) courses = courses.filter(item => (item.tags || []).includes(tag))
         const sort = url.searchParams.get('sort')
         if (sort === 'resources') courses.sort((a, b) => b.resource_count - a.resource_count)
         else if (sort === 'reviews') courses.sort((a, b) => b.review_count - a.review_count)
         else if (sort === 'updated') courses.sort((a, b) => String(b.updated_at).localeCompare(String(a.updated_at)))
         else courses.sort((a, b) => (b.resource_count + b.review_count) - (a.resource_count + a.review_count))
-        return send(res, 200, paginate(courses, url))
+        return send(res, 200, { ...paginate(courses, url), facets })
       }
 
       const courseResourceId = routeParam(pathname, /^\/api\/v1\/courses\/([^/]+)\/resources$/)
@@ -233,7 +240,7 @@ function createApp(options) {
           const user = requireUser(req, data); const offeringId = text(body.offering_id, '开课实例', 1, 100)
           if (!data.offerings.some(item => item.id === offeringId)) throw new HttpError(404, '开课实例不存在')
           if (data.reviews.some(item => item.user_id === user.id && item.offering_id === offeringId && ['pending', 'published'].includes(item.status))) throw new HttpError(409, '你已经评价过该开课实例')
-          const review = { id: makeId('review'), user_id: user.id, offering_id: offeringId, difficulty: score(body.difficulty, '课程难度'), workload: score(body.workload, '作业量'), gain: score(body.gain, '收获程度'), recommend: score(body.recommend, '推荐程度'), tags: Array.isArray(body.tags) ? body.tags.slice(0, 8).map(item => text(item, '标签', 1, 20)) : [], body: text(body.body, '评价内容', 20, 800), anonymous: true, status: 'pending', helpful_count: 0, created_at: now(), updated_at: now() }
+          const review = { id: makeId('review'), user_id: user.id, offering_id: offeringId, rating: score(body.rating ?? body.recommend, '评价分数'), tags: Array.isArray(body.tags) ? body.tags.slice(0, 8).map(item => text(item, '标签', 1, 20)) : [], body: text(body.body, '评价内容', 20, 800), anonymous: true, status: 'pending', helpful_count: 0, created_at: now(), updated_at: now() }
           data.reviews.push(review); return { id: review.id, status: review.status }
         })
         return send(res, 201, result)

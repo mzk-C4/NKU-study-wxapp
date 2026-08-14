@@ -1,0 +1,10 @@
+{
+  "courses": {
+    "网站 manifest 中的课程 id": {
+      "department": "网站当前缺失时可补充学院",
+      "aliases": ["课程别名"],
+      "extra_tags": ["与网站 tags 分开保存的补充标签"]
+    }
+  },
+  "guides": []
+}

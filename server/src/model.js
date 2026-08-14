@@ -3,8 +3,13 @@ function round(value) {
 }
 
 function average(items, key) {
-  if (!items.length) return null
-  return round(items.reduce((sum, item) => sum + Number(item[key] || 0), 0) / items.length)
+  const values = items
+    .map(item => item[key])
+    .filter(value => value !== null && value !== undefined && value !== '')
+    .map(Number)
+    .filter(Number.isFinite)
+  if (!values.length) return null
+  return round(values.reduce((sum, value) => sum + value, 0) / values.length)
 }
 
 function termLabel(offering) {
@@ -34,12 +39,13 @@ function courseReviews(data, courseId) {
 
 function ratingsView(reviews) {
   const showAggregate = reviews.length >= 3
+  const normalized = reviews.map(review => ({ rating: review.rating ?? review.recommend }))
+  const rating = showAggregate ? average(normalized, 'rating') : null
   return {
     show_aggregate: showAggregate,
-    recommend: showAggregate ? average(reviews, 'recommend') : null,
-    difficulty: showAggregate ? average(reviews, 'difficulty') : null,
-    workload: showAggregate ? average(reviews, 'workload') : null,
-    gain: showAggregate ? average(reviews, 'gain') : null
+    average: rating,
+    rating,
+    recommend: rating
   }
 }
 
@@ -85,10 +91,7 @@ function reviewView(data, review) {
     course_name: course ? course.name : '课程待补充',
     teacher_name: teacher ? teacher.name : '教师待补充',
     term_label: termLabel(offering),
-    difficulty: review.difficulty,
-    workload: review.workload,
-    gain: review.gain,
-    recommend: review.recommend,
+    rating: review.rating ?? review.recommend,
     tags: review.tags || [],
     body: review.body,
     anonymous: true,
@@ -116,7 +119,7 @@ function buildSearchIndex(data) {
   data.courses.filter(course => course.status === 'published').forEach(course => {
     const offerings = data.offerings.filter(item => item.course_id === course.id)
     const teachers = offerings.map(offering => data.teachers.find(teacher => teacher.id === offering.teacher_id)).filter(Boolean).map(teacher => teacher.name)
-    items.push({ id: course.id, type: 'course', type_label: '课', badge: course.category_code, name: course.name, aliases: course.aliases || [], tags: course.tags || [], teachers, search_text: [course.name, ...(course.aliases || []), ...(course.tags || []), ...teachers].join(' '), subtitle: `${course.department} · ${course.requirement_type}` })
+    items.push({ id: course.id, type: 'course', type_label: '课', badge: course.category_name || course.scope || course.requirement_type || course.category_code, name: course.name, aliases: course.aliases || [], tags: course.tags || [], teachers, search_text: [course.name, ...(course.aliases || []), ...(course.tags || []), ...teachers].join(' '), subtitle: [course.term || course.recommended_stage, course.department].filter(Boolean).join(' · ') })
   })
   data.teachers.forEach(teacher => {
     const offering = data.offerings.find(item => item.teacher_id === teacher.id)

@@ -1,7 +1,7 @@
 <view class="page courses-page">
   <view class="search-box" bindtap="openSearch"><view class="search-icon"></view><text>搜索课程、教师或标签</text></view>
-  <view class="category-bar section"><view wx:for="{{categories}}" wx:key="*this" class="category {{(item === '全部' && !category) || item === category ? 'category--active' : ''}}" data-value="{{item}}" bindtap="chooseCategory">{{item}}</view></view>
-  <view class="filters"><view class="filter" bindtap="chooseRequirement">课程属性</view><view class="filter">热门标签</view><view class="filter" bindtap="chooseSort">排序</view></view>
+  <scroll-view scroll-x class="category-scroll section"><view class="category-bar"><view wx:for="{{categories}}" wx:key="*this" class="category {{(item === '全部' && !category) || item === category ? 'category--active' : ''}}" data-value="{{item}}" bindtap="chooseCategory">{{item}}</view></view></scroll-view>
+  <view class="filters"><view class="filter" bindtap="chooseTerm">{{term || '全部学期'}}</view><view class="filter" bindtap="chooseTag">{{tag || '全部标签'}}</view><view class="filter" bindtap="chooseSort">排序</view></view>
   <view class="section-head section"><view class="section-title">全部课程</view><view class="micro">共 {{total}} 门</view></view>
   <state-view loading="{{loading}}" error="{{error}}" empty="{{!loading && !error && !courses.length}}" empty-text="没有找到相关课程" bindretry="loadCourses"></state-view>
   <course-card wx:for="{{courses}}" wx:key="id" course="{{item}}" bindselect="openCourse"></course-card>
