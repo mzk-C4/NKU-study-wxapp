@@ -1,1 +1,1 @@
-{ "component": true, "usingComponents": { "tag-chip": "/components/tag-chip/index" } }
+{ "component": true, "usingComponents": { "tag-chip": "../tag-chip/index" } }

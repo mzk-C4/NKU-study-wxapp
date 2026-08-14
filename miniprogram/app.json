@@ -33,9 +33,9 @@
     ]
   },
   "usingComponents": {
-    "state-view": "/components/state-view/index",
-    "course-card": "/components/course-card/index",
-    "tag-chip": "/components/tag-chip/index"
+    "state-view": "components/state-view/index",
+    "course-card": "components/course-card/index",
+    "tag-chip": "components/tag-chip/index"
   },
   "style": "v2",
   "lazyCodeLoading": "requiredComponents",
