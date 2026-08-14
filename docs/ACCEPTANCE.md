@@ -11,5 +11,9 @@
 - [ ] 页面覆盖加载、空数据、网络错误和未登录状态
 - [ ] 375px 小屏、刘海屏、底部安全区和微信大字体显示正常
 - [ ] `npm test` 全部通过
+- [ ] `npm run release:check` 通过，`GET /api/v1/home` 返回约定 JSON
+- [ ] 体验版和正式版自动使用 `https://nkustudy.top/api/v1`
+- [ ] 微信公众平台已配置 `https://nkustudy.top` 为 request 合法域名
+- [ ] 微信开发者工具预览编译通过，体验版上传成功
 - [ ] 仓库历史不存在密码、Token、OpenID 或网盘管理凭证
 - [ ] 生产环境关闭 `ALLOW_DEV_LOGIN`，使用 HTTPS 域名而非服务器 IP

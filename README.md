@@ -22,7 +22,7 @@ NKUStudy 是由南开学生共建的非官方课程学习平台，提供课程�
    node src/server.js
    ```
 
-2. 使用微信开发者工具打开仓库根目录。开发环境接口默认是 `http://127.0.0.1:3000/api/v1`。
+2. 使用微信开发者工具打开仓库根目录。开发版接口默认是 `http://127.0.0.1:3000/api/v1`。
 3. 开发者工具中勾选“不校验合法域名”进行本地联调；生产环境必须配置 HTTPS 业务域名。
 4. 管理页访问 `http://127.0.0.1:3000/admin/`，填入本地 `ADMIN_KEY` 后操作。
 
@@ -34,10 +34,34 @@ npm run devtools:open
 
 若开发者工具不在常见安装目录，先设置 `WECHAT_DEVTOOLS_HOME`。兼容脚本只在内存中更换 CLI 桥接端口，不会修改微信开发者工具安装文件；可用 `WECHAT_CLI_BRIDGE_PORT` 指定其他空闲端口。
 
+## 环境与发布
+
+小程序根据微信环境自动选择接口：
+
+| 微信环境 | API 地址 |
+|---|---|
+| 开发版 `develop` | `http://127.0.0.1:3000/api/v1` |
+| 体验版 `trial` | `https://nkustudy.top/api/v1` |
+| 正式版 `release` | `https://nkustudy.top/api/v1` |
+
+微信公众平台需要把 `https://nkustudy.top` 配置为 request 合法域名。上传前先执行生产 API、自动测试和静态检查：
+
+```powershell
+npm run release:check
+```
+
+检查通过后生成预览或上传体验版：
+
+```powershell
+npm run devtools:preview
+npm run devtools:upload -- -v 0.1.0 -d "NKUStudy MVP"
+```
+
+`devtools:upload` 会先执行发布检查；生产 API 未上线或响应不符合契约时会停止上传，避免发布无法联调的体验版。
+
 ## 测试
 
 ```powershell
-cd server
 npm test
 ```
 
