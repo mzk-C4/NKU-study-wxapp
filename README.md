@@ -26,6 +26,14 @@ NKUStudy 是由南开学生共建的非官方课程学习平台，提供课程�
 3. 开发者工具中勾选“不校验合法域名”进行本地联调；生产环境必须配置 HTTPS 业务域名。
 4. 管理页访问 `http://127.0.0.1:3000/admin/`，填入本地 `ADMIN_KEY` 后操作。
 
+也可以从仓库根目录启动开发者工具：
+
+```powershell
+npm run devtools:open
+```
+
+若开发者工具不在常见安装目录，先设置 `WECHAT_DEVTOOLS_HOME`。兼容脚本只在内存中更换 CLI 桥接端口，不会修改微信开发者工具安装文件；可用 `WECHAT_CLI_BRIDGE_PORT` 指定其他空闲端口。
+
 ## 测试
 
 ```powershell

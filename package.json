@@ -4,6 +4,8 @@
   "private": true,
   "scripts": {
     "check:miniprogram": "node scripts/check-miniprogram.js",
+    "devtools:open": "node scripts/wechat-devtools.js open --project . --lang zh",
+    "devtools:login": "node scripts/wechat-devtools.js islogin --project . --lang zh",
     "test": "npm --prefix server test && npm run check:miniprogram"
   },
   "engines": { "node": ">=18" }

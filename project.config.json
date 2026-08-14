@@ -1,5 +1,6 @@
 {
   "appid": "wx4fe2a7554180e903",
+  "projectname": "NKUStudy 微信小程序",
   "compileType": "miniprogram",
   "miniprogramRoot": "miniprogram/",
   "setting": {
