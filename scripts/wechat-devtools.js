@@ -19,7 +19,18 @@ if (!installRoot) {
 const bundledNode = path.join(installRoot, 'node.exe')
 if (process.env.NKUSTUDY_WECHAT_CLI_CHILD !== '1' && path.resolve(process.execPath) !== path.resolve(bundledNode)) {
   const invocationDirectory = process.cwd()
-  const result = childProcess.spawnSync(bundledNode, [__filename, ...process.argv.slice(2)], {
+  const forwardedArguments = process.argv.slice(2).map((argument, index, argumentsList) => {
+    const previousArgument = argumentsList[index - 1]
+    if (previousArgument === '--project' && !path.isAbsolute(argument)) {
+      return path.resolve(invocationDirectory, argument)
+    }
+    if (argument.startsWith('--project=')) {
+      const projectPath = argument.slice('--project='.length)
+      return `--project=${path.isAbsolute(projectPath) ? projectPath : path.resolve(invocationDirectory, projectPath)}`
+    }
+    return argument
+  })
+  const result = childProcess.spawnSync(bundledNode, [__filename, ...forwardedArguments], {
     stdio: 'inherit',
     cwd: installRoot,
     env: { ...process.env, cwd: invocationDirectory, NKUSTUDY_WECHAT_CLI_CHILD: '1' }
