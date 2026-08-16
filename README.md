@@ -9,6 +9,7 @@ NKUStudy 是由南开学生共建的非官方课程学习平台。当前小程�
 - `admin/`：内部课程、资料投稿和评价审核页
 - `design/`：HTML 界面设计稿和逐页 PNG
 - `docs/`：协作计划、接口契约和验收说明
+- 当前任务状态与跨聊天交接：[`docs/COLLABORATION_PLAN.md`](docs/COLLABORATION_PLAN.md)（唯一状态 owner）
 
 ## 本地运行
 
