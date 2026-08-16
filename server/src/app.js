@@ -134,7 +134,15 @@ function createApp(options) {
       if (courseReviewId && req.method === 'GET') {
         const data = store.read()
         const offerings = data.offerings.filter(item => item.course_id === courseReviewId).map(item => offeringView(data, item))
-        const offeringIds = new Set(offerings.map(item => item.id))
+        const teacherId = url.searchParams.get('teacher_id')
+        const academicYear = url.searchParams.get('academic_year')
+        const semester = url.searchParams.get('semester')
+        const filteredOfferings = offerings.filter(item => (
+          (!teacherId || item.teacher_id === teacherId) &&
+          (!academicYear || item.academic_year === academicYear) &&
+          (!semester || item.semester === semester)
+        ))
+        const offeringIds = new Set(filteredOfferings.map(item => item.id))
         let reviews = data.reviews.filter(item => offeringIds.has(item.offering_id) && item.status === 'published').map(item => reviewView(data, item))
         const offeringId = url.searchParams.get('offering_id'); if (offeringId) reviews = reviews.filter(item => item.offering_id === offeringId)
         reviews.sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))
@@ -194,7 +202,8 @@ function createApp(options) {
           if (!existing) { existing = { id: makeId('user'), openid, status: 'active', created_at: now(), updated_at: now() }; data.users.push(existing) }
           existing.updated_at = now(); return { id: existing.id, status: existing.status }
         })
-        return send(res, 200, { token: signToken(user.id, config.tokenSecret), user })
+        const expiresInSeconds = 60 * 60 * 24 * 30
+        return send(res, 200, { token: signToken(user.id, config.tokenSecret, expiresInSeconds), expires_at: new Date(Date.now() + expiresInSeconds * 1000).toISOString(), user })
       }
 
       if (pathname === '/api/v1/favorites' && req.method === 'POST') {
@@ -231,7 +240,9 @@ function createApp(options) {
         const body = await readBody(req)
         const result = await store.mutate(data => {
           const user = requireUser(req, data); const offeringId = text(body.offering_id, '开课实例', 1, 100)
-          if (!data.offerings.some(item => item.id === offeringId)) throw new HttpError(404, '开课实例不存在')
+          const offering = data.offerings.find(item => item.id === offeringId)
+          const course = offering && data.courses.find(item => item.id === offering.course_id && item.status === 'published')
+          if (!offering || !course) throw new HttpError(404, '开课实例不存在')
           if (data.reviews.some(item => item.user_id === user.id && item.offering_id === offeringId && ['pending', 'published'].includes(item.status))) throw new HttpError(409, '你已经评价过该开课实例')
           const review = { id: makeId('review'), user_id: user.id, offering_id: offeringId, difficulty: score(body.difficulty, '课程难度'), workload: score(body.workload, '作业量'), gain: score(body.gain, '收获程度'), recommend: score(body.recommend, '推荐程度'), tags: Array.isArray(body.tags) ? body.tags.slice(0, 8).map(item => text(item, '标签', 1, 20)) : [], body: text(body.body, '评价内容', 20, 800), anonymous: true, status: 'pending', helpful_count: 0, created_at: now(), updated_at: now() }
           data.reviews.push(review); return { id: review.id, status: review.status }
@@ -246,7 +257,7 @@ function createApp(options) {
         const data = store.read(); const user = requireUser(req, data); const items = data.submissions.filter(item => item.user_id === user.id).map(item => ({ ...item, share_url: undefined, extraction_code: undefined, course_name: data.courses.find(course => course.id === item.course_id)?.name || '课程待补充' })); return send(res, 200, { items, total: items.length })
       }
       if (pathname === '/api/v1/me/reviews' && req.method === 'GET') {
-        const data = store.read(); const user = requireUser(req, data); const items = data.reviews.filter(item => item.user_id === user.id).map(item => reviewView(data, item)); return send(res, 200, { items, total: items.length })
+        const data = store.read(); const user = requireUser(req, data); const items = data.reviews.filter(item => item.user_id === user.id).map(item => reviewView(data, item, true)); return send(res, 200, { items, total: items.length })
       }
 
       if (pathname.startsWith('/api/v1/admin')) {
@@ -261,9 +272,9 @@ function createApp(options) {
         if (pathname === '/api/v1/admin/submissions' && req.method === 'GET') { const data = store.read(); return send(res, 200, { items: data.submissions.map(item => ({ ...item, course_name: data.courses.find(course => course.id === item.course_id)?.name || '课程待补充' })), total: data.submissions.length }) }
         const adminSubmissionId = routeParam(pathname, /^\/api\/v1\/admin\/submissions\/([^/]+)$/)
         if (adminSubmissionId && req.method === 'PATCH') { const body = await readBody(req); const result = await store.mutate(data => { const item = data.submissions.find(entry => entry.id === adminSubmissionId); if (!item) throw new HttpError(404, '投稿不存在'); if (!['approved', 'needs_changes', 'rejected'].includes(body.status)) throw new HttpError(400, '审核状态无效'); item.status = body.status; item.review_note = text(body.review_note, '审核说明', 0, 300); item.updated_at = now(); if (item.status === 'approved' && !item.resource_id) { const resource = { id: makeId('resource'), course_id: item.course_id, offering_id: null, type: item.type, title: item.title, description: item.description, academic_year: item.academic_year, semester: item.semester, storage_provider: item.storage_provider, share_url: item.share_url, extraction_code: item.extraction_code, extension: 'LINK', size_label: '网盘资料', contributor: '匿名同学', status: 'published', created_at: now(), updated_at: now() }; data.resources.push(resource); item.resource_id = resource.id } return item }); return send(res, 200, result) }
-        if (pathname === '/api/v1/admin/reviews' && req.method === 'GET') { const data = store.read(); return send(res, 200, { items: data.reviews.map(item => reviewView(data, item)), total: data.reviews.length }) }
+        if (pathname === '/api/v1/admin/reviews' && req.method === 'GET') { const data = store.read(); return send(res, 200, { items: data.reviews.map(item => reviewView(data, item, true)), total: data.reviews.length }) }
         const adminReviewId = routeParam(pathname, /^\/api\/v1\/admin\/reviews\/([^/]+)$/)
-        if (adminReviewId && req.method === 'PATCH') { const body = await readBody(req); const result = await store.mutate(data => { const item = data.reviews.find(entry => entry.id === adminReviewId); if (!item) throw new HttpError(404, '评价不存在'); if (!['published', 'rejected', 'hidden'].includes(body.status)) throw new HttpError(400, '审核状态无效'); item.status = body.status; item.review_note = text(body.review_note, '审核说明', 0, 300); item.updated_at = now(); return reviewView(data, item) }); return send(res, 200, result) }
+        if (adminReviewId && req.method === 'PATCH') { const body = await readBody(req); const result = await store.mutate(data => { const item = data.reviews.find(entry => entry.id === adminReviewId); if (!item) throw new HttpError(404, '评价不存在'); if (!['published', 'rejected', 'hidden'].includes(body.status)) throw new HttpError(400, '审核状态无效'); item.status = body.status; item.review_note = text(body.review_note, '审核说明', 0, 300); item.updated_at = now(); return reviewView(data, item, true) }); return send(res, 200, result) }
       }
 
       throw new HttpError(404, '接口不存在')

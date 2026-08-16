@@ -67,6 +67,16 @@ test('public course, resource, review and guide reads use the shared model', asy
   const organic = await request('/api/v1/courses/course_organic_chemistry')
   assert.equal(organic.body.data.review_count, 2)
   assert.equal(organic.body.data.ratings.show_aggregate, false)
+  assert.equal(organic.body.data.ratings.recommend, null)
+  assert.equal(organic.body.data.rank, undefined)
+
+  const reviews = await request('/api/v1/courses/course_probability/reviews?teacher_id=teacher_zhou&academic_year=2025-2026&semester=fall')
+  assert.equal(reviews.body.data.total, 2)
+  assert.ok(reviews.body.data.items.every(item => item.teacher_name === '周老师' && item.term_label === '2025-2026 秋'))
+  assert.ok(reviews.body.data.items.every(item => item.anonymous === true && item.user_id === undefined && item.review_note === undefined))
+
+  const emptyReviews = await request('/api/v1/courses/course_probability/reviews?semester=summer')
+  assert.equal(emptyReviews.body.data.total, 0)
 
   const guide = await request('/api/v1/guides/guide_course_selection')
   assert.equal(guide.body.data.steps[0].title, '第 1 步')
@@ -108,6 +118,22 @@ test('one user can submit only one active review per offering', async () => {
   assert.equal(first.body.data.status, 'pending')
   const duplicate = await request('/api/v1/reviews', { method: 'POST', headers, body: JSON.stringify(payload) })
   assert.equal(duplicate.response.status, 409)
+
+  const mine = await request('/api/v1/me/reviews', { headers })
+  assert.equal(mine.body.data.total, 1)
+  assert.equal(mine.body.data.items[0].course_id, 'course_data_structures')
+  assert.equal(mine.body.data.items[0].teacher_name, '陈老师')
+  assert.equal(mine.body.data.items[0].term_label, '2025-2026 秋')
+  assert.equal(mine.body.data.items[0].status, 'pending')
+  assert.equal(mine.body.data.items[0].review_note, '')
+})
+
+test('wechat login returns a restorable session expiry', async () => {
+  const { response, body } = await request('/api/v1/auth/wechat', { method: 'POST', body: JSON.stringify({ code: 'session-expiry-test' }) })
+  assert.equal(response.status, 200)
+  assert.match(body.data.token, /^[^.]+\.[^.]+$/)
+  assert.ok(Date.parse(body.data.expires_at) > Date.now())
+  assert.equal(body.data.user.status, 'active')
 })
 
 test('admin key protects moderation and approvals publish content', async () => {

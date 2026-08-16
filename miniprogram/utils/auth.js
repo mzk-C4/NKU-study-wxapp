@@ -1,7 +1,14 @@
 const api = require('./request')
 
 function getStoredUser() {
-  return wx.getStorageSync('auth_user') || null
+  const token = wx.getStorageSync('auth_token')
+  const user = wx.getStorageSync('auth_user')
+  const expiresAt = wx.getStorageSync('auth_expires_at')
+  if (!token || !user || (expiresAt && Date.parse(expiresAt) <= Date.now())) {
+    api.clearStoredSession()
+    return null
+  }
+  return user
 }
 
 function wxLogin() {
@@ -18,14 +25,12 @@ async function ensureLogin() {
   const result = await wxLogin()
   if (!result.code) throw new Error('未获得微信登录凭证')
   const session = await api.post('/auth/wechat', { code: result.code })
-  wx.setStorageSync('auth_token', session.token)
-  wx.setStorageSync('auth_user', session.user)
+  api.saveSession(session)
   return session
 }
 
 function logout() {
-  wx.removeStorageSync('auth_token')
-  wx.removeStorageSync('auth_user')
+  api.clearStoredSession()
 }
 
 module.exports = { ensureLogin, getStoredUser, logout }

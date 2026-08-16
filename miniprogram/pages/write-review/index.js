@@ -19,7 +19,7 @@ Page({
     scores: { difficulty: 0, workload: 0, gain: 0, recommend: 0 },
     ratingFields: buildRatingFields({}),
     tagOptions: ['讲解清楚', '作业偏多', '考试常规', '需要预习', '资料齐全', '适合自学'].map(text => ({ text, selected: false })),
-    selectedTags: [], body: '', anonymous: true
+    selectedTags: [], body: '', bodyLength: 0
   },
   onLoad(options) { this.setData({ courseId: options.course_id || '' }); this.prepare() },
   async prepare() {
@@ -44,20 +44,23 @@ Page({
   },
   toggleTag(event) {
     const tag = event.currentTarget.dataset.tag
+    if (!this.data.selectedTags.includes(tag) && this.data.selectedTags.length >= 5) {
+      wx.showToast({ title: '最多选择 5 个标签', icon: 'none' })
+      return
+    }
     const selectedTags = this.data.selectedTags.includes(tag) ? this.data.selectedTags.filter(item => item !== tag) : [...this.data.selectedTags, tag]
     this.setData({ selectedTags, tagOptions: this.data.tagOptions.map(item => ({ ...item, selected: selectedTags.includes(item.text) })) })
   },
-  inputBody(event) { this.setData({ body: event.detail.value }) },
-  toggleAnonymous(event) { this.setData({ anonymous: event.detail.value }) },
+  inputBody(event) { this.setData({ body: event.detail.value, bodyLength: event.detail.value.length }) },
   async submit() {
-    const { course, offeringIndex, scores, selectedTags, body, anonymous } = this.data
+    const { course, offeringIndex, scores, selectedTags, body } = this.data
     if (offeringIndex < 0 || Object.values(scores).some(value => !value) || body.trim().length < 20) {
       wx.showToast({ title: '请选择教师、完成评分并填写至少20字', icon: 'none' })
       return
     }
     this.setData({ submitting: true })
     try {
-      await api.post('/reviews', { offering_id: course.offerings[offeringIndex].id, ...scores, tags: selectedTags, body: body.trim(), anonymous })
+      await api.post('/reviews', { offering_id: course.offerings[offeringIndex].id, ...scores, tags: selectedTags, body: body.trim(), anonymous: true })
       wx.showModal({ title: '提交成功', content: '评价已进入审核，公开页面将保持匿名。', showCancel: false, success: () => wx.navigateBack() })
     } catch (error) {
       wx.showToast({ title: error.message, icon: 'none' })
