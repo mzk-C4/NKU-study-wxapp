@@ -1,5 +1,6 @@
-.course { padding: 26rpx; border: 1rpx solid #E8E2EC; border-radius: 26rpx; background: #FFFDF8; }
-.course + .course { margin-top: 20rpx; }
+.course { display: block; width: 100% !important; min-width: 100%; max-width: 100%; margin: 0 !important; padding: 26rpx; border: 1rpx solid #E8E2EC; border-radius: 26rpx; color: #2B123E; background: #FFFDF8; box-sizing: border-box; text-align: left; line-height: normal; }
+.course::after { border: 0; }
+.course--pressed { opacity: .86; }
 .course-head { display: flex; gap: 18rpx; align-items: flex-start; }
 .zone { width: 58rpx; height: 58rpx; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; border-radius: 18rpx; color: #FFFFFF; background: #4B1F6F; font-weight: 700; }
 .course-main { flex: 1; min-width: 0; }

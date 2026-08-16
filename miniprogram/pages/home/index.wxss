@@ -12,6 +12,8 @@
 .quick-icon--gold { color: #77550E; background: #F8EFD9; }
 .quick-icon--green { color: #266E5A; background: #E7F3EE; }
 .quick-icon--red { color: #9B4951; background: #F9E9EA; }
+course-card { display: block; align-self: stretch; width: 100%; box-sizing: border-box; }
+.course-list { display: flex; flex-direction: column; gap: 20rpx; }
 .season-card { position: relative; overflow: hidden; padding: 28rpx 130rpx 28rpx 28rpx; color: #FFFFFF; border-radius: 28rpx; background: #2B123E; }
 .season-title { font-size: 28rpx; font-weight: 700; }
 .season-text { margin-top: 8rpx; color: rgba(255,255,255,.72); font-size: 21rpx; line-height: 1.5; }

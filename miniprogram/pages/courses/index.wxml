@@ -4,6 +4,6 @@
   <view class="filters"><view class="filter" bindtap="chooseRequirement">课程属性</view><view class="filter">热门标签</view><view class="filter" bindtap="chooseSort">排序</view></view>
   <view class="section-head section"><view class="section-title">全部课程</view><view class="micro">共 {{total}} 门</view></view>
   <state-view loading="{{loading}}" error="{{error}}" empty="{{!loading && !error && !courses.length}}" empty-text="没有找到相关课程" bindretry="loadCourses"></state-view>
-  <course-card wx:for="{{courses}}" wx:key="id" course="{{item}}" bindselect="openCourse"></course-card>
+  <view class="course-list"><course-card wx:for="{{courses}}" wx:key="id" course="{{item}}" bindselect="openCourse"></course-card></view>
   <view class="course-fab" bindtap="submitCourse">＋</view>
 </view>
