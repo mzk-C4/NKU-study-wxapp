@@ -9,6 +9,8 @@ const projectRoot = path.resolve(__dirname, '../..')
 let server
 let baseUrl
 let temporaryDirectory
+let runtimeDatabasePath
+let runtimeDatabaseTemporaryPath
 
 async function request(pathname, options = {}) {
   const response = await fetch(`${baseUrl}${pathname}`, {
@@ -28,8 +30,10 @@ async function login(code) {
 
 test.before(async () => {
   temporaryDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'nkustudy-api-'))
+  runtimeDatabasePath = path.join(temporaryDirectory, 'runtime.json')
+  runtimeDatabaseTemporaryPath = `${runtimeDatabasePath}.${process.pid}.tmp`
   server = createApp({
-    dbPath: path.join(temporaryDirectory, 'runtime.json'),
+    dbPath: runtimeDatabasePath,
     seedPath: path.join(projectRoot, 'server/data/seed.json'),
     adminPath: path.join(projectRoot, 'admin/index.html'),
     adminLogoPath: path.join(projectRoot, 'assets/branding/nkustudy-avatar-v2-nankai-128.png'),
@@ -43,7 +47,9 @@ test.before(async () => {
 
 test.after(async () => {
   await new Promise(resolve => server.close(resolve))
-  fs.rmSync(temporaryDirectory, { recursive: true, force: true })
+  if (fs.existsSync(runtimeDatabasePath)) fs.unlinkSync(runtimeDatabasePath)
+  if (fs.existsSync(runtimeDatabaseTemporaryPath)) fs.unlinkSync(runtimeDatabaseTemporaryPath)
+  fs.rmdirSync(temporaryDirectory)
 })
 
 test('public course, resource, review and guide reads use the shared model', async () => {

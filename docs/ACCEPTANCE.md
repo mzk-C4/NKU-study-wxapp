@@ -1,6 +1,20 @@
 # MVP 验收清单
 
-- [ ] 微信开发者工具编译无错误
+## 验证证据
+
+以下环节必须分别记录，不能用其中一项的结果推断另一项。状态使用 `PASS`、`FAIL`、`SKIP` 或 `BLOCKED`；`SKIP`/`BLOCKED` 需写明原因。
+
+| 环节 | 核验内容 | 状态 | 命令、证据或原因 |
+|---|---|---|---|
+| 完整本地自动化验证 | 服务端测试与小程序静态检查 |  | `npm.cmd run verify:local` |
+| 外部 HTTPS API 验证 | `/api/v1/home` 的 HTTPS、可用性和响应契约 |  | `npm.cmd run verify:external`；会访问外部 API |
+| 微信开发者工具 | 编译、预览及相关页面交互 |  |  |
+| 真机 | 相关页面、网络、登录和设备适配 |  |  |
+| 体验版上传 | 上传成功且体验版使用 `https://nkustudy.top/api/v1` |  | `devtools:upload` 必须先通过 `release:check` |
+| 生产环境 | 正式版使用 `https://nkustudy.top/api/v1`，request 合法域名已配置，`ALLOW_DEV_LOGIN` 已关闭，并使用 HTTPS 域名而非服务器 IP |  | 不得由本地或体验版结果推断 |
+
+## 功能与安全验收
+
 - [ ] 游客可浏览首页、课程、资料、评价与指南
 - [ ] 收藏、投稿、写评价和失效报告时才触发微信登录
 - [ ] A–E 分类、课程属性、标签和建议修读阶段互不混用
@@ -10,10 +24,4 @@
 - [ ] 投稿与评价默认待审核，管理端通过后才公开
 - [ ] 页面覆盖加载、空数据、网络错误和未登录状态
 - [ ] 375px 小屏、刘海屏、底部安全区和微信大字体显示正常
-- [ ] `npm test` 全部通过
-- [ ] `npm run release:check` 通过，`GET /api/v1/home` 返回约定 JSON
-- [ ] 体验版和正式版自动使用 `https://nkustudy.top/api/v1`
-- [ ] 微信公众平台已配置 `https://nkustudy.top` 为 request 合法域名
-- [ ] 微信开发者工具预览编译通过，体验版上传成功
 - [ ] 仓库历史不存在密码、Token、OpenID 或网盘管理凭证
-- [ ] 生产环境关闭 `ALLOW_DEV_LOGIN`，使用 HTTPS 域名而非服务器 IP

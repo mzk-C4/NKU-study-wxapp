@@ -1,3 +1,3 @@
 <view wx:if="{{loading}}" class="state"><view class="spinner"></view><text>正在加载...</text></view>
-<view wx:elif="{{error}}" class="state"><text class="state-title">网络开小差了</text><text class="state-text">{{error}}</text><button class="retry" bindtap="retry">重新加载</button></view>
+<view wx:elif="{{error}}" class="state"><text class="state-title">暂时无法加载</text><text class="state-text">{{error}}</text><button class="retry" hover-class="retry--pressed" hover-stay-time="80" bindtap="retry">重新加载</button></view>
 <view wx:elif="{{empty}}" class="state"><text class="state-title">{{emptyText}}</text><slot></slot></view>

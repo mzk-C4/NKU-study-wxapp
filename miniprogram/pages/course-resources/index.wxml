@@ -1,10 +1,10 @@
 <view class="resource-page">
-  <view class="detail-tabs"><view class="detail-tab" data-tab="overview" bindtap="openTab">概览</view><view class="detail-tab detail-tab--active">资料 {{course.resource_count || 0}}</view><view class="detail-tab" data-tab="reviews" bindtap="openTab">评价 {{course.review_count || 0}}</view></view>
+  <course-detail-tabs course-id="{{id}}" active="resources" resource-count="{{course.resource_count || 0}}" review-count="{{course.review_count || 0}}"></course-detail-tabs>
   <view class="page resource-body">
     <view class="chips"><view wx:for="{{types}}" wx:key="*this" class="chip {{type === item ? 'chip--active' : ''}}" data-type="{{item}}" bindtap="chooseType">{{item}}</view></view>
     <state-view loading="{{loading}}" error="{{error}}" empty="{{!loading && !error && !visibleResources.length}}" empty-text="暂时还没有资料" bindretry="loadResources"></state-view>
-    <view class="resource-card" wx:for="{{visibleResources}}" wx:key="id" data-id="{{item.id}}" bindtap="openResource"><view class="file-icon">{{item.extension}}</view><view class="resource-main"><view class="resource-title">{{item.title}}</view><view class="micro">{{item.type}} · {{item.extension}} · {{item.size_label}} · {{item.term_label}}</view><view class="resource-foot"><text class="link-ok">✓ 链接正常</text><text class="open-link">打开网盘</text></view></view></view>
+    <view class="resource-card {{!item.download_available ? 'resource-card--unavailable' : (downloadingId === item.id ? 'resource-card--downloading' : (downloadingId ? 'resource-card--busy' : ''))}}" wx:for="{{visibleResources}}" wx:key="id" data-id="{{item.id}}" bindtap="openResource" hover-class="resource-card--pressed" hover-stay-time="80"><view class="file-icon">{{item.extension || '文件'}}</view><view class="resource-main"><view class="resource-title">{{item.title}}</view><view class="micro">{{item.type || '课程资料'}} · {{item.extension || '格式未知'}} · {{item.size_label || '大小未知'}} · {{item.term_label || '阶段未标注'}}</view><view class="resource-foot"><text class="link-ok {{!item.download_available ? 'link-ok--unavailable' : ''}}">{{item.download_available ? '✓ 安全下载地址' : '暂不可下载'}}</text><text class="open-link {{!item.download_available || downloadingId ? 'open-link--muted' : ''}}">{{!item.download_available ? '暂不可下载' : (downloadingId === item.id ? '正在下载' : (downloadingId ? '请稍候' : '下载并打开'))}}</text></view></view></view>
     <view class="empty-space"></view>
   </view>
-  <view class="sticky-footer"><button class="button button--primary" bindtap="submitResource">分享这门课的资料</button></view>
+  <view class="sticky-footer"><button class="button button--primary" bindtap="submitResource">资料投稿建设中</button></view>
 </view>

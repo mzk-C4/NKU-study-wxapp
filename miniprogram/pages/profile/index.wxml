@@ -1,10 +1,10 @@
 <view class="profile-page">
-  <view class="profile-hero"><view class="profile-row"><view class="profile-avatar">N</view><view><view class="profile-name">{{user ? 'NKUStudy 用户' : '你好，南开同学'}}</view><view class="profile-sub">{{user ? '已登录 · 公开页面保持匿名' : '浏览无需登录，登录后同步收藏和投稿'}}</view></view></view><button wx:if="{{!user}}" class="login-button" loading="{{loading}}" bindtap="login">微信登录</button><button wx:else class="logout-button" bindtap="logout">退出登录</button></view>
+  <view class="profile-hero"><view class="profile-row"><view class="profile-avatar">N</view><view><view class="profile-name">你好，南开同学</view><view class="profile-sub">公开课程浏览无需登录</view></view></view><button class="login-button" bindtap="showUnavailable">登录功能建设中</button></view>
   <view class="page profile-body">
-    <view class="profile-stats"><view><b>{{history.length}}</b><text>本机浏览</text></view><view><b>{{user ? favorites.length : '—'}}</b><text>收藏课程</text></view><view><b>{{user ? contributionCount : '—'}}</b><text>我的贡献</text></view></view>
-    <view class="card menu section"><view class="menu-row"><text>我的收藏</text><text class="muted">{{favoriteLabel}} ›</text></view><view class="menu-row" bindtap="openSubmit"><text>我的投稿</text><text class="muted">{{submissionLabel}} ›</text></view><view class="menu-row"><text>我的评价</text><text class="muted">{{reviewLabel}} ›</text></view></view>
-    <view class="section" wx:if="{{history.length}}"><view class="section-head"><view class="section-title">最近浏览</view></view><view class="card history-row" wx:for="{{history}}" wx:key="id" data-id="{{item.id}}" bindtap="openHistory"><view><view class="history-name">{{item.name}}</view><view class="micro">{{item.category_code}}区 · {{item.department}}</view></view><text>›</text></view></view>
+    <view class="profile-stats"><view><b>{{history.length}}</b><text>本机浏览</text></view><view><b>—</b><text>收藏课程</text></view><view><b>—</b><text>我的贡献</text></view></view>
+    <view class="card menu section"><view class="menu-row" bindtap="showUnavailable"><text>我的收藏</text><text class="muted">建设中 ›</text></view><view class="menu-row" bindtap="showUnavailable"><text>我的投稿</text><text class="muted">建设中 ›</text></view><view class="menu-row" bindtap="showUnavailable"><text>我的评价</text><text class="muted">建设中 ›</text></view></view>
+    <view class="section" wx:if="{{history.length}}"><view class="section-head"><view class="section-title">最近浏览</view></view><view class="card history-row" wx:for="{{history}}" wx:key="id" data-id="{{item.id}}" bindtap="openHistory"><view><view class="history-name">{{item.name}}</view><view class="micro">{{item.group || '课程'}} · {{item.term || '阶段待补充'}}</view></view><text>›</text></view></view>
     <view class="card menu section"><view class="menu-row" bindtap="feedback"><text>意见反馈</text><text>›</text></view><view class="menu-row" bindtap="about"><text>关于 NKUStudy</text><text>›</text></view></view>
-    <view class="profile-note"><view>无需实名，不公开微信信息</view><view>学生共建 · 非南开大学官方平台</view></view>
+    <view class="profile-note"><view>未连接线上身份与个人数据服务</view><view>学生共建 · 非南开大学官方平台</view></view>
   </view>
 </view>

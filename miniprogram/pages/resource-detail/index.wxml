@@ -1,10 +1,8 @@
 <view class="page resource-detail">
-  <state-view loading="{{loading}}" error="{{error}}" bindretry="loadResource"></state-view>
-  <block wx:if="{{resource}}">
-    <view class="resource-icon">{{resource.extension}}</view><view class="resource-name">{{resource.title}}</view><view class="resource-course">{{resource.course_name}} · {{resource.type}}</view>
-    <view class="card info-list section"><view class="info-row"><text>文件格式</text><b>{{resource.extension}} · {{resource.size_label}}</b></view><view class="info-row"><text>适用学期</text><b>{{resource.term_label}}</b></view><view class="info-row"><text>网盘平台</text><b>{{resource.storage_provider}}</b></view><view class="info-row"><text>链接状态</text><tag-chip text="正常" tone="green"></tag-chip></view><view class="info-row"><text>贡献者</text><b>{{resource.contributor}}</b></view></view>
-    <view class="notice section"><view class="notice-mark">i</view><text>复制分享链接和提取码后，请前往对应网盘打开。</text></view>
-    <button class="button button--primary section" bindtap="copyLink">复制链接及提取码</button><button class="button button--ghost" bindtap="reportInvalid">反馈链接失效</button>
-    <view class="card section"><view class="section-head"><view class="section-title small-title">同课程其他资料</view><view class="section-link" bindtap="openCourse">查看全部</view></view><view class="related" wx:for="{{resource.related}}" wx:key="id"><view class="related-icon">{{item.extension}}</view><view><view class="related-title">{{item.title}}</view><view class="micro">{{item.size_label}}</view></view></view></view>
-  </block>
+  <view class="card unavailable-card">
+    <view class="resource-icon">资料</view>
+    <view class="resource-name">旧资料详情页已停用</view>
+    <view class="unavailable-text">生产资源由课程资料列表提供受控下载地址，不再请求独立资料详情、分享链接或举报接口。</view>
+    <button class="button button--secondary section" bindtap="goBack">返回课程资料</button>
+  </view>
 </view>

@@ -1,8 +1,8 @@
-const api = require('../../utils/request')
+const publicApi = require('../../services/public-api')
 const navigation = require('../../utils/navigation')
 
 Page({
-  data: { loading: true, error: '', home: null, hotCourses: [] },
+  data: { loading: true, error: '', home: null, hotCourses: [], hasPublicContent: false },
 
   onLoad() { this.loadHome() },
   onPullDownRefresh() { this.loadHome().finally(() => wx.stopPullDownRefresh()) },
@@ -10,8 +10,10 @@ Page({
   async loadHome() {
     this.setData({ loading: true, error: '' })
     try {
-      const home = await api.get('/home')
-      this.setData({ home, hotCourses: home.hot_courses || [], loading: false })
+      const home = await publicApi.getHome()
+      const hotCourses = home.hot_courses || []
+      const hasPublicContent = Boolean(home.announcement || hotCourses.length || home.latest_updates.length)
+      this.setData({ home, hotCourses, hasPublicContent, loading: false })
     } catch (error) {
       this.setData({ loading: false, error: error.message })
     }

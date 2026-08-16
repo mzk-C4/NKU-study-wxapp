@@ -1,9 +1,27 @@
 <view class="page search-page">
-  <view class="search-row"><view class="search-box search-input"><view class="search-icon"></view><input value="{{query}}" placeholder="搜索课程、教师、资料或指南" bindinput="input" bindconfirm="submit" focus="{{true}}"/></view><text class="cancel" bindtap="clear">清除</text></view>
-  <view class="type-tabs"><view wx:for="{{types}}" wx:key="key" class="type-tab {{type === item.key ? 'type-tab--active' : ''}}" data-type="{{item.key}}" bindtap="chooseType">{{item.label}} {{item.count}}</view></view>
-  <view class="chips section"><view class="chip chip--active">全部</view><view class="chip">A–E 分类</view><view class="chip">教师</view><view class="chip">学期</view></view>
-  <view class="section-head section"><view class="micro">找到 {{results.length}} 条当前类型结果</view><view class="section-link">筛选</view></view>
-  <state-view loading="{{loading}}" error="{{error}}" empty="{{!loading && !error && !results.length}}" empty-text="没有找到相关内容" bindretry="loadIndex"></state-view>
-  <view class="result-card" wx:for="{{results}}" wx:key="id" data-item="{{item}}" bindtap="openResult"><view class="result-zone">{{item.badge || item.type_label}}</view><view class="result-main"><rich-text class="result-name" nodes="{{item.highlighted_name}}"></rich-text><view class="micro">{{item.subtitle}}</view><view class="result-tags"><tag-chip wx:for="{{item.tags}}" wx:for-item="tag" wx:key="*this" text="{{tag}}"></tag-chip></view></view><view class="result-arrow">›</view></view>
-  <view class="notice section" wx:if="{{!loading}}"><view class="notice-mark">i</view><text>没有找到？试试课程简称或标签，也可以申请补充课程。</text></view>
+  <view class="search-row"><view class="search-box search-input"><view class="search-icon"></view><input value="{{query}}" maxlength="80" placeholder="搜索课程、教师或标签" confirm-type="search" bindinput="input" bindconfirm="submit" focus="{{true}}"/><button wx:if="{{query}}" class="search-clear" hover-class="search-clear--pressed" aria-label="清除搜索词" bindtap="clearQuery">×</button></view></view>
+  <view class="notice section"><view class="notice-mark">i</view><text>当前仅开放课程搜索；资料与评价请先进入对应课程查看。</text></view>
+  <view class="filter-panel section">
+    <view class="filter-heading"><text class="filter-title">筛选课程</text><button wx:if="{{hasActiveFilters}}" class="reset-filters" hover-class="control--pressed" bindtap="resetFilters">重置全部</button></view>
+    <view class="filters">
+      <picker class="filter-picker" range="{{termChoices}}" value="{{termChoiceIndex}}" data-key="term" bindchange="changeFacet"><view class="filter {{term ? 'filter--active' : ''}}">{{term || '修读阶段'}}</view></picker>
+      <picker class="filter-picker" range="{{groupChoices}}" value="{{groupChoiceIndex}}" data-key="group" bindchange="changeFacet"><view class="filter {{group ? 'filter--active' : ''}}">{{group || '课程类别'}}</view></picker>
+      <picker class="filter-picker" range="{{tagChoices}}" value="{{tagChoiceIndex}}" data-key="tag" bindchange="changeFacet"><view class="filter {{tag ? 'filter--active' : ''}}">{{tag || '课程标签'}}</view></picker>
+      <picker class="filter-picker" range="{{assessmentChoices}}" value="{{assessmentChoiceIndex}}" data-key="assessment" bindchange="changeFacet"><view class="filter {{assessment ? 'filter--active' : ''}}">{{assessment || '考核方式'}}</view></picker>
+    </view>
+    <view class="active-filters" wx:if="{{hasActiveFilters}}">
+      <button wx:if="{{term}}" class="active-filter" hover-class="control--pressed" data-key="term" bindtap="clearFilter">修读阶段：{{term}} ×</button>
+      <button wx:if="{{group}}" class="active-filter" hover-class="control--pressed" data-key="group" bindtap="clearFilter">课程类别：{{group}} ×</button>
+      <button wx:if="{{tag}}" class="active-filter" hover-class="control--pressed" data-key="tag" bindtap="clearFilter">课程标签：{{tag}} ×</button>
+      <button wx:if="{{assessment}}" class="active-filter" hover-class="control--pressed" data-key="assessment" bindtap="clearFilter">考核方式：{{assessment}} ×</button>
+    </view>
+  </view>
+  <view class="search-idle" wx:if="{{idle && !loading && !error}}"><text class="state-title">搜索课程</text><text class="state-text">输入课程名、教师名或标签，或使用上方筛选。</text></view>
+  <view class="section-head section" wx:if="{{hasSearched && !loading && !error}}"><view class="micro">共 {{total}} 门课程</view><view class="section-link">仅课程</view></view>
+  <state-view loading="{{loading}}" error="{{error}}" empty="{{hasSearched && !loading && !error && !results.length}}" empty-text="没有找到相关课程" bindretry="retry"></state-view>
+  <button class="result-card" hover-class="result-card--pressed" wx:for="{{results}}" wx:key="id" data-id="{{item.id}}" bindtap="openResult"><view class="result-zone">{{item.badge}}</view><view class="result-main"><rich-text class="result-name" nodes="{{item.highlighted_name}}"></rich-text><view class="micro" wx:if="{{item.subtitle}}">{{item.subtitle}}</view><rich-text class="match-note" wx:if="{{item.match_html}}" nodes="{{item.match_html}}"></rich-text><view class="match-note" wx:else>{{item.match_text}}</view><view class="result-tags" wx:if="{{item.tags.length}}"><tag-chip wx:for="{{item.tags}}" wx:for-item="tag" wx:key="*this" text="{{tag}}"></tag-chip></view></view><view class="result-arrow">›</view></button>
+  <view class="load-more" wx:if="{{loadingMore}}">正在加载更多课程...</view>
+  <button class="load-more-retry" hover-class="control--pressed" wx:elif="{{loadMoreError}}" bindtap="retryLoadMore">加载更多失败，点击重试</button>
+  <view class="load-more" wx:elif="{{hasSearched && results.length && !hasMore}}">没有更多结果</view>
+  <view class="notice section" wx:if="{{hasSearched && !loading && !error}}"><view class="notice-mark">i</view><text>没有找到？可以尝试课程全名、教师姓名或服务器公开标签。</text></view>
 </view>

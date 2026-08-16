@@ -1,26 +1,15 @@
-const api = require('./request')
-
-function getStoredUser() {
-  return wx.getStorageSync('auth_user') || null
+function unavailableError() {
+  const error = new Error('功能建设中，暂未连接线上登录服务。')
+  error.code = 'FEATURE_UNAVAILABLE'
+  return error
 }
 
-function wxLogin() {
-  return new Promise((resolve, reject) => {
-    wx.login({ success: resolve, fail: reject })
-  })
+function getStoredUser() {
+  return null
 }
 
 async function ensureLogin() {
-  const token = wx.getStorageSync('auth_token')
-  const user = getStoredUser()
-  if (token && user) return { token, user }
-
-  const result = await wxLogin()
-  if (!result.code) throw new Error('未获得微信登录凭证')
-  const session = await api.post('/auth/wechat', { code: result.code })
-  wx.setStorageSync('auth_token', session.token)
-  wx.setStorageSync('auth_user', session.user)
-  return session
+  throw unavailableError()
 }
 
 function logout() {
@@ -28,4 +17,4 @@ function logout() {
   wx.removeStorageSync('auth_user')
 }
 
-module.exports = { ensureLogin, getStoredUser, logout }
+module.exports = { ensureLogin, getStoredUser, logout, unavailableError }

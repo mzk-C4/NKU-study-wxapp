@@ -55,6 +55,60 @@ for (const file of walk(miniRoot)) {
   }
 }
 
+const detailTabPages = ['course-overview', 'course-resources', 'course-reviews']
+const detailTabComponent = 'components/course-detail-tabs/index'
+if (app.usingComponents?.['course-detail-tabs'] !== detailTabComponent) {
+  fail(`共享课程详情 Tab 未全局注册：course-detail-tabs -> ${detailTabComponent}`)
+}
+
+for (const page of detailTabPages) {
+  const pageRoot = path.join(miniRoot, 'pages', page)
+  const template = fs.readFileSync(path.join(pageRoot, 'index.wxml'), 'utf8')
+  const references = template.match(/<course-detail-tabs(?:\s|>)/g) || []
+  if (references.length !== 1) fail(`详情页必须且只能引用一次共享 Tab：pages/${page}/index.wxml`)
+}
+
+const detailTabStyleOwner = path.join(miniRoot, 'components/course-detail-tabs/index.wxss')
+const detailTabStylePattern = /(^|[},\s])\.(?:detail-tabs|detail-tab|detail-tab--active)(?=[\s,{:#>+~])/m
+const detailTabStyleFiles = walk(miniRoot).filter(file => file.endsWith('.wxss') && detailTabStylePattern.test(fs.readFileSync(file, 'utf8')))
+if (!detailTabStyleFiles.includes(detailTabStyleOwner)) fail('共享课程详情 Tab 缺少统一样式 owner')
+for (const file of detailTabStyleFiles) {
+  if (file !== detailTabStyleOwner) fail(`课程详情 Tab 样式只能由共享组件持有：${path.relative(root, file)}`)
+}
+
+const courseCardTemplate = fs.readFileSync(path.join(miniRoot, 'components/course-card/index.wxml'), 'utf8')
+if (!/^\s*<button\b[^>]*\bclass="[^"]*\bcourse\b[^"]*"/i.test(courseCardTemplate)) {
+  fail('course-card 根交互节点必须保持原生 button')
+}
+
+const runtimeJavaScript = walk(miniRoot).filter(file => file.endsWith('.js'))
+const forbiddenEndpoints = [
+  ['微信登录', /['"`]\/auth\/wechat(?:['"`/?])/],
+  ['收藏', /['"`]\/favorites(?:['"`/?])/],
+  ['个人数据', /['"`]\/me\//],
+  ['资料投稿', /['"`]\/resource-submissions(?:['"`/?])/],
+  ['资料详情或举报', /['"`]\/resources\//],
+  ['旧课程评价', /['"`]\/courses\/[^\r\n]*\/reviews(?:['"`/?])/],
+  ['旧搜索索引', /['"`]\/search-index(?:['"`/?])/],
+  ['旧指南', /['"`]\/guides(?:['"`/?])/],
+  ['评价写入', /['"`]\/reviews(?:['"`?#])/]
+]
+
+for (const file of runtimeJavaScript) {
+  const source = fs.readFileSync(file, 'utf8')
+  for (const [name, pattern] of forbiddenEndpoints) {
+    if (pattern.test(source)) fail(`未开放端点仍存在于小程序运行代码：${name} -> ${path.relative(root, file)}`)
+  }
+}
+
+const pageJavaScript = [path.join(miniRoot, 'pages'), path.join(miniRoot, 'components')].flatMap(walk).filter(file => file.endsWith('.js'))
+const directPublicPath = /['"`]\/(?:health|home|courses(?:\/|['"`])|review-groups(?:\/|['"`]))/
+for (const file of pageJavaScript) {
+  const source = fs.readFileSync(file, 'utf8')
+  if (directPublicPath.test(source)) fail(`页面或组件不得直接拼接生产公开路径：${path.relative(root, file)}`)
+  if (/utils\/request|utils\\request/.test(source)) fail(`页面或组件必须通过 public-api adapter 请求：${path.relative(root, file)}`)
+}
+
 if (!fs.existsSync(path.join(miniRoot, 'lib/fuse.js'))) fail('缺少本地 Fuse.js 搜索库')
 
 const miniConfig = require(path.join(miniRoot, 'config.js'))

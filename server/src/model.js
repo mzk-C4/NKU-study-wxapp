@@ -116,7 +116,8 @@ function buildSearchIndex(data) {
   data.courses.filter(course => course.status === 'published').forEach(course => {
     const offerings = data.offerings.filter(item => item.course_id === course.id)
     const teachers = offerings.map(offering => data.teachers.find(teacher => teacher.id === offering.teacher_id)).filter(Boolean).map(teacher => teacher.name)
-    items.push({ id: course.id, type: 'course', type_label: '课', badge: course.category_code, name: course.name, aliases: course.aliases || [], tags: course.tags || [], teachers, search_text: [course.name, ...(course.aliases || []), ...(course.tags || []), ...teachers].join(' '), subtitle: `${course.department} · ${course.requirement_type}` })
+    const shortName = course.short_name || ''
+    items.push({ id: course.id, type: 'course', type_label: '课', badge: course.category_code, name: course.name, short_name: shortName, aliases: course.aliases || [], tags: course.tags || [], teachers, search_text: [course.name, shortName, ...(course.aliases || []), ...(course.tags || []), ...teachers].filter(Boolean).join(' '), subtitle: `${course.department} · ${course.requirement_type}` })
   })
   data.teachers.forEach(teacher => {
     const offering = data.offerings.find(item => item.teacher_id === teacher.id)

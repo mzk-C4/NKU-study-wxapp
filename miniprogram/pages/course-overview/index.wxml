@@ -1,14 +1,14 @@
 <view class="course-detail">
   <state-view loading="{{loading}}" error="{{error}}" bindretry="loadCourse"></state-view>
   <block wx:if="{{course}}">
-    <view class="detail-hero"><view class="detail-row"><view><view class="detail-title">{{course.name}}</view><view class="detail-meta">{{course.category_code}}区 · {{course.requirement_type}} · {{course.scope}}</view></view><view class="favorite" bindtap="toggleFavorite">{{favorite ? '♥' : '♡'}}</view></view></view>
-    <view class="detail-tabs"><view class="detail-tab detail-tab--active">概览</view><view class="detail-tab" data-tab="resources" bindtap="openTab">资料 {{course.resource_count}}</view><view class="detail-tab" data-tab="reviews" bindtap="openTab">评价 {{course.review_count}}</view></view>
+    <view class="detail-hero"><view class="detail-row"><view><view class="detail-title">{{course.name}}</view><view class="detail-meta">{{course.group || '分类待补充'}} · {{course.term || '修读阶段待补充'}} · {{course.assessment || '考核方式待补充'}}</view></view><view class="favorite" bindtap="showFavoriteUnavailable">收藏建设中</view></view></view>
+    <course-detail-tabs course-id="{{id}}" active="overview" resource-count="{{course.resource_count || 0}}" review-count="{{course.review_count || 0}}"></course-detail-tabs>
     <view class="page detail-body">
-      <view class="metric-grid"><view class="metric"><text class="metric-value">{{course.ratings.difficulty || '—'}}</text><text>课程难度</text></view><view class="metric"><text class="metric-value">{{course.ratings.workload || '—'}}</text><text>作业量</text></view><view class="metric"><text class="metric-value">{{course.ratings.gain || '—'}}</text><text>收获程度</text></view></view>
-      <view class="card section"><view class="rule-title">课程概览</view><view class="description">{{course.description}}</view></view>
-      <view class="card section"><view class="section-head"><view class="rule-title">开课与教师</view></view><view class="offering" wx:for="{{course.offerings}}" wx:key="id"><view class="teacher-avatar">{{item.teacher_name_short}}</view><view class="offering-main"><view class="teacher-name">{{item.teacher_name}}</view><view class="micro">{{item.academic_year}} {{item.semester_label}} · {{item.campus}}</view></view><tag-chip text="{{item.review_count}}条评价" tone="green"></tag-chip></view></view>
-      <view class="card section"><view class="rule-title">常见标签</view><view class="tag-list"><tag-chip wx:for="{{course.tags}}" wx:key="*this" text="{{item}}"></tag-chip></view></view>
-      <view class="notice section"><view class="notice-mark">i</view><text>课程信息与评价仅供参考，请以当学期教学安排为准。</text></view>
+      <view class="metric-grid"><view class="metric"><text class="metric-value">{{course.ratings.show_aggregate ? course.ratings.average : '—'}}</text><text>综合评分</text></view><view class="metric"><text class="metric-value">{{course.review_count}}</text><text>公开评价</text></view><view class="metric"><text class="metric-value">{{course.resource_count}}</text><text>课程资料</text></view></view>
+      <view class="card section"><view class="rule-title">课程概览</view><view class="description">{{course.description || '暂未提供课程摘要。'}}</view></view>
+      <view class="card section"><view class="section-head"><view class="rule-title">评价教师分组</view></view><view class="offering" wx:for="{{course.teacher_groups}}" wx:key="group_key"><view class="teacher-avatar">{{item.teacher_name_short}}</view><view class="offering-main"><view class="teacher-name">{{item.teacher_name}}</view><view class="micro">来自已公开评价的教师分组</view></view><tag-chip text="{{item.review_count}}条评价" tone="green"></tag-chip></view><view class="micro" wx:if="{{!course.teacher_groups.length}}">暂时没有可展示的教师评价分组。</view></view>
+      <view class="card section"><view class="rule-title">常见标签</view><view class="tag-list" wx:if="{{course.tags.length}}"><tag-chip wx:for="{{course.tags}}" wx:key="*this" text="{{item}}"></tag-chip></view><view class="micro" wx:else>暂时没有可展示的课程标签。</view></view>
+      <view class="notice section"><view class="notice-mark">i</view><text>教师分组来自公开评价，不代表当前学期开课安排；请以教务系统为准。</text></view>
     </view>
   </block>
 </view>

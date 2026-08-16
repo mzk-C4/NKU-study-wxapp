@@ -1,0 +1,6 @@
+.detail-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); height: 90rpx; background: #FFFDF8; border-bottom: 1rpx solid #E8E2EC; }
+.detail-tab { position: relative; width: 100%; min-width: 0; height: 90rpx; margin: 0; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 0; color: #6F6972; background: transparent; box-sizing: border-box; text-align: center; font-size: 24rpx; line-height: normal; }
+.detail-tab::after { border: 0; }
+.detail-tab--pressed { background: #F3EDF7; }
+.detail-tab--active { color: #4B1F6F; background: transparent; opacity: 1; font-weight: 700; }
+.detail-tab--active::after { content: ""; position: absolute; top: auto; left: 34%; right: 34%; bottom: 0; width: auto; height: 6rpx; border: 0; border-radius: 6rpx 6rpx 0 0; background: #4B1F6F; transform: none; transform-origin: center; }

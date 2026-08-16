@@ -35,6 +35,7 @@
   "usingComponents": {
     "state-view": "components/state-view/index",
     "course-card": "components/course-card/index",
+    "course-detail-tabs": "components/course-detail-tabs/index",
     "tag-chip": "components/tag-chip/index"
   },
   "style": "v2",

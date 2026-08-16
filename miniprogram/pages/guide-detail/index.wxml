@@ -1,14 +1,7 @@
 <view class="page guide-detail">
-  <state-view loading="{{loading}}" error="{{error}}" bindretry="loadGuide"></state-view>
-  <block wx:if="{{guide}}">
-    <tag-chip text="{{guide.category}}" tone="gold"></tag-chip>
-    <view class="article-title">{{guide.title}}</view>
-    <view class="article-meta">约 {{guide.read_minutes}} 分钟 · 更新于 {{guide.updated_at}}</view>
-    <view class="article-lead">{{guide.summary}}</view>
-    <view class="rule-title">{{guide.section_title}}</view>
-    <view class="step" wx:for="{{guide.steps}}" wx:key="title"><view class="step-number">{{index + 1}}</view><view class="step-main"><view class="step-title">{{item.title}}</view><view class="step-text">{{item.body}}</view></view></view>
-    <view class="notice section"><view class="notice-mark">i</view><text>请以教务系统最新通知为准。发现内容有误，可以提交纠错。</text></view>
-    <view class="related-courses section" wx:if="{{guide.related_courses.length}}"><view class="section-title small-title">相关课程</view><view class="related-course" wx:for="{{guide.related_courses}}" wx:key="id" data-id="{{item.id}}" bindtap="openCourse"><text>{{item.name}}</text><text>›</text></view></view>
-    <button class="button button--secondary section" bindtap="reportCorrection">提交内容纠错</button>
-  </block>
+  <view class="card unavailable-card">
+    <view class="article-title">指南详情建设中</view>
+    <view class="article-lead">暂未连接线上指南服务，本页面不会发送网络请求。请以教务系统最新通知为准。</view>
+    <button class="button button--secondary section" bindtap="openGuides">返回指南页</button>
+  </view>
 </view>

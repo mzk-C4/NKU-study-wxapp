@@ -8,18 +8,19 @@
 
   <view class="quick-grid">
     <view class="quick" data-url="/pages/courses/index" bindtap="openPage"><view class="quick-icon">课</view><text>找课程</text></view>
-    <view class="quick" data-url="/pages/search/index?type=resource" bindtap="openPage"><view class="quick-icon quick-icon--gold">资</view><text>找资料</text></view>
-    <view class="quick" data-url="/pages/search/index?type=review" bindtap="openPage"><view class="quick-icon quick-icon--green">评</view><text>看评价</text></view>
+    <view class="quick" data-url="/pages/search/index?type=course" bindtap="openPage"><view class="quick-icon quick-icon--gold">资</view><text>按课找资料</text></view>
+    <view class="quick" data-url="/pages/search/index?type=course" bindtap="openPage"><view class="quick-icon quick-icon--green">评</view><text>查公开评价</text></view>
     <view class="quick" data-url="/pages/guides/index" bindtap="openPage"><view class="quick-icon quick-icon--red">指</view><text>选课指南</text></view>
   </view>
 
-  <state-view loading="{{loading}}" error="{{error}}" bindretry="loadHome"></state-view>
-  <block wx:if="{{!loading && !error && home}}">
+  <state-view loading="{{loading}}" error="{{error}}" empty="{{!loading && !error && !hasPublicContent}}" empty-text="暂时没有可展示的公开内容" bindretry="loadHome"></state-view>
+  <block wx:if="{{!loading && !error}}">
+    <view class="notice section" wx:if="{{home.announcement}}"><view class="notice-mark">i</view><text>{{home.announcement}}</text></view>
     <view class="season-card section" bindtap="openPage" data-url="/pages/guides/index">
-      <view class="season-title">选课季 · 开始前先确认</view>
-      <view class="season-text">培养方案、课程容量、时间冲突与退补选安排</view><view class="season-mark">选</view>
+      <view class="season-title">选课指南建设中</view>
+      <view class="season-text">暂未连接线上指南服务；选课规则请以教务系统最新通知为准</view><view class="season-mark">选</view>
     </view>
-    <view class="section">
+    <view class="section" wx:if="{{hotCourses.length}}">
       <view class="section-head"><view class="section-title">大家在看</view><view class="section-link" bindtap="openPage" data-url="/pages/courses/index">查看全部</view></view>
       <view class="course-list"><course-card wx:for="{{hotCourses}}" wx:key="id" course="{{item}}" bindselect="openCourse"></course-card></view>
     </view>

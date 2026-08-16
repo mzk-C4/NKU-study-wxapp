@@ -1,25 +1,8 @@
 <view class="page review-form-page">
-  <state-view loading="{{loading}}"></state-view>
-  <block wx:if="{{course}}">
-    <view class="card selected-course">
-      <view class="course-zone">{{course.category_code}}</view>
-      <view><view class="selected-name">{{course.name}}</view><view class="micro">评价会绑定具体教师与学期</view></view>
-    </view>
-    <view class="section"><view class="field">
-      <text class="field-label">任课教师与开课学期</text>
-      <picker range="{{course.offerings}}" range-key="display_name" value="{{offeringIndex}}" bindchange="chooseOffering"><view class="picker">{{offeringName}} <text>›</text></view></picker>
-    </view></view>
-    <view class="card section">
-      <view class="rule-title">课程感受</view>
-      <view class="rating-row" wx:for="{{ratingFields}}" wx:key="key">
-        <text>{{item.label}}</text>
-        <view class="rating-dots"><view wx:for="{{scoreOptions}}" wx:for-item="score" wx:key="*this" class="rating-dot {{item.value >= score ? 'rating-dot--active' : ''}}" data-field="{{item.key}}" data-score="{{score}}" bindtap="setScore"></view></view>
-        <b>{{item.value || '—'}}</b>
-      </view>
-    </view>
-    <view class="section"><text class="field-label">选择印象标签</text><view class="tag-options"><view wx:for="{{tagOptions}}" wx:key="text" class="chip {{item.selected ? 'chip--active' : ''}}" data-tag="{{item.text}}" bindtap="toggleTag">{{item.text}}</view></view></view>
-    <view class="field section"><text class="field-label">评价内容</text><textarea class="textarea review-textarea" maxlength="800" placeholder="说说课堂节奏、考核方式和学习建议（至少20字）" value="{{body}}" bindinput="inputBody"></textarea></view>
-    <view class="anonymous-row"><view><view class="anonymous-title">匿名发布</view><view class="micro">公开页面不会显示微信信息</view></view><switch color="#4B1F6F" checked="{{anonymous}}" bindchange="toggleAnonymous"></switch></view>
-    <button class="button button--primary section" loading="{{submitting}}" disabled="{{submitting}}" bindtap="submit">提交审核</button>
-  </block>
+  <view class="card unavailable-card">
+    <view class="section-title">匿名评价提交暂未开放</view>
+    <view class="unavailable-text">生产 owner 虽已声明写入契约，但客户端仍在等待写入安全、限流、审核和错误响应证据。本页面不会发送评价请求。</view>
+    <view class="notice section"><view class="notice-mark">i</view><text>公开评价仍可在课程详情中只读浏览。</text></view>
+    <button class="button button--secondary section" bindtap="goBack">返回课程评价</button>
+  </view>
 </view>
