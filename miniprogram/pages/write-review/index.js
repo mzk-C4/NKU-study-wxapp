@@ -1,66 +1,45 @@
-const api = require('../../utils/request')
+const { publicApi } = require('../../services/public-api')
 
-const ratingLabels = {
-  difficulty: '课程难度',
-  workload: '作业量',
-  gain: '收获程度',
-  recommend: '推荐程度'
-}
-
-function buildRatingFields(scores) {
-  return Object.keys(ratingLabels).map(key => ({ key, label: ratingLabels[key], value: scores[key] || 0 }))
-}
-
-Page({
+function createWriteReviewPage(api = publicApi) {
+  return {
   data: {
     courseId: '', loading: true, submitting: false, course: null,
-    offeringIndex: -1, offeringName: '请选择开课实例',
-    scoreOptions: [1, 2, 3, 4, 5],
-    scores: { difficulty: 0, workload: 0, gain: 0, recommend: 0 },
-    ratingFields: buildRatingFields({}),
-    tagOptions: ['讲解清楚', '作业偏多', '考试常规', '需要预习', '资料齐全', '适合自学'].map(text => ({ text, selected: false })),
-    selectedTags: [], body: '', bodyLength: 0
+    error: '',
+    teacher: '', scoreOptions: [1, 2, 3, 4, 5], rating: 0,
+    tagOptions: [],
+    selectedTags: [], body: '', anonymous: true
   },
   onLoad(options) { this.setData({ courseId: options.course_id || '' }); this.prepare() },
   async prepare() {
+    this.setData({ loading: true, error: '' })
     try {
-      await getApp().ensureLogin()
-      const course = await api.get(`/courses/${this.data.courseId}`)
-      const offeringIndex = course.offerings.length === 1 ? 0 : -1
-      this.setData({ course, offeringIndex, offeringName: offeringIndex === 0 ? course.offerings[0].display_name : '请选择开课实例', loading: false })
+      const course = await api.getCourse(this.data.courseId)
+      const groups = await api.getCourseReviewGroups(course)
+      const tagOptions = [...new Set(groups.flatMap(group => (group.items || []).flatMap(review => review.tags)))].map(text => ({ text, selected: false }))
+      this.setData({ course, tagOptions, loading: false, error: '' })
     } catch (error) {
-      this.setData({ loading: false })
-      wx.showModal({ title: '暂时无法评价', content: error.message, showCancel: false })
+      this.setData({ loading: false, error: error.message || '暂时无法加载评价页面' })
     }
   },
-  chooseOffering(event) {
-    const offeringIndex = Number(event.detail.value)
-    this.setData({ offeringIndex, offeringName: this.data.course.offerings[offeringIndex].display_name })
-  },
-  setScore(event) {
-    const field = event.currentTarget.dataset.field
-    const scores = { ...this.data.scores, [field]: Number(event.currentTarget.dataset.score) }
-    this.setData({ scores, ratingFields: buildRatingFields(scores) })
-  },
+  inputTeacher(event) { this.setData({ teacher: event.detail.value }) },
+  chooseTeacher(event) { this.setData({ teacher: event.currentTarget.dataset.teacher }) },
+  setRating(event) { this.setData({ rating: Number(event.currentTarget.dataset.score) }) },
   toggleTag(event) {
     const tag = event.currentTarget.dataset.tag
-    if (!this.data.selectedTags.includes(tag) && this.data.selectedTags.length >= 5) {
-      wx.showToast({ title: '最多选择 5 个标签', icon: 'none' })
-      return
-    }
     const selectedTags = this.data.selectedTags.includes(tag) ? this.data.selectedTags.filter(item => item !== tag) : [...this.data.selectedTags, tag]
     this.setData({ selectedTags, tagOptions: this.data.tagOptions.map(item => ({ ...item, selected: selectedTags.includes(item.text) })) })
   },
-  inputBody(event) { this.setData({ body: event.detail.value, bodyLength: event.detail.value.length }) },
+  inputBody(event) { this.setData({ body: event.detail.value }) },
+  toggleAnonymous(event) { this.setData({ anonymous: event.detail.value }) },
   async submit() {
-    const { course, offeringIndex, scores, selectedTags, body } = this.data
-    if (offeringIndex < 0 || Object.values(scores).some(value => !value) || body.trim().length < 20) {
-      wx.showToast({ title: '请选择教师、完成评分并填写至少20字', icon: 'none' })
+    const { course, teacher, rating, selectedTags, body, anonymous } = this.data
+    if (!teacher.trim() || !rating || body.trim().length < 20) {
+      wx.showToast({ title: '请填写教师、完成评分并填写至少 20 字', icon: 'none' })
       return
     }
     this.setData({ submitting: true })
     try {
-      await api.post('/reviews', { offering_id: course.offerings[offeringIndex].id, ...scores, tags: selectedTags, body: body.trim(), anonymous: true })
+      await api.submitReview({ course_id: course.id, teacher: teacher.trim(), rating, tags: selectedTags, body: body.trim(), anonymous })
       wx.showModal({ title: '提交成功', content: '评价已进入审核，公开页面将保持匿名。', showCancel: false, success: () => wx.navigateBack() })
     } catch (error) {
       wx.showToast({ title: error.message, icon: 'none' })
@@ -68,4 +47,9 @@ Page({
       this.setData({ submitting: false })
     }
   }
-})
+  }
+}
+
+Page(createWriteReviewPage())
+
+module.exports = { createWriteReviewPage }

@@ -2,7 +2,7 @@
 .search-input { flex: 1; }
 .search-input input { flex: 1; height: 100%; }
 .cancel { color: #4B1F6F; font-size: 24rpx; font-weight: 700; }
-.type-tabs { display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 18rpx; border-bottom: 1rpx solid #E8E2EC; }
+.type-tabs { display: grid; grid-template-columns: repeat(2, 1fr); margin-top: 18rpx; border-bottom: 1rpx solid #E8E2EC; }
 .type-tab { position: relative; padding: 24rpx 0 18rpx; text-align: center; color: #6F6972; font-size: 23rpx; }
 .type-tab--active { color: #4B1F6F; font-weight: 700; }
 .type-tab--active::after { content: ""; position: absolute; left: 35%; right: 35%; bottom: 0; height: 6rpx; border-radius: 3rpx; background: #4B1F6F; }

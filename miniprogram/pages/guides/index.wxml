@@ -1,9 +1,6 @@
 <view class="guides-page">
   <view class="guide-hero"><view class="guide-title">少走弯路，安心选课</view><view class="guide-sub">流程与规则请始终以教务系统最新通知为准</view></view>
   <view class="page guide-body">
-    <view class="guide-grid"><view wx:for="{{categories}}" wx:key="*this" wx:if="{{item !== '全部'}}" class="guide-category {{category === item ? 'guide-category--active' : ''}}" data-category="{{item}}" bindtap="chooseCategory"><view class="category-name">{{item}}</view><view class="micro">查看相关文章与流程</view></view></view>
-    <view class="section-head section"><view class="section-title">选课必读</view><view class="section-link" data-category="全部" bindtap="chooseCategory">全部文章</view></view>
-    <state-view loading="{{loading}}" error="{{error}}" empty="{{!loading && !error && !visibleGuides.length}}" empty-text="暂时没有指南" bindretry="loadGuides"></state-view>
-    <view class="card guide-list"><view class="guide-row" wx:for="{{visibleGuides}}" wx:key="id" data-id="{{item.id}}" bindtap="openGuide"><view class="guide-index">{{index + 1}}</view><view class="guide-main"><view class="guide-name">{{item.title}}</view><view class="micro">约 {{item.read_minutes}} 分钟 · 更新于 {{item.updated_at}}</view></view><view class="guide-arrow">›</view></view></view>
+    <view class="card section"><view class="section-title">小程序指南建设中</view><view class="micro section">当前服务端尚未开放指南接口，小程序不会请求不存在的数据，也不会用本地假数据替代网站内容。</view><button class="button button--secondary section" bindtap="openWebsite">查看说明</button></view>
   </view>
 </view>

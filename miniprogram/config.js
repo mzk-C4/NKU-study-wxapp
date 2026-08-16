@@ -1,5 +1,5 @@
 const API_BASE_URLS = Object.freeze({
-  develop: 'http://127.0.0.1:3000/api/v1',
+  develop: 'https://nkustudy.top/api/v1',
   trial: 'https://nkustudy.top/api/v1',
   release: 'https://nkustudy.top/api/v1'
 })

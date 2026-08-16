@@ -3,7 +3,7 @@
   <view class="page resource-body">
     <view class="chips"><view wx:for="{{types}}" wx:key="*this" class="chip {{type === item ? 'chip--active' : ''}}" data-type="{{item}}" bindtap="chooseType">{{item}}</view></view>
     <state-view loading="{{loading}}" error="{{error}}" empty="{{!loading && !error && !visibleResources.length}}" empty-text="暂时还没有资料" bindretry="loadResources"></state-view>
-    <view class="resource-card" wx:for="{{visibleResources}}" wx:key="id" data-id="{{item.id}}" bindtap="openResource"><view class="file-icon">{{item.extension}}</view><view class="resource-main"><view class="resource-title">{{item.title}}</view><view class="micro">{{item.type}} · {{item.extension}} · {{item.size_label}} · {{item.term_label}}</view><view class="resource-foot"><text class="link-ok">✓ 链接正常</text><text class="open-link">打开网盘</text></view></view></view>
+    <view class="resource-card" wx:for="{{visibleResources}}" wx:key="id" data-id="{{item.id}}" bindtap="openResource"><view class="file-icon">{{item.extension}}</view><view class="resource-main"><view class="resource-title">{{item.title}}</view><view class="micro">{{item.section}} · {{item.extension}} · {{item.size_label}} · {{item.term_label}}</view><view class="micro" wx:if="{{item.description}}">{{item.description}}</view><view class="resource-foot"><text class="link-ok">服务器直链</text><text class="open-link">下载并打开</text></view></view></view>
     <view class="empty-space"></view>
   </view>
   <view class="sticky-footer"><button class="button button--primary" bindtap="submitResource">分享这门课的资料</button></view>

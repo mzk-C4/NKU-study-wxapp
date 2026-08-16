@@ -1,36 +1,20 @@
-const api = require('../../utils/request')
-const auth = require('../../utils/auth')
+const { publicApi } = require('../../services/public-api')
 
 Page({
   data: { id: '', loading: true, error: '', course: null, favorite: false },
   onLoad(options) { this.setData({ id: options.id || '' }); this.loadCourse() },
-  onShow() { if (this.data.id) this.refreshFavorite() },
 
   async loadCourse() {
     if (!this.data.id) return this.setData({ loading: false, error: '缺少课程编号' })
     this.setData({ loading: true, error: '' })
     try {
-      const course = await api.get(`/courses/${this.data.id}`)
+      const course = await publicApi.getCourse(this.data.id)
       const history = wx.getStorageSync('browse_history') || []
       const next = [course, ...history.filter(item => item.id !== course.id)].slice(0, 20)
       wx.setStorageSync('browse_history', next)
       this.setData({ course, loading: false })
       wx.setNavigationBarTitle({ title: course.name })
-      this.refreshFavorite()
     } catch (error) { this.setData({ loading: false, error: error.message }) }
-  },
-
-  async refreshFavorite() {
-    if (!auth.getStoredUser()) {
-      this.setData({ favorite: false })
-      return
-    }
-    try {
-      const data = await api.get('/me/favorites')
-      this.setData({ favorite: data.items.some(item => item.id === this.data.id) })
-    } catch (_) {
-      this.setData({ favorite: false })
-    }
   },
 
   openTab(event) {
@@ -39,13 +23,5 @@ Page({
     if (tab === 'reviews') wx.redirectTo({ url: `/pages/course-reviews/index?id=${this.data.id}` })
   },
 
-  async toggleFavorite() {
-    try {
-      await getApp().ensureLogin()
-      if (this.data.favorite) await api.delete(`/favorites/${this.data.id}`)
-      else await api.post('/favorites', { course_id: this.data.id })
-      this.setData({ favorite: !this.data.favorite })
-      wx.showToast({ title: this.data.favorite ? '已加入收藏' : '已取消收藏' })
-    } catch (error) { wx.showToast({ title: error.message, icon: 'none' }) }
-  }
+  toggleFavorite() { wx.showToast({ title: '收藏功能将在登录上线后开放', icon: 'none' }) }
 })

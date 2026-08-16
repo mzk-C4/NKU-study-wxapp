@@ -1,9 +1,8 @@
 <view class="page search-page">
-  <view class="search-row"><view class="search-box search-input"><view class="search-icon"></view><input value="{{query}}" placeholder="搜索课程、教师、资料或指南" bindinput="input" bindconfirm="submit" focus="{{true}}"/></view><text class="cancel" bindtap="clear">清除</text></view>
+  <view class="search-row"><view class="search-box search-input"><view class="search-icon"></view><input value="{{query}}" placeholder="搜索课程、教师或服务器标签" bindinput="input" bindconfirm="submit" focus="{{true}}"/></view><text class="cancel" bindtap="clear">清除</text></view>
   <view class="type-tabs"><view wx:for="{{types}}" wx:key="key" class="type-tab {{type === item.key ? 'type-tab--active' : ''}}" data-type="{{item.key}}" bindtap="chooseType">{{item.label}} {{item.count}}</view></view>
-  <view class="chips section"><view class="chip chip--active">全部</view><view class="chip">A–E 分类</view><view class="chip">教师</view><view class="chip">学期</view></view>
   <view class="section-head section"><view class="micro">找到 {{results.length}} 条当前类型结果</view><view class="section-link">筛选</view></view>
-  <state-view loading="{{loading}}" error="{{error}}" empty="{{!loading && !error && !results.length}}" empty-text="没有找到相关内容" bindretry="loadIndex"></state-view>
-  <view class="result-card" wx:for="{{results}}" wx:key="id" data-item="{{item}}" bindtap="openResult"><view class="result-zone">{{item.badge || item.type_label}}</view><view class="result-main"><rich-text class="result-name" nodes="{{item.highlighted_name}}"></rich-text><view class="micro">{{item.subtitle}}</view><view class="result-tags"><tag-chip wx:for="{{item.tags}}" wx:for-item="tag" wx:key="*this" text="{{tag}}"></tag-chip></view></view><view class="result-arrow">›</view></view>
-  <view class="notice section" wx:if="{{!loading}}"><view class="notice-mark">i</view><text>没有找到？试试课程简称或标签，也可以申请补充课程。</text></view>
+  <state-view loading="{{loading}}" error="{{error}}" empty="{{!loading && !error && !results.length}}" empty-text="没有找到相关内容" bindretry="loadResults"></state-view>
+  <view class="result-card" wx:for="{{results}}" wx:key="id" data-item="{{item}}" bindtap="openResult"><view class="result-zone">{{item.badge}}</view><view class="result-main"><view class="result-name">{{item.name}}</view><view class="micro">{{item.subtitle}}</view><view class="result-tags"><tag-chip wx:for="{{item.tags}}" wx:for-item="tag" wx:key="*this" text="{{tag}}"></tag-chip></view></view><view class="result-arrow">›</view></view>
+  <view class="notice section" wx:if="{{!loading}}"><view class="notice-mark">i</view><text>课程搜索由服务器完成；历史评价若未匹配当前课程，会明确标记“未匹配”。</text></view>
 </view>
