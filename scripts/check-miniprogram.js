@@ -57,8 +57,6 @@ for (const file of walk(miniRoot)) {
 
 const miniJavaScript = walk(miniRoot).filter(file => file.endsWith('.js')).map(file => fs.readFileSync(file, 'utf8')).join('\n')
 const unsupportedEndpointPatterns = [
-  /['"`]\/search-index/,
-  /['"`]\/guides(?:\/|['"`])/,
   /['"`]\/auth\/wechat/,
   /['"`]\/favorites(?:\/|['"`])/,
   /['"`]\/me\//,
@@ -70,8 +68,32 @@ const unsupportedEndpointPatterns = [
 for (const pattern of unsupportedEndpointPatterns) {
   if (pattern.test(miniJavaScript)) fail(`小程序仍包含未开放或管理端点：${pattern}`)
 }
-if (/\b(category|sort)\s*:/.test(miniJavaScript)) fail('课程请求中不得保留 category 或 sort 参数')
 if (/page_size\s*:\s*(?:10[1-9]|1[1-9]\d|[2-9]\d{2,})/.test(miniJavaScript)) fail('课程 page_size 不得超过 100')
+
+const runtimeJavaScript = walk(miniRoot).filter(file => file.endsWith('.js'))
+const publicApiOwner = path.join(miniRoot, 'services', 'public-api.js')
+const adapterOnlyReadEndpoints = [
+  ['搜索索引', /['"`]\/search-index(?:['"`?#])/],
+  ['指南读取', /['"`]\/guides(?:\/|\?|['"`])/]
+]
+for (const file of runtimeJavaScript) {
+  if (file === publicApiOwner) continue
+  const source = fs.readFileSync(file, 'utf8')
+  for (const [name, pattern] of adapterOnlyReadEndpoints) {
+    if (pattern.test(source)) fail(`${name}路径只能由 public-api adapter 持有：${path.relative(root, file)}`)
+  }
+}
+
+const pageJavaScript = [path.join(miniRoot, 'pages'), path.join(miniRoot, 'components')].flatMap(walk).filter(file => file.endsWith('.js'))
+const directPublicPath = /['"`]\/(?:health|home|search-index(?:\/|['"`])|guides(?:\/|['"`])|courses(?:\/|['"`])|review-groups(?:\/|['"`]))/
+for (const file of pageJavaScript) {
+  const source = fs.readFileSync(file, 'utf8')
+  if (directPublicPath.test(source)) fail(`页面或组件不得直接拼接生产公开路径：${path.relative(root, file)}`)
+  if (/utils[\\/]request(?:['"`]|$)/.test(source)) fail(`页面或组件必须通过 public-api adapter 请求：${path.relative(root, file)}`)
+  if (/\bwx\.request\s*\(/.test(source)) fail(`页面或组件不得直接调用 wx.request：${path.relative(root, file)}`)
+}
+
+if (!fs.existsSync(path.join(miniRoot, 'lib', 'fuse.js'))) fail('缺少本地 Fuse.js 搜索库')
 
 const miniConfig = require(path.join(miniRoot, 'config.js'))
 const developApiBaseUrl = miniConfig.resolveApiBaseUrl('develop')

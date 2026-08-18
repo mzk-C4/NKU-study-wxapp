@@ -5,7 +5,7 @@
 | 服务器公开字段 | 小程序用途 |
 |---|---|
 | `course.id` | 不可变课程 UID；详情、收藏未来关联键 |
-| `name` / `description` | 课程标题与简介 |
+| `name` / `short_name` / `aliases` / `description` | 课程标题、服务端简称/别名与简介；客户端不猜简称 |
 | `group` / `category_name` | 网站课程组，例如“通识选修课” |
 | `term` / `tags` / `assessment` | 原样展示与筛选 |
 | `teacher_groups` | 网站评价中的教师分组，不推导另一套教师安排 |
@@ -14,7 +14,12 @@
 | `resource.download_url` | 直接交给微信下载，不读取内部路径 |
 | `review-group.matched` | 历史评价是否精确匹配当前课程 |
 | `review.rating/tags/body` | 网站现有单评分、标签与正文 |
+| `search-index.id/type/name/...` | 同一版本的课程、教师、资料和指南索引；adapter 丢弃未知类型和不完整项目 |
+| `search-index.resource.course_id` | 资料搜索结果进入所属课程资料页，不请求独立资源详情 |
+| `guide.id/category/updated_at` | 稳定指南 ID、四类学习事务分类与更新时间 |
+| `guide.steps/related_courses` | 指南步骤与相关课程 UUID 导航 |
+| `guide.source_url/correction_url` | 仅保留公开 HTTPS 链接，页面只复制链接 |
 
 没有学年、校区字段。未匹配评价是网站正常历史数据：客户端显示 `matched=false`，不伪造课程或教师关联。评价投稿标签只复用该课程公开评价已经出现的标签；没有历史标签时允许不选。
 
-删除的旧客户端兼容包括 `category_code`、`scope`、`recommended_stage`、A–E 分类、四维评价、网盘分享字段和本地搜索索引。需要调整少量源数据时应在网站数据中一次性修正，而不是在小程序增加长期特例。
+删除的旧客户端兼容包括 `category_code`、`scope`、`recommended_stage`、A–E 分类、四维评价、网盘分享字段和本地硬编码搜索数据。正式搜索只使用生产 `/search-index` 快照；需要调整源数据时应在网站数据中一次性修正，而不是在小程序增加长期特例。

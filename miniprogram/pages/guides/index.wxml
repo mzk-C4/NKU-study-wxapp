@@ -1,6 +1,60 @@
 <view class="guides-page">
-  <view class="guide-hero"><view class="guide-title">少走弯路，安心选课</view><view class="guide-sub">流程与规则请始终以教务系统最新通知为准</view></view>
+  <view class="guide-hero">
+    <view class="guide-title">选课指南</view>
+    <view class="guide-sub">选课、培养方案、退补选与考试成绩学习事务</view>
+    <view class="guide-updated" wx:if="{{dataUpdatedAt}}">数据更新：{{dataUpdatedAt}}</view>
+  </view>
+
   <view class="page guide-body">
-    <view class="card section"><view class="section-title">小程序指南建设中</view><view class="micro section">当前服务端尚未开放指南接口，小程序不会请求不存在的数据，也不会用本地假数据替代网站内容。</view><button class="button button--secondary section" bindtap="openWebsite">查看说明</button></view>
+    <scroll-view class="category-scroll" scroll-x enable-flex>
+      <view class="category-list">
+        <button
+          wx:for="{{categories}}"
+          wx:key="label"
+          class="category-button {{category === item.value ? 'category-button--active' : ''}} {{item.unavailable ? 'category-button--unavailable' : ''}}"
+          data-category="{{item.value}}"
+          bindtap="chooseCategory"
+        >{{item.label}}</button>
+      </view>
+    </scroll-view>
+
+    <state-view
+      loading="{{loading}}"
+      error="{{error}}"
+      empty="{{isEmpty}}"
+      empty-text="当前分类暂无已发布指南"
+      bindretry="retry"
+    >
+      <view class="empty-help">请稍后再来查看，重要时间安排仍以教务系统通知为准。</view>
+    </state-view>
+
+    <view class="guide-list" wx:if="{{!loading && !error && guides.length}}">
+      <button
+        wx:for="{{guides}}"
+        wx:key="id"
+        class="guide-row"
+        data-id="{{item.id}}"
+        bindtap="openGuide"
+        hover-class="guide-row--pressed"
+      >
+        <view class="guide-main">
+          <view class="guide-name">{{item.title}}</view>
+          <view class="guide-summary" wx:if="{{item.summary}}">{{item.summary}}</view>
+          <view class="guide-meta">
+            <text class="guide-category-label">{{item.category_label}}</text>
+            <text>{{item.updated_label}}</text>
+          </view>
+          <view class="guide-scope" wx:if="{{item.applicable_scope}}">适用范围：{{item.applicable_scope}}</view>
+        </view>
+        <view class="guide-arrow">›</view>
+      </button>
+    </view>
+
+    <view class="load-more-state" wx:if="{{loadingMore}}">正在加载更多...</view>
+    <view class="load-more-error" wx:elif="{{loadMoreError}}">
+      <text>{{loadMoreError}}</text>
+      <button class="load-more-button" bindtap="retryLoadMore">重试</button>
+    </view>
+    <view class="load-more-state" wx:elif="{{guides.length && !hasMore}}">已显示全部指南</view>
   </view>
 </view>
