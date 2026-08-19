@@ -1,3 +1,4 @@
+const { reportVisit } = require('../../utils/visit-report')
 const { publicApi } = require('../../services/public-api')
 const navigation = require('../../utils/navigation')
 const { createRequestGeneration } = require('../../utils/request-generation')
@@ -8,7 +9,7 @@ Page({
     groups: ['全部'], group: '', termOptions: ['全部学期'], term: '', tagOptions: ['全部标签'], tag: '', assessmentOptions: ['全部考核'], assessment: ''
   },
   requestGeneration: createRequestGeneration(),
-  onLoad() { this.loadCourses() },
+  onLoad() { reportVisit('/mp/courses'); this.loadCourses() },
   onPullDownRefresh() { this.loadCourses().finally(() => wx.stopPullDownRefresh()) },
   onReachBottom() {
     if (!this.data.loading && !this.data.loadingMore && this.data.hasMore) this.loadCourses({ append: true })

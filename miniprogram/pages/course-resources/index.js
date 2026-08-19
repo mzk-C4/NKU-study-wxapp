@@ -1,9 +1,10 @@
+const { reportVisit } = require('../../utils/visit-report')
 const { publicApi } = require('../../services/public-api')
 const { downloadResource } = require('../../utils/resource-download')
 
 Page({
   data: { id: '', loading: true, error: '', course: null, resources: [], visibleResources: [], types: ['全部'], type: '全部' },
-  onLoad(options) { this.setData({ id: options.id || '' }); this.loadResources() },
+  onLoad(options) { reportVisit('/mp/course-resources'); this.setData({ id: options.id || '' }); this.loadResources() },
 
   async loadResources() {
     this.setData({ loading: true, error: '' })

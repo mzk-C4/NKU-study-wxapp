@@ -7,4 +7,27 @@
     <view class="card menu section"><view class="menu-row" bindtap="feedback"><text>意见反馈</text><text>›</text></view><view class="menu-row" bindtap="about"><text>关于 NKUStudy</text><text>›</text></view></view>
     <view class="profile-note"><view>微信手机号登录仅保留未来框架，当前不会发起登录请求</view><view>学生共建 · 非南开大学官方平台</view></view>
   </view>
+
+  <view class="about-mask" wx:if="{{aboutVisible}}" bindtap="closeAbout">
+    <view class="about-sheet" catchtap="noop">
+      <view class="about-head">
+        <view class="about-title">关于 NKUStudy</view>
+        <view class="about-close" bindtap="closeAbout">×</view>
+      </view>
+      <view class="about-lead">南开学生共建的课程资料与选课参考平台</view>
+      <view class="about-block">
+        <view class="about-label">数据来源</view>
+        <view class="about-text">课程、资料与评价来自 NKUStudy.top 及其授权数据源（如 NKUCS.ICU），随网站持续更新。</view>
+      </view>
+      <view class="about-block">
+        <view class="about-label">使用说明</view>
+        <view class="about-text">浏览课程与资料无需登录；写评价默认匿名，提交后进入网站现有审核流程。</view>
+      </view>
+      <view class="about-block">
+        <view class="about-label">免责声明</view>
+        <view class="about-text">本小程序为非官方学生项目，内容仅供参考，选课与考核信息请以教务系统为准。</view>
+      </view>
+      <view class="about-foot">学生共建 · 欢迎通过 NKUStudy.top 贡献课程资料与评价</view>
+    </view>
+  </view>
 </view>

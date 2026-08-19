@@ -12,6 +12,11 @@
 .metric-value { margin-bottom: 6rpx; color: #4B1F6F; font-family: Georgia, serif; font-size: 38rpx; font-weight: 700; }
 .rule-title { padding-left: 16rpx; border-left: 8rpx solid #D7A63C; font-size: 30rpx; font-weight: 700; }
 .description { margin-top: 20rpx; color: #4F4951; font-size: 24rpx; line-height: 1.7; }
+.md-line { margin-top: 10rpx; }
+.md-line:first-child { margin-top: 0; }
+.md-item { position: relative; padding-left: 26rpx; }
+.md-item::before { content: ""; position: absolute; left: 6rpx; top: 15rpx; width: 8rpx; height: 8rpx; border-radius: 50%; background: #D7A63C; }
+.md-link { color: #6B3A8E; text-decoration: underline; }
 .offering { display: flex; align-items: center; gap: 18rpx; padding: 22rpx 0; border-bottom: 1rpx solid #E8E2EC; }
 .offering:last-child { border-bottom: 0; }
 .teacher-avatar { width: 66rpx; height: 66rpx; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; border-radius: 50%; color: #FFFFFF; background: #4B1F6F; font-weight: 700; }

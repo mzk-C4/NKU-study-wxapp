@@ -1,8 +1,10 @@
+const { reportVisit } = require('../../utils/visit-report')
 const { publicApi } = require('../../services/public-api')
+const { parseMarkdown } = require('../../utils/markdown')
 
 Page({
-  data: { id: '', loading: true, error: '', course: null, favorite: false },
-  onLoad(options) { this.setData({ id: options.id || '' }); this.loadCourse() },
+  data: { id: '', loading: true, error: '', course: null, favorite: false, descriptionBlocks: [] },
+  onLoad(options) { reportVisit('/mp/course-overview'); this.setData({ id: options.id || '' }); this.loadCourse() },
 
   async loadCourse() {
     if (!this.data.id) return this.setData({ loading: false, error: '缺少课程编号' })
@@ -12,9 +14,18 @@ Page({
       const history = wx.getStorageSync('browse_history') || []
       const next = [course, ...history.filter(item => item.id !== course.id)].slice(0, 20)
       wx.setStorageSync('browse_history', next)
-      this.setData({ course, loading: false })
+      this.setData({ course, descriptionBlocks: parseMarkdown(course.description), loading: false })
       wx.setNavigationBarTitle({ title: course.name })
     } catch (error) { this.setData({ loading: false, error: error.message }) }
+  },
+
+  copyLink(event) {
+    const href = event.currentTarget.dataset.href
+    if (!href) return
+    wx.setClipboardData({
+      data: href,
+      success() { wx.showToast({ title: '链接已复制，请在浏览器打开', icon: 'none' }) }
+    })
   },
 
   openTab(event) {

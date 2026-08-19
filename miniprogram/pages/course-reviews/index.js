@@ -1,8 +1,9 @@
+const { reportVisit } = require('../../utils/visit-report')
 const { publicApi } = require('../../services/public-api')
 
 Page({
   data: { id: '', groupKey: '', loading: true, error: '', course: null, reviews: [], visibleReviews: [], teacherGroups: [], teacher: '', standaloneGroup: null },
-  onLoad(options) { this.setData({ id: options.id || '', groupKey: options.group_key || '' }); this.loadReviews() },
+  onLoad(options) { reportVisit('/mp/course-reviews'); this.setData({ id: options.id || '', groupKey: options.group_key || '' }); this.loadReviews() },
   async loadReviews() {
     this.setData({ loading: true, error: '' })
     try {
