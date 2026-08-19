@@ -17,8 +17,8 @@ Page({
         name: item.title,
         term: '近30天 ' + item.visits + ' 次浏览',
         group: '热门',
-        resource_count: null,
-        review_count: null
+        resource_count: item.resource_count,
+        review_count: item.review_count
       }))
       this.setData({ home, hotCourses: home.hot_courses || [], trending, latestUpdates: this.buildUpdates(home.latest_updates), loading: false })
     } catch (error) {
