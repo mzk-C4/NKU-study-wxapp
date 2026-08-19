@@ -64,5 +64,5 @@ test('public client has zero calls to unsupported or management endpoints', asyn
   await api.getCourseResources(fixtures.course.id)
   await api.getReviewGroups()
   const paths = transport.calls.map(call => call.path)
-  assert.equal(paths.some(path => /admin|search-index|guides|auth|favorites|submissions|reports|\/me\//.test(path)), false)
+  assert.equal(paths.some(path => /admin|auth|favorites|submissions|reports|\/me\//.test(path)), false)
 })

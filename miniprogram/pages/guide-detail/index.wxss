@@ -1,0 +1,50 @@
+.article-title { margin: 18rpx 0; font-size: 46rpx; line-height: 1.35; font-weight: 700; }
+.article-meta { display: flex; flex-wrap: wrap; gap: 14rpx; color: #6F6972; font-size: 21rpx; }
+.meta-category { color: #4B1F6F; font-weight: 700; }
+.article-lead {
+  margin: 30rpx 0;
+  padding: 24rpx;
+  border-left: 8rpx solid #D7A63C;
+  border-radius: 0 20rpx 20rpx 0;
+  background: #F8EFD9;
+  color: #5E471C;
+  font-size: 24rpx;
+  line-height: 1.7;
+}
+.scope-card { display: flex; gap: 24rpx; padding: 24rpx; border: 1rpx solid #E8E2EC; border-radius: 22rpx; background: #FFFDF8; }
+.scope-label { flex: 0 0 auto; color: #4B1F6F; font-weight: 700; }
+.scope-value { color: #5F5962; line-height: 1.55; }
+.rule-title { padding-left: 16rpx; border-left: 8rpx solid #D7A63C; font-size: 30rpx; font-weight: 700; }
+.step { display: grid; grid-template-columns: 54rpx 1fr; gap: 20rpx; margin-top: 26rpx; }
+.step-number { display: flex; align-items: center; justify-content: center; width: 54rpx; height: 54rpx; border-radius: 50%; color: #FFFFFF; background: #4B1F6F; font-weight: 700; }
+.step-title { margin-bottom: 6rpx; font-size: 26rpx; font-weight: 700; }
+.step-text { color: #5F5962; font-size: 23rpx; line-height: 1.7; white-space: pre-wrap; }
+.section-empty { margin-top: 22rpx; color: #817A84; font-size: 23rpx; }
+.related-courses { overflow: hidden; margin-top: 22rpx; border: 1rpx solid #E8E2EC; border-radius: 24rpx; background: #FFFDF8; }
+.related-course {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 88rpx;
+  margin: 0;
+  padding: 18rpx 24rpx;
+  border-bottom: 1rpx solid #E8E2EC;
+  border-radius: 0;
+  color: #211C24;
+  background: transparent;
+  font-size: 24rpx;
+  text-align: left;
+  line-height: 1.5;
+  box-sizing: border-box;
+}
+.related-course:last-child { border-bottom: 0; }
+.related-course--pressed { background: #F5F0F7; }
+.related-arrow { color: #817A84; font-size: 38rpx; }
+.source-card { padding: 26rpx; border: 1rpx solid #E8E2EC; border-radius: 24rpx; background: #FFFDF8; }
+.source-label { color: #6F6972; font-size: 22rpx; }
+.source-title { margin-top: 10rpx; font-size: 27rpx; font-weight: 700; }
+.link-button { height: 80rpx; margin: 22rpx 0 0; border-radius: 20rpx; color: #4B1F6F; background: #EFE8F4; font-size: 24rpx; line-height: 80rpx; }
+.correction-card { display: flex; flex-direction: column; align-items: stretch; gap: 20rpx; padding: 24rpx; border-radius: 22rpx; background: #F0EBF3; }
+.correction-help { margin-top: 8rpx; color: #6F6972; font-size: 21rpx; line-height: 1.5; }
+.link-button--compact { width: 100%; margin: 0; padding: 0 24rpx; box-sizing: border-box; }

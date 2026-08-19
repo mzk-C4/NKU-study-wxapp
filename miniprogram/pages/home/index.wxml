@@ -9,7 +9,7 @@
   <view class="quick-grid">
     <view class="quick" data-url="/pages/courses/index" bindtap="openPage"><view class="quick-icon">课</view><text>找课程</text></view>
     <view class="quick" data-url="/pages/courses/index" bindtap="openPage"><view class="quick-icon quick-icon--gold">资</view><text>找资料</text></view>
-    <view class="quick" data-url="/pages/search/index?type=review" bindtap="openPage"><view class="quick-icon quick-icon--green">评</view><text>看评价</text></view>
+    <view class="quick" data-url="/pages/courses/index" bindtap="openPage"><view class="quick-icon quick-icon--green">评</view><text>看评价</text></view>
     <view class="quick" data-url="/pages/guides/index" bindtap="openPage"><view class="quick-icon quick-icon--red">指</view><text>选课指南</text></view>
   </view>
 

@@ -8,6 +8,7 @@
     "pages/course-overview/index",
     "pages/course-resources/index",
     "pages/course-reviews/index",
+    "pages/guide-detail/index",
     "pages/submit-resource/index",
     "pages/write-review/index"
   ],
