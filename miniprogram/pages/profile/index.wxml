@@ -1,11 +1,22 @@
 <view class="profile-page">
-  <view class="profile-hero"><view class="profile-row"><view class="profile-avatar">N</view><view><view class="profile-name">你好，南开同学</view><view class="profile-sub">浏览课程、资料和评价无需登录</view></view></view><button class="login-button" loading="{{loading}}" bindtap="login">手机号登录建设中</button></view>
+  <view class="profile-hero"><view class="profile-row"><view class="profile-avatar">{{user ? (user.nickname ? user.nickname[0] : 'N') : 'N'}}</view><view><view class="profile-name">{{user ? (user.nickname || '微信用户') : '你好，南开同学'}}</view><view class="profile-sub">{{user ? '微信身份已登录，写评价自动匿名' : '浏览课程、资料和评价无需登录'}}</view></view></view><button wx:if="{{!user}}" class="login-button" loading="{{loading}}" bindtap="login">微信一键登录</button><button wx:else class="login-button" bindtap="logout">退出登录</button></view>
   <view class="page profile-body">
-    <view class="profile-stats"><view><b>{{history.length}}</b><text>本机浏览</text></view><view><b>—</b><text>收藏课程</text></view><view><b>—</b><text>我的贡献</text></view></view>
-    <view class="card menu section"><view class="menu-row" bindtap="unavailable"><text>我的收藏</text><text class="muted">{{favoriteLabel}} ›</text></view><view class="menu-row" bindtap="openSubmit"><text>我的投稿</text><text class="muted">{{submissionLabel}} ›</text></view><view class="menu-row" bindtap="unavailable"><text>我的评价</text><text class="muted">{{reviewLabel}} ›</text></view></view>
+    <view class="profile-stats"><view><b>{{history.length}}</b><text>本机浏览</text></view><view><b>{{user ? favorites.length : '—'}}</b><text>收藏课程</text></view><view><b>{{user ? reviews.length : '—'}}</b><text>我的评价</text></view></view>
+    <view class="section" wx:if="{{user}}">
+      <view class="chips"><view class="chip {{listTab === 'favorites' ? 'chip--active' : ''}}" data-tab="favorites" bindtap="switchList">我的收藏</view><view class="chip {{listTab === 'reviews' ? 'chip--active' : ''}}" data-tab="reviews" bindtap="switchList">我的评价</view></view>
+      <block wx:if="{{listTab === 'favorites'}}">
+        <view class="card history-row" wx:for="{{favorites}}" wx:key="course_id" data-id="{{item.course_id}}" bindtap="openFavorite"><view><view class="history-name">{{item.name}}</view><view class="micro">{{item.group || '分类待补充'}} · {{item.term || '学期待补充'}} · {{item.resource_count || 0}} 份资料</view></view><text>›</text></view>
+        <view class="empty-space" wx:if="{{!favorites.length}}"><text class="micro">还没有收藏，在课程资料页点☆收藏</text></view>
+      </block>
+      <block wx:else>
+        <view class="card history-row" wx:for="{{reviews}}" wx:key="id"><view><view class="history-name">{{item.course_title}} · {{item.teacher_name}}</view><view class="micro">{{item.created_at}} · {{item.status === 'pending' ? '待审' : (item.status === 'approved' ? '已通过' : (item.hidden ? '已隐藏' : item.status))}}</view><view class="micro" wx:if="{{item.body}}">{{item.body}}</view></view></view>
+        <view class="empty-space" wx:if="{{!reviews.length}}"><text class="micro">还没有写过评价</text></view>
+      </block>
+    </view>
+    <view class="card menu section" wx:if="{{!user}}"><view class="menu-row" bindtap="login"><text>我的收藏 / 我的评价</text><text class="muted">登录后开放 ›</text></view></view>
     <view class="section" wx:if="{{history.length}}"><view class="section-head"><view class="section-title">最近浏览</view></view><view class="card history-row" wx:for="{{history}}" wx:key="id" data-id="{{item.id}}" bindtap="openHistory"><view><view class="history-name">{{item.name}}</view><view class="micro">{{item.group || '分类待补充'}} · {{item.term || '学期待补充'}}</view></view><text>›</text></view></view>
     <view class="card menu section"><view class="menu-row" bindtap="feedback"><text>意见反馈</text><text>›</text></view><view class="menu-row" bindtap="about"><text>关于 NKUStudy</text><text>›</text></view></view>
-    <view class="profile-note"><view>微信手机号登录仅保留未来框架，当前不会发起登录请求</view><view>学生共建 · 非南开大学官方平台</view></view>
+    <view class="profile-note"><view>登录使用微信身份（openid），不收集手机号</view><view>学生共建 · 非南开大学官方平台</view></view>
   </view>
 
   <view class="about-mask" wx:if="{{aboutVisible}}" bindtap="closeAbout">

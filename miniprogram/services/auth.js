@@ -89,6 +89,10 @@ function authedPost(path, data) {
   return request.post(path, data, authHeader())
 }
 
+function authedDelete(path) {
+  return request.request(path, { method: 'DELETE', header: authHeader() })
+}
+
 module.exports = {
   login,
   ensureLogin,
@@ -98,5 +102,6 @@ module.exports = {
   getToken,
   getCachedUser,
   authedGet,
-  authedPost
+  authedPost,
+  authedDelete
 }

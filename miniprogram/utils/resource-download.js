@@ -12,6 +12,21 @@ function saveTemporaryFile(tempFilePath) {
   })
 }
 
+function downloadFailureModal(resource, detail) {
+  wx.showModal({
+    title: '下载失败',
+    content: `${detail}
+
+可以重试，或向管理员反馈该资源失效。`,
+    confirmText: '重试',
+    cancelText: '反馈失效',
+    success(result) {
+      if (result.confirm) downloadResource(resource)
+      else if (result.cancel && typeof resource?.onReport === 'function') resource.onReport(resource)
+    }
+  })
+}
+
 function downloadResource(resource) {
   if (!validDownloadUrl(resource?.download_url)) {
     wx.showModal({ title: '下载地址不可用', content: '服务器没有返回合法的 NKUStudy 资源地址。', showCancel: false })
@@ -24,7 +39,7 @@ function downloadResource(resource) {
     success(result) {
       wx.hideLoading()
       if (result.statusCode !== 200 || !result.tempFilePath) {
-        wx.showToast({ title: `下载失败（${result.statusCode || '未知'}）`, icon: 'none' })
+        downloadFailureModal(resource, `服务器返回 ${result.statusCode || '异常状态'}。`)
         return
       }
       wx.openDocument({
@@ -36,7 +51,7 @@ function downloadResource(resource) {
     },
     fail(error) {
       wx.hideLoading()
-      wx.showToast({ title: error.errMsg?.includes('domain') ? '请先配置资源下载合法域名' : '下载失败，请稍后重试', icon: 'none' })
+      downloadFailureModal(resource, error.errMsg?.includes('domain') ? '资源域名未配置为合法下载域名。' : '网络中断或超时。')
     }
   })
 }
