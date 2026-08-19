@@ -57,9 +57,6 @@ for (const file of walk(miniRoot)) {
 
 const miniJavaScript = walk(miniRoot).filter(file => file.endsWith('.js')).map(file => fs.readFileSync(file, 'utf8')).join('\n')
 const unsupportedEndpointPatterns = [
-  /['"`]\/auth\/wechat/,
-  /['"`]\/favorites(?:\/|['"`])/,
-  /['"`]\/me\//,
   /['"`]\/resource-submissions/,
   /['"`]\/resources\/\$\{/,
   /\/courses\/\$\{[^}]+\}\/reviews/,

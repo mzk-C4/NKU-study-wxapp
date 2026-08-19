@@ -1,33 +1,8 @@
 const { reportVisit } = require('../../utils/visit-report')
 const { publicApi } = require('../../services/public-api')
 const { downloadResource } = require('../../utils/resource-download')
+const { reportDeadLink } = require('../../utils/resource-report')
 const auth = require('../../services/auth')
-
-function reportDeadLink(courseName, resource) {
-  const ref = `${courseName} / ${resource.section || ''} / ${resource.title}`
-  wx.showModal({
-    title: '反馈资源失效',
-    editable: true,
-    placeholderText: '补充说明（可留空）',
-    content: '',
-    success(result) {
-      if (!result.confirm) return
-      wx.request({
-        url: 'https://nkustudy.top/feedback-api/submit',
-        method: 'POST',
-        header: { 'content-type': 'application/json' },
-        data: {
-          title: `资源失效：${resource.title}`,
-          content: (result.content || '').trim() || '下载失败，请检查该资源链接。',
-          type: 'content',
-          resourceRef: ref.slice(0, 200)
-        },
-        success: () => wx.showToast({ title: '已反馈，感谢', icon: 'success' }),
-        fail: () => wx.showToast({ title: '反馈发送失败', icon: 'none' })
-      })
-    }
-  })
-}
 
 Page({
   data: { id: '', loading: true, error: '', course: null, resources: [], visibleResources: [], types: ['全部'], type: '全部', favorite: false },
