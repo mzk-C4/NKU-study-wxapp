@@ -1,3 +1,4 @@
+const { reportVisit } = require('../../utils/visit-report')
 const publicApi = require('../../services/public-api')
 
 const PAGE_SIZE = 20
@@ -64,7 +65,7 @@ Page({
     dataUpdatedAt: ''
   },
 
-  onLoad() {
+  onLoad() { reportVisit('/mp/guides');
     this._isUnloaded = false
     this._requestId = 0
     return this.loadGuides()

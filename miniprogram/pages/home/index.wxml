@@ -24,9 +24,19 @@
       <state-view wx:if="{{hotCourses.length === 0}}" empty="{{true}}" emptyText="暂时没有热门课程"></state-view>
       <course-card wx:for="{{hotCourses}}" wx:key="id" course="{{item}}" bindselect="openCourse"></course-card>
     </view>
-    <view class="section" wx:if="{{home.latest_updates.length}}">
+    <view class="section" wx:if="{{latestUpdates.length}}">
       <view class="section-head"><view class="section-title">最近更新</view></view>
-      <view class="card update-row" wx:for="{{home.latest_updates}}" wx:key="id"><view class="update-dot"></view><view><view class="update-title">{{item.title}}</view><view class="micro">{{item.summary}}</view></view></view>
+      <view class="card update-row" wx:for="{{latestUpdates}}" wx:key="id" data-id="{{item.id}}" bindtap="openUpdate">
+        <view class="update-head">
+          <view class="update-title">{{item.title}}</view>
+          <view class="update-date" wx:if="{{item.updated}}">{{item.updated}}</view>
+        </view>
+        <view class="update-lead" wx:if="{{item.lead}}">{{item.lead}}</view>
+        <view class="update-points" wx:if="{{item.hasPoints}}">
+          <view class="update-point" wx:for="{{item.points}}" wx:key="id" wx:for-item="point"><view class="update-point-dot"></view><view class="update-point-text">{{point.text}}</view></view>
+        </view>
+        <view class="update-more">查看课程 ›</view>
+      </view>
     </view>
     <view class="notice section" wx:if="{{home.announcement}}"><view class="notice-mark">i</view><text>{{home.announcement}}</text></view>
     <view class="build-note">学生共建 · 非南开大学官方平台</view>

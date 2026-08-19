@@ -1,3 +1,4 @@
+const { reportVisit } = require('../../utils/visit-report')
 const publicApi = require('../../services/public-api')
 const navigation = require('../../utils/navigation')
 const { createSearchEngine, SEARCH_TYPES } = require('../../utils/search-engine')
@@ -128,7 +129,7 @@ Page({
   },
   searchTimer: null,
 
-  onLoad(options = {}) {
+  onLoad(options = {}) { reportVisit('/mp/search');
     this._isUnloaded = false
     this._requestId = 0
     this._indexRequestId = 0

@@ -1,3 +1,4 @@
+const { reportVisit } = require('../../utils/visit-report')
 const { publicApi } = require('../../services/public-api')
 
 function createWriteReviewPage(api = publicApi) {
@@ -9,7 +10,7 @@ function createWriteReviewPage(api = publicApi) {
     tagOptions: [],
     selectedTags: [], body: '', anonymous: true
   },
-  onLoad(options) { this.setData({ courseId: options.course_id || '' }); this.prepare() },
+  onLoad(options) { reportVisit('/mp/write-review'); this.setData({ courseId: options.course_id || '' }); this.prepare() },
   async prepare() {
     this.setData({ loading: true, error: '' })
     try {

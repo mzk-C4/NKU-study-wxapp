@@ -1,3 +1,4 @@
+const { reportVisit } = require('../../utils/visit-report')
 const publicApi = require('../../services/public-api')
 const navigation = require('../../utils/navigation')
 
@@ -56,7 +57,7 @@ Page({
     guide: null
   },
 
-  onLoad(options = {}) {
+  onLoad(options = {}) { reportVisit('/mp/guide-detail');
     this._isUnloaded = false
     this._requestId = 0
     const id = normalizeGuideId(options.id || options.guideId)

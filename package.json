@@ -12,10 +12,11 @@
     "test:contract": "node --test test/public-api-contract.test.js",
     "test:pages": "node --test test/page-state.test.js",
     "test:search-guide": "node --test test/api-config.test.js test/public-api.test.js test/search-page.test.js test/guide-pages.test.js",
+    "test:content": "node --test test/markdown.test.js test/visit-report.test.js",
     "verify:quick": "npm run check:miniprogram",
     "verify:local": "npm test",
     "verify:external": "node scripts/release-preflight.js",
-    "test": "npm run test:contract && npm run test:pages && npm run test:search-guide && npm run check:miniprogram"
+    "test": "npm run test:contract && npm run test:pages && npm run test:search-guide && npm run test:content && npm run check:miniprogram"
   },
   "engines": { "node": ">=18" }
 }
