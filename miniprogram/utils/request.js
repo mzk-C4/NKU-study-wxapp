@@ -38,6 +38,6 @@ function request(path, options = {}) {
 }
 
 module.exports = {
-  get(path, data) { return request(path, { data }) },
-  post(path, data) { return request(path, { method: 'POST', data }) }
+  get(path, data, header) { return request(path, { data, header }) },
+  post(path, data, header) { return request(path, { method: 'POST', data, header }) }
 }
