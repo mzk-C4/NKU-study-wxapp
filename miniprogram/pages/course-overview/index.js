@@ -3,6 +3,15 @@ const { publicApi } = require('../../services/public-api')
 const { parseMarkdown } = require('../../utils/markdown')
 
 Page({
+  onShareAppMessage() {
+    return {
+      title: `「${this.data.course?.name || 'NKUStudy 课程'}」- NKUStudy`,
+      path: `/pages/course-overview/index?id=${this.data.id}`
+    }
+  },
+  onShareTimeline() {
+    return { title: 'NKUStudy · 南开课程资料导航' }
+  },
   data: { id: '', loading: true, error: '', course: null, favorite: false, descriptionBlocks: [] },
   onLoad(options) { reportVisit('/mp/course-overview'); this.setData({ id: options.id || '' }); this.loadCourse() },
 

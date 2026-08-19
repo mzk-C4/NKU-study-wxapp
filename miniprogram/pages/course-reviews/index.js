@@ -2,6 +2,15 @@ const { reportVisit } = require('../../utils/visit-report')
 const { publicApi } = require('../../services/public-api')
 
 Page({
+  onShareAppMessage() {
+    return {
+      title: `「${this.data.course?.name ? `${this.data.course.name}的评价` : 'NKUStudy 课程评价'}」- NKUStudy`,
+      path: `/pages/course-overview/index?id=${this.data.id}`
+    }
+  },
+  onShareTimeline() {
+    return { title: 'NKUStudy · 南开课程资料导航' }
+  },
   data: { id: '', groupKey: '', loading: true, error: '', course: null, reviews: [], visibleReviews: [], teacherGroups: [], teacher: '', standaloneGroup: null },
   onLoad(options) { reportVisit('/mp/course-reviews'); this.setData({ id: options.id || '', groupKey: options.group_key || '' }); this.loadReviews() },
   async loadReviews() {

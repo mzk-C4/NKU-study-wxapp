@@ -19,6 +19,10 @@
       <view class="season-title">选课季 · 开始前先确认</view>
       <view class="season-text">小程序指南建设中，请以教务系统最新通知为准</view><view class="season-mark">选</view>
     </view>
+    <view class="section" wx:if="{{trending.length}}">
+      <view class="section-head"><view class="section-title">热门课程 · 近 30 天</view></view>
+      <course-card wx:for="{{trending}}" wx:key="id" course="{{item}}" bindselect="openCourse"></course-card>
+    </view>
     <view class="section">
       <view class="section-head"><view class="section-title">大家在看</view><view class="section-link" bindtap="openPage" data-url="/pages/courses/index">查看全部</view></view>
       <state-view wx:if="{{hotCourses.length === 0}}" empty="{{true}}" emptyText="暂时没有热门课程"></state-view>

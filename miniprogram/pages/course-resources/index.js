@@ -5,6 +5,15 @@ const { reportDeadLink } = require('../../utils/resource-report')
 const auth = require('../../services/auth')
 
 Page({
+  onShareAppMessage() {
+    return {
+      title: `「${this.data.course?.name || 'NKUStudy 课程资料'}」- NKUStudy`,
+      path: `/pages/course-overview/index?id=${this.data.id}`
+    }
+  },
+  onShareTimeline() {
+    return { title: 'NKUStudy · 南开课程资料导航' }
+  },
   data: { id: '', loading: true, error: '', course: null, resources: [], visibleResources: [], types: ['全部'], type: '全部', favorite: false },
   onLoad(options) { reportVisit('/mp/course-resources'); this.setData({ id: options.id || '' }); this.loadResources() },
 

@@ -3,7 +3,7 @@ const { publicApi } = require('../../services/public-api')
 const navigation = require('../../utils/navigation')
 
 Page({
-  data: { loading: true, error: '', home: null, hotCourses: [], latestUpdates: [] },
+  data: { loading: true, error: '', home: null, hotCourses: [], trending: [], latestUpdates: [] },
 
   onLoad() { reportVisit('/mp/home'); this.loadHome() },
   onPullDownRefresh() { this.loadHome().finally(() => wx.stopPullDownRefresh()) },
@@ -12,7 +12,15 @@ Page({
     this.setData({ loading: true, error: '' })
     try {
       const home = await publicApi.getHome()
-      this.setData({ home, hotCourses: home.hot_courses || [], latestUpdates: this.buildUpdates(home.latest_updates), loading: false })
+      const trending = (home.trending || []).map(item => ({
+        id: item.id,
+        name: item.title,
+        term: '近30天 ' + item.visits + ' 次浏览',
+        group: '热门',
+        resource_count: null,
+        review_count: null
+      }))
+      this.setData({ home, hotCourses: home.hot_courses || [], trending, latestUpdates: this.buildUpdates(home.latest_updates), loading: false })
     } catch (error) {
       this.setData({ loading: false, error: error.message })
     }
