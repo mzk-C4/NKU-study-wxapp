@@ -1,4 +1,4 @@
 <view class="page submit-page">
   <view class="notice"><view class="notice-mark">i</view><text>资料投稿与微信手机号登录将在后续阶段开放。</text></view>
-  <view class="card section"><view class="section-title">投稿功能建设中</view><view class="micro section">现阶段小程序不会提交或暂存服务器数据。管理人员继续在网站后台统一处理内容。</view><button class="button button--secondary section" bindtap="openWebsiteHelp">如何提交资料</button></view>
+  <view class="card section"><view class="section-title">投稿功能建设中</view><view class="micro section">现阶段小程序不会提交或保存线上投稿。内容仍由网站后台统一处理。</view><button class="button button--secondary section" bindtap="openWebsiteHelp">如何提交资料</button></view>
 </view>
