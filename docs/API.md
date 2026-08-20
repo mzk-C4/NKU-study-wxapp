@@ -29,6 +29,14 @@
 | GET | `/courses/{courseUid}/resources` | 课程资源与 R2 下载地址 |
 | GET | `/review-groups` | 网站评价分组；未匹配分组正常保留 |
 | GET | `/review-groups/{groupKey}` | 评价分组详情 |
+| POST | `/auth/wechat` | `wx.login` code 换取 30 天 Bearer Token |
+| POST | `/auth/logout` | 注销当前 Bearer Token |
+| GET | `/me` | 当前小程序用户信息 |
+| POST | `/me/profile` | 更新昵称与 HTTPS 头像地址 |
+| GET | `/me/favorites` | 我的收藏课程列表 |
+| GET | `/me/reviews` | 我的评价与审核状态 |
+| POST | `/favorites` | 收藏课程 |
+| DELETE | `/favorites/{courseUid}` | 取消收藏课程 |
 | POST | `/reviews` | 匿名评价投稿，进入网站现有审核队列 |
 
 所有动态路径参数必须 URL 编码。页面只能通过 `miniprogram/services/public-api.js` 调用公开接口。
@@ -53,6 +61,18 @@
 ```
 
 评价只使用单一 `rating`、`body` 和 `tags`，不恢复旧多维评分。
+
+## 微信登录与个人数据
+
+个人主体小程序不使用手机号授权。客户端调用 `wx.login()` 获取一次性 code，再提交 `{ "code": "..." }` 到 `/auth/wechat`。服务器返回：
+
+```json
+{ "token": "...", "expires_in": 2592000, "user": { "id": 1, "nickname": "", "avatar_url": "" } }
+```
+
+Token 仅保存于微信本地存储，受保护请求使用 `Authorization: Bearer <token>`；过期或收到 401 时立即清除。openid 与 AppSecret 不进入响应、日志或客户端仓库。昵称最多 32 字符，头像只接受公开 HTTPS 地址。
+
+`GET /me/favorites` 与 `GET /me/reviews` 使用 `page/page_size`，`page_size` 不超过 100。收藏正文为 `{ "course_id": "immutable-course-uuid" }`。已登录用户提交评价时携带可选 Token，因此公开内容仍匿名，但可在“我的评价”查看审核状态。
 
 ## 四类搜索
 
@@ -95,11 +115,9 @@ Fuse 权重为 `name 0.30 / short_name 0.20 / aliases 0.15 / tags 0.15 / teacher
 
 ## 明确不调用
 
-本阶段不调用：
+仍不调用：
 
-- `/auth/wechat`
-- `/favorites*`
-- `/me/*`
+- `/auth/phone`
 - `/resource-submissions`
 - `/resources/{id}`
 - `/resources/{id}/reports`
