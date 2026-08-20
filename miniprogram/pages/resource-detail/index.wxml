@@ -1,0 +1,37 @@
+<view class="page">
+  <state-view loading="{{loading}}" error="{{error}}" empty="{{!loading && !error && !resource}}" empty-text="资源不存在" bindretry="loadDetail"></state-view>
+
+  <block wx:if="{{!loading && !error && resource}}">
+    <view class="detail-icon">{{resource.extension || 'FILE'}}</view>
+    <view class="detail-title">{{resource.title}}</view>
+    <view class="micro detail-sub">{{resource.section}} · {{resource.type || ''}}</view>
+
+    <view class="card info-list">
+      <view class="info-row"><text class="info-key">文件格式</text><text class="info-val">{{resource.extension || '未知'}} · {{resource.size_label || '未知大小'}}</text></view>
+      <view class="info-row"><text class="info-key">适用学期</text><text class="info-val">{{resource.term_label || '未指定'}}</text></view>
+      <view class="info-row"><text class="info-key">所属分类</text><text class="info-val">{{resource.section || '未分类'}}</text></view>
+      <view class="info-row"><text class="info-key">资源类型</text><text class="info-val">{{resource.type || '未指定'}}</text></view>
+      <view class="info-row"><text class="info-key">资源描述</text><text class="info-val">{{resource.description || '无'}}</text></view>
+    </view>
+
+    <view class="notice"><view class="notice-mark">i</view><text>点击下方按钮可下载或复制链接。链接来自 NKUStudy 资源服务器，可直接访问。</text></view>
+
+    <button class="button button--primary" bindtap="download">下载并打开</button>
+    <button class="button button--ghost copy-btn" bindtap="copyLink">复制链接</button>
+    <button class="button button--ghost report-btn" bindtap="reportExpired">反馈链接失效</button>
+
+    <view wx:if="{{related.length}}" class="section">
+      <view class="section-title">同课程其他资料</view>
+      <view class="card related-list">
+        <view class="related-row" wx:for="{{related}}" wx:key="id" data-id="{{item.id}}" bindtap="openRelated">
+          <view class="related-icon">{{item.extension || '?'}}</view>
+          <view class="related-info">
+            <text class="related-title">{{item.title}}</text>
+            <text class="micro">{{item.size_label}} · {{item.section}}</text>
+          </view>
+          <text class="related-arrow">›</text>
+        </view>
+      </view>
+    </view>
+  </block>
+</view>

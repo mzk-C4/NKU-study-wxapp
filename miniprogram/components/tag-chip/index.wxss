@@ -3,3 +3,11 @@
 .tag--gold { color: #795514; background: #F8EFD9; }
 .tag--green { color: #27865F; background: #E8F5EF; }
 .tag--gray { color: #6F6972; background: #F0EDF1; }
+
+/* FB-18: 暗色模式 */
+@media (prefers-color-scheme: dark) {
+  .tag--purple { background: #3D2A4E; color: #C9B8D8; }
+  .tag--gold { background: #3D3520; color: #D4BC8A; }
+  .tag--green { background: #1E3028; color: #8BC4A8; }
+  .tag--gray { background: #2D2838; color: #8B8090; }
+}

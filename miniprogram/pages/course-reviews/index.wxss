@@ -10,3 +10,17 @@
 .review-card { margin-top: 20rpx; padding: 26rpx; border: 1rpx solid #E8E2EC; border-radius: 26rpx; background: #FFFDF8; }
 .review-head { display: flex; align-items: center; gap: 14rpx; }.review-avatar { width: 56rpx; height: 56rpx; display: flex; align-items: center; justify-content: center; border-radius: 50%; color: #2B123E; background: #D7A63C; font-weight: 700; }.review-user { flex: 1; }
 .review-tags { display: flex; flex-wrap: wrap; gap: 8rpx; margin-top: 18rpx; }.review-body { margin-top: 18rpx; color: #484248; font-size: 24rpx; line-height: 1.7; }.review-foot { display: flex; justify-content: space-between; margin-top: 18rpx; color: #6F6972; font-size: 20rpx; }
+/* FB-18: 暗色模式 */
+@media (prefers-color-scheme: dark) {
+  .detail-tabs { background: #211C28; border-color: #2D2838; }
+  .detail-tab { color: #8B8090; }
+  .score-number { color: #C9B8D8; }
+  .score-bars { color: #8B8090; }
+  .score-bars b { color: #C9B8D8; }
+  .filter-picker { background: #211C28; border-color: #2D2838; }
+  .filter-picker text { color: #8B8090; }
+  .filter-picker b { color: #C9B8D8; }
+  .review-card { background: #211C28; border-color: #2D2838; }
+  .review-body { color: #A8A0B0; }
+  .review-foot { color: #8B8090; }
+}

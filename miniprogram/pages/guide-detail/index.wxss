@@ -48,3 +48,19 @@
 .correction-card { display: flex; flex-direction: column; align-items: stretch; gap: 20rpx; padding: 24rpx; border-radius: 22rpx; background: #F0EBF3; }
 .correction-help { margin-top: 8rpx; color: #6F6972; font-size: 21rpx; line-height: 1.5; }
 .link-button--compact { width: 100%; margin: 0; padding: 0 24rpx; box-sizing: border-box; }
+
+/* FB-18: 暗色模式 */
+@media (prefers-color-scheme: dark) {
+  .article-title { color: #E0DCE4; }
+  .article-meta { color: #8B8090; }
+  .meta-category { color: #C9B8D8; }
+  .article-lead { background: #2D2818; color: #D4BC8A; border-left-color: #D7A63C; }
+  .scope-card { background: #211C28; border-color: #2D2838; }
+  .scope-value { color: #A8A0B0; }
+  .step-text { color: #A8A0B0; }
+  .related-courses { background: #211C28; border-color: #2D2838; }
+  .related-course { color: #E0DCE4; border-bottom-color: #2D2838; }
+  .related-course--pressed { background: #2D2438; }
+  .source-card { background: #211C28; border-color: #2D2838; }
+  .link-button { background: #2D2438; color: #C9B8D8; }
+}

@@ -38,3 +38,18 @@
 .result-arrow { color: #817A84; font-size: 44rpx; }
 .load-more { padding: 30rpx 0 10rpx; text-align: center; color: #817A84; font-size: 22rpx; }
 .load-more-retry { min-height: 80rpx; margin: 10rpx auto 0; padding: 0 24rpx; border: 0; color: #4B1F6F; background: transparent; font-size: 22rpx; line-height: 80rpx; }
+
+/* FB-18: 暗色模式 */
+@media (prefers-color-scheme: dark) {
+  .search-clear { color: #8B8090; background: #2D2838; }
+  .filter-panel { background: #211C28; border-color: #2D2838; }
+  .filter-title { color: #E0DCE4; }
+  .reset-filters { color: #C9B8D8; }
+  .filter { background: #211C28; border-color: #2D2838; color: #8B8090; }
+  .active-filter { background: #211C28; border-color: #2D2838; color: #C9B8D8; }
+  .type-tab { background: #211C28; border-color: #2D2838; color: #8B8090; }
+  .type-tabs-edge { background: linear-gradient(90deg, rgba(33,28,40,0), #211C28 52%); color: #C9B8D8; }
+  .search-idle { color: #8B8090; }
+  .state-title { color: #E0DCE4; }
+  .result-card { background: #211C28; border-color: #2D2838; color: #E0DCE4; }
+}

@@ -4,3 +4,10 @@
 .spinner { width: 42rpx; height: 42rpx; margin-bottom: 20rpx; border: 5rpx solid #E8E2EC; border-top-color: #4B1F6F; border-radius: 50%; animation: spin .8s linear infinite; }
 .retry { margin-top: 24rpx; padding: 0 34rpx; height: 68rpx; line-height: 68rpx; color: #FFFFFF; background: #4B1F6F; border-radius: 18rpx; font-size: 24rpx; }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* FB-18: 暗色模式 */
+@media (prefers-color-scheme: dark) {
+  .state { color: #8B8090; }
+  .state-title { color: #E0DCE4; }
+  .spinner { border-color: #2D2838; border-top-color: #4B1F6F; }
+}
