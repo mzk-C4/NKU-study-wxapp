@@ -6,5 +6,5 @@
 .file-icon { width: 76rpx; height: 84rpx; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; border-radius: 18rpx; color: #4B1F6F; background: #EFE8F4; font-size: 18rpx; font-weight: 700; }
 .resource-main { flex: 1; min-width: 0; }
 .resource-title { margin-bottom: 10rpx; font-size: 27rpx; line-height: 1.45; font-weight: 700; }
-.resource-foot { display: flex; justify-content: space-between; margin-top: 20rpx; padding-top: 18rpx; border-top: 1rpx dashed #E8E2EC; font-size: 21rpx; }
-.link-ok { color: #27865F; }.open-link { color: #4B1F6F; font-weight: 700; }
+.resource-foot { display: flex; justify-content: flex-end; margin-top: 20rpx; padding-top: 18rpx; border-top: 1rpx dashed #E8E2EC; font-size: 21rpx; }
+.open-link { color: #4B1F6F; font-weight: 700; }
