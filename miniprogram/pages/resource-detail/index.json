@@ -1,6 +1,3 @@
 {
-  "navigationBarTitleText": "资料详情",
-  "usingComponents": {
-    "state-view": "/components/state-view/index"
-  }
+  "navigationBarTitleText": "资料详情"
 }

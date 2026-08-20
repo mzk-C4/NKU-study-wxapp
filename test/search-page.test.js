@@ -543,7 +543,7 @@ test('formal search runtime uses only adapter methods and keeps endpoint ownersh
 test('home review shortcut remains reachable through the course library instead of the removed review search mode', () => {
   const source = fs.readFileSync(path.join(projectRoot, 'miniprogram/pages/home/index.wxml'), 'utf8')
   assert.doesNotMatch(source, /pages\/search\/index\?type=review/)
-  assert.match(source, /data-url="\/pages\/courses\/index"[^>]*>[\s\S]*?<text>看评价<\/text>/)
+  assert.match(source, /data-url="\/pages\/courses\/index"[^>]*>[\s\S]*?<text(?:\s+[^>]*)?>看评价<\/text>/)
 })
 
 test('search result cards fill the page and the clear action stays inside the search field', () => {
