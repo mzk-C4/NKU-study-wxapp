@@ -20,3 +20,12 @@
 .active-filter-row { min-height: 66rpx; margin-top: 18rpx; padding-left: 18rpx; display: flex; align-items: center; justify-content: space-between; border-radius: 18rpx; color: #5F5962; background: #F2EDF4; font-size: 21rpx; }
 .load-more-button { width: 100%; height: 76rpx; margin-left: 0; margin-right: 0; border-radius: 20rpx; color: #4B1F6F; background: #F0E8F4; font-size: 23rpx; font-weight: 700; }
 .course-fab { position: fixed; right: 34rpx; bottom: calc(140rpx + env(safe-area-inset-bottom)); width: 92rpx; height: 92rpx; display: flex; align-items: center; justify-content: center; border-radius: 30rpx; color: #FFFFFF; background: #4B1F6F; box-shadow: 0 16rpx 36rpx rgba(75,31,111,.28); font-size: 46rpx; }
+
+/* FB-18: 暗色模式 */
+@media (prefers-color-scheme: dark) {
+  .category-bar { background: #211C28; border-color: #2D2838; }
+  .category { color: #8B8090; }
+  .category--active { background: #4B1F6F; color: #FFFFFF; }
+  .filter { background: #211C28; border-color: #2D2838; color: #8B8090; }
+  .course-fab { background: #4B1F6F; }
+}

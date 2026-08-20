@@ -1,0 +1,22 @@
+<view class="page">
+  <view class="chips">
+    <view wx:for="{{filters}}" wx:key="key" class="chip {{filter === item.key ? 'chip--active' : ''}}" data-key="{{item.key}}" bindtap="chooseFilter">{{item.label}}</view>
+  </view>
+
+  <state-view loading="{{loading}}" error="{{error}}" empty="{{!loading && !error && !visibleSubmissions.length}}" empty-text="暂无投稿记录" bindretry="loadSubmissions"></state-view>
+
+  <view wx:for="{{visibleSubmissions}}" wx:key="id" class="card sub-card">
+    <view class="sub-header">
+      <text class="sub-status sub-status--{{item.statusTone}}">{{item.statusLabel}}</text>
+      <text class="micro">{{item.submitted_at}}</text>
+    </view>
+    <text class="sub-title">{{item.title}}</text>
+    <view class="micro sub-meta">{{item.type}} · {{item.platform}}</view>
+    <view class="two-buttons" wx:if="{{item.status === 'pending' || item.status === 'revision'}}">
+      <button class="button button--ghost" data-id="{{item.id}}" bindtap="editSubmission">修改</button>
+      <button class="button button--secondary" data-id="{{item.id}}" bindtap="editSubmission">重新提交</button>
+    </view>
+  </view>
+
+  <view class="notice" style="margin-top: 28rpx;"><view class="notice-mark">i</view><text>当前投稿记录仅保存在本机，在线审核功能开放后可同步查看进度。</text></view>
+</view>

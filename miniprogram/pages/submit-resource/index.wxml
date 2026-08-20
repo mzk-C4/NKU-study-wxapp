@@ -1,4 +1,42 @@
-<view class="page submit-page">
-  <view class="notice"><view class="notice-mark">i</view><text>资料投稿与微信手机号登录将在后续阶段开放。</text></view>
-  <view class="card section"><view class="section-title">投稿功能建设中</view><view class="micro section">现阶段小程序不会提交或保存线上投稿。内容仍由网站后台统一处理。</view><button class="button button--secondary section" bindtap="openWebsiteHelp">如何提交资料</button></view>
+<view class="page">
+  <view class="notice"><view class="notice-mark">!</view><text>请先删除资料中的姓名、学号等个人信息，并确认拥有分享权限。</text></view>
+
+  <view class="field">
+    <text class="field-label">资料标题</text>
+    <input class="input" placeholder="例如：2025 秋期中试题" value="{{form.title}}" data-field="title" bindinput="onInput" />
+  </view>
+
+  <view class="field">
+    <text class="field-label">资料类型</text>
+    <picker mode="selector" range="{{resourceTypes}}" bindchange="onTypeChange">
+      <view class="picker">{{form.type || '请选择资料类型'}}</view>
+    </picker>
+  </view>
+
+  <view class="field">
+    <text class="field-label">网盘平台</text>
+    <picker mode="selector" range="{{platforms}}" bindchange="onPlatformChange">
+      <view class="picker">{{form.platform || '请选择网盘平台'}}</view>
+    </picker>
+  </view>
+
+  <view class="field">
+    <text class="field-label">分享链接</text>
+    <input class="input" placeholder="粘贴可正常访问的链接" value="{{form.url}}" data-field="url" bindinput="onInput" />
+  </view>
+
+  <view class="field">
+    <text class="field-label">提取码（选填）</text>
+    <input class="input" placeholder="请输入提取码" value="{{form.code}}" data-field="code" bindinput="onInput" />
+  </view>
+
+  <view class="field">
+    <text class="field-label">补充说明（选填）</text>
+    <textarea class="textarea" placeholder="说明资料范围或使用方法" value="{{form.description}}" data-field="description" bindinput="onInput" maxlength="500" />
+  </view>
+
+  <view class="two-buttons">
+    <button class="button button--ghost" bindtap="saveDraft">保存草稿</button>
+    <button class="button button--primary" bindtap="submit" disabled="{{submitting}}">提交投稿</button>
+  </view>
 </view>

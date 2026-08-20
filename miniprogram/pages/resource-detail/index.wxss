@@ -1,0 +1,32 @@
+.detail-icon { width: 116rpx; height: 128rpx; margin: 8rpx auto 24rpx; display: flex; align-items: center; justify-content: center; border-radius: 30rpx; color: #4B1F6F; background: #EFE8F4; font-size: 28rpx; font-weight: 700; }
+.detail-title { text-align: center; font-size: 34rpx; font-weight: 700; line-height: 1.4; }
+.detail-sub { text-align: center; margin-top: 10rpx; }
+.info-list { padding: 0 26rpx; }
+.info-row { display: flex; align-items: center; justify-content: space-between; min-height: 88rpx; border-bottom: 1rpx solid #E8E2EC; font-size: 24rpx; }
+.info-row:last-child { border-bottom: 0; }
+.info-key { color: #6F6972; }
+.info-val { color: #211C24; font-weight: 500; text-align: right; }
+.copy-btn { margin-top: 16rpx; }
+.report-btn { margin-top: 16rpx; }
+.related-list { padding: 0 26rpx; }
+.related-row { display: flex; gap: 20rpx; align-items: center; padding: 22rpx 0; border-bottom: 1rpx solid #E8E2EC; }
+.related-row:last-child { border-bottom: 0; }
+.related-icon { width: 54rpx; height: 54rpx; flex: 0 0 auto; display: flex; align-items: center; justify-content: center; border-radius: 16rpx; color: #4B1F6F; background: #EFE8F4; font-size: 18rpx; font-weight: 700; }
+.related-info { flex: 1; min-width: 0; }
+.related-title { display: block; font-size: 26rpx; font-weight: 600; margin-bottom: 6rpx; }
+.related-arrow { font-size: 32rpx; color: #6F6972; }
+
+/* FB-18: 暗色模式 */
+@media (prefers-color-scheme: dark) {
+  .detail-icon { background: #3D2A4E; color: #C9B8D8; }
+  .detail-title { color: #E0DCE4; }
+  .info-list { background: #211C28; border-color: #2D2838; }
+  .info-row { border-bottom-color: #2D2838; }
+  .info-key { color: #8B8090; }
+  .info-val { color: #E0DCE4; }
+  .related-list { background: #211C28; border-color: #2D2838; }
+  .related-row { border-bottom-color: #2D2838; }
+  .related-title { color: #E0DCE4; }
+  .related-icon { background: #3D2A4E; color: #C9B8D8; }
+  .related-arrow { color: #8B8090; }
+}

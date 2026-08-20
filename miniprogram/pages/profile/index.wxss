@@ -14,3 +14,21 @@
 .about-text { margin-top: 8rpx; color: #484248; font-size: 24rpx; line-height: 1.7; }
 .about-foot { margin-top: 26rpx; color: #817A84; text-align: center; font-size: 20rpx; line-height: 1.6; }
 .profile-field { margin-top: 28rpx; }
+/* FB-18: 暗色模式 */
+@media (prefers-color-scheme: dark) {
+  .profile-hero { background: #2B123E; }
+  .profile-avatar { background: #D7A63C; color: #2B123E; }
+  .profile-stats { border-color: #2D2838; background: #2D2838; }
+  .profile-stats view { background: #211C28; }
+  .profile-stats b { color: #C9B8D8; }
+  .profile-stats text { color: #8B8090; }
+  .menu-row { border-bottom-color: #2D2838; }
+  .record-body { color: #A8A0B0; }
+  .about-mask { background: rgba(10,5,15,.7); }
+  .about-sheet { background: #211C28; }
+  .about-title { color: #E8CF96; }
+  .about-close { background: #2D2438; color: #8B8090; }
+  .about-lead { color: #C9B8D8; }
+  .about-text { color: #A8A0B0; }
+  .about-block { border-top-color: #2D2838; }
+}
