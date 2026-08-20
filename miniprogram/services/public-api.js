@@ -367,6 +367,84 @@ function mapReviewGroupList(rawData) {
   return { items: groups, total: toCount(raw.total == null ? groups.length : raw.total), available: true }
 }
 
+function mapUser(rawUser) {
+  const raw = rawUser && typeof rawUser === 'object' ? rawUser : {}
+  const id = Number(raw.id)
+  return {
+    id: Number.isSafeInteger(id) && id > 0 ? id : 0,
+    nickname: toText(raw.nickname).slice(0, 32),
+    avatar_url: validatePublicHttpsUrl(raw.avatar_url),
+    created_at: raw.created_at || null,
+    last_login_at: raw.last_login_at || null
+  }
+}
+
+function mapAuthResult(rawData) {
+  const raw = rawData && typeof rawData === 'object' ? rawData : {}
+  return {
+    token: toText(raw.token),
+    expires_in: toPositiveInteger(raw.expires_in, 0, 60 * 60 * 24 * 365),
+    user: mapUser(raw.user)
+  }
+}
+
+function mapFavoriteItem(rawItem) {
+  const raw = rawItem && typeof rawItem === 'object' ? rawItem : {}
+  return {
+    course_id: toText(raw.course_id),
+    favorited_at: raw.favorited_at || null,
+    name: toText(raw.name),
+    term: toText(raw.term),
+    group: toText(raw.group),
+    resource_count: toCount(raw.resource_count),
+    review_count: toCount(raw.review_count)
+  }
+}
+
+function mapFavoriteList(rawData) {
+  const raw = rawData && typeof rawData === 'object' ? rawData : {}
+  const items = Array.isArray(raw.items) ? raw.items.map(mapFavoriteItem).filter(item => item.course_id) : []
+  return {
+    items,
+    total: toCount(raw.total == null ? items.length : raw.total),
+    page: toPositiveInteger(raw.page, 1, 1000000),
+    page_size: toPositiveInteger(raw.page_size, items.length || 20, 100)
+  }
+}
+
+function mapMyReview(rawItem) {
+  const raw = rawItem && typeof rawItem === 'object' ? rawItem : {}
+  return {
+    id: toText(raw.id),
+    course_title: toText(raw.course_title),
+    teacher_name: toText(raw.teacher_name),
+    rating: toCount(raw.rating),
+    tags: toTextArray(raw.tags),
+    body: toText(raw.body),
+    status: toText(raw.status) || 'pending',
+    hidden: raw.hidden === true,
+    created_at: raw.created_at || '',
+    updated_at: raw.updated_at || ''
+  }
+}
+
+function mapMyReviewList(rawData) {
+  const raw = rawData && typeof rawData === 'object' ? rawData : {}
+  const items = Array.isArray(raw.items) ? raw.items.map(mapMyReview).filter(item => item.id) : []
+  return {
+    items,
+    total: toCount(raw.total == null ? items.length : raw.total),
+    page: toPositiveInteger(raw.page, 1, 1000000),
+    page_size: toPositiveInteger(raw.page_size, items.length || 20, 100)
+  }
+}
+
+function authenticatedFeatureUnavailable() {
+  const error = new Error('本地参考服务未提供微信登录和个人数据。')
+  error.code = 'REFERENCE_MOCK_UNAVAILABLE'
+  throw error
+}
+
 function mapCourseSearchItem(course) {
   const subtitle = [course.group, course.term, course.assessment].filter(Boolean).join(' · ')
   return {
@@ -445,6 +523,52 @@ function createPublicApi(client = request, options = {}) {
       const result = mapCourseList(await client.get('/courses', courseQuery({ ...options, q: keyword })))
       return { ...result, items: result.items.map(mapCourseSearchItem) }
     },
+    async loginWechat(code) {
+      if (isReference) return authenticatedFeatureUnavailable()
+      return mapAuthResult(await client.post('/auth/wechat', { code: toText(code) }))
+    },
+    async getMe() {
+      if (isReference) return authenticatedFeatureUnavailable()
+      const data = await client.get('/me', undefined, { auth: 'required' })
+      return mapUser(data && data.user)
+    },
+    async updateProfile(input = {}) {
+      if (isReference) return authenticatedFeatureUnavailable()
+      const data = await client.post('/me/profile', {
+        nickname: toText(input.nickname).slice(0, 32),
+        ...(input.avatar_url === undefined ? {} : { avatar_url: validatePublicHttpsUrl(input.avatar_url) })
+      }, { auth: 'required' })
+      return mapUser(data && data.user)
+    },
+    async logout() {
+      if (isReference) return authenticatedFeatureUnavailable()
+      const data = await client.post('/auth/logout', undefined, { auth: 'required' })
+      return { revoked: data && data.revoked === true }
+    },
+    async getFavorites(query = {}) {
+      if (isReference) return authenticatedFeatureUnavailable()
+      return mapFavoriteList(await client.get('/me/favorites', {
+        page: toPositiveInteger(query.page, 1, 1000000),
+        page_size: toPositiveInteger(query.page_size, 20, 100)
+      }, { auth: 'required' }))
+    },
+    async addFavorite(courseId) {
+      if (isReference) return authenticatedFeatureUnavailable()
+      const data = await client.post('/favorites', { course_id: toText(courseId) }, { auth: 'required' })
+      return { favorited: data && data.favorited === true, created: data && data.created === true, total: toCount(data && data.total) }
+    },
+    async removeFavorite(courseId) {
+      if (isReference) return authenticatedFeatureUnavailable()
+      const data = await client.delete(`/favorites/${encodePathSegment(courseId)}`, undefined, { auth: 'required' })
+      return { favorited: false, removed: data && data.removed === true, total: toCount(data && data.total) }
+    },
+    async getMyReviews(query = {}) {
+      if (isReference) return authenticatedFeatureUnavailable()
+      return mapMyReviewList(await client.get('/me/reviews', {
+        page: toPositiveInteger(query.page, 1, 1000000),
+        page_size: toPositiveInteger(query.page_size, 20, 100)
+      }, { auth: 'required' }))
+    },
     async submitReview(input = {}) {
       if (isReference) {
         const error = new Error('本地参考服务未提供评价提交。')
@@ -458,7 +582,7 @@ function createPublicApi(client = request, options = {}) {
         tags: toTextArray(input.tags),
         body: toText(input.body),
         anonymous: input.anonymous === true
-      })
+      }, { auth: 'optional' })
     },
     validateResourceDownloadUrl,
     isAllowedResourceDownloadUrl(value) { return Boolean(validateResourceDownloadUrl(value)) },
@@ -493,6 +617,12 @@ module.exports = Object.assign(publicApi, {
   mapCourseResources,
   mapReviewGroup,
   mapReviewGroupList,
+  mapUser,
+  mapAuthResult,
+  mapFavoriteItem,
+  mapFavoriteList,
+  mapMyReview,
+  mapMyReviewList,
   mapCourseSearchItem,
   createPublicApi,
   adaptCourse: mapCourse,

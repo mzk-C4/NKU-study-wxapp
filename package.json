@@ -1,6 +1,6 @@
 {
   "name": "nkustudy-wxapp",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "scripts": {
     "check:miniprogram": "node scripts/check-miniprogram.js",
@@ -9,7 +9,7 @@
     "devtools:preview": "node scripts/wechat-devtools.js preview --project . --lang zh",
     "release:check": "npm test && node scripts/release-preflight.js",
     "devtools:upload": "npm run release:check && node scripts/wechat-devtools.js upload --project . --lang zh",
-    "test:contract": "node --test test/public-api-contract.test.js",
+    "test:contract": "node --test test/public-api-contract.test.js test/auth-session.test.js test/request-auth.test.js",
     "test:pages": "node --test test/page-state.test.js",
     "test:search-guide": "node --test test/api-config.test.js test/public-api.test.js test/search-page.test.js test/guide-pages.test.js",
     "test:content": "node --test test/markdown.test.js test/visit-report.test.js",

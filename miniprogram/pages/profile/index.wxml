@@ -1,33 +1,58 @@
 <view class="profile-page">
-  <view class="profile-hero"><view class="profile-row"><view class="profile-avatar">N</view><view><view class="profile-name">你好，南开同学</view><view class="profile-sub">浏览课程、资料和评价无需登录</view></view></view><button class="login-button" loading="{{loading}}" bindtap="login">手机号登录建设中</button></view>
+  <view class="profile-hero">
+    <view class="profile-row">
+      <view class="profile-avatar">{{userInitial}}</view>
+      <view class="profile-copy">
+        <view class="profile-name">{{isLoggedIn ? (user.nickname || '南开同学') : '你好，南开同学'}}</view>
+        <view class="profile-sub">{{isLoggedIn ? '微信身份已验证，可同步收藏与评价' : '浏览课程、资料和评价无需登录'}}</view>
+      </view>
+    </view>
+    <button wx:if="{{!isLoggedIn}}" class="login-button" loading="{{loading}}" disabled="{{loading}}" bindtap="login">微信账号登录</button>
+    <view wx:else class="profile-actions">
+      <button class="hero-button" bindtap="startEditProfile">编辑昵称</button>
+      <button class="hero-button hero-button--quiet" loading="{{loading}}" disabled="{{loading}}" bindtap="logout">退出登录</button>
+    </view>
+  </view>
+
   <view class="page profile-body">
-    <view class="profile-stats"><view><b>{{history.length}}</b><text>本机浏览</text></view><view><b>—</b><text>收藏课程</text></view><view><b>—</b><text>我的贡献</text></view></view>
-    <view class="card menu section"><view class="menu-row" bindtap="unavailable"><text>我的收藏</text><text class="muted">{{favoriteLabel}} ›</text></view><view class="menu-row" bindtap="openSubmit"><text>我的投稿</text><text class="muted">{{submissionLabel}} ›</text></view><view class="menu-row" bindtap="unavailable"><text>我的评价</text><text class="muted">{{reviewLabel}} ›</text></view></view>
+    <view class="profile-stats">
+      <view><b>{{history.length}}</b><text>本机浏览</text></view>
+      <view><b>{{isLoggedIn ? favoriteTotal : '—'}}</b><text>收藏课程</text></view>
+      <view><b>{{isLoggedIn ? reviewTotal : '—'}}</b><text>我的评价</text></view>
+    </view>
+
+    <view class="notice section" wx:if="{{contentError}}"><view class="notice-mark">!</view><text>{{contentError}}</text></view>
+
+    <view class="card menu section">
+      <view class="menu-row" bindtap="toggleFavorites"><text>我的收藏</text><text class="muted">{{favoriteLabel}} {{favoritesVisible ? '⌃' : '›'}}</text></view>
+      <view class="menu-row" bindtap="openSubmit"><text>资料投稿</text><text class="muted">{{submissionLabel}} ›</text></view>
+      <view class="menu-row" bindtap="toggleReviews"><text>我的评价</text><text class="muted">{{reviewLabel}} {{reviewsVisible ? '⌃' : '›'}}</text></view>
+    </view>
+
+    <view class="section" wx:if="{{favoritesVisible}}">
+      <view class="section-head"><view class="section-title">我的收藏</view><view class="section-action" bindtap="refresh">刷新</view></view>
+      <view class="card empty-record" wx:if="{{contentLoading}}">正在同步收藏…</view>
+      <view class="card empty-record" wx:elif="{{!favorites.length}}">还没有收藏课程</view>
+      <view class="card record-row" wx:for="{{favorites}}" wx:key="course_id" data-id="{{item.course_id}}" bindtap="openFavorite"><view class="record-main"><view class="history-name">{{item.name}}</view><view class="micro">{{item.group || '分类待补充'}} · {{item.term || '学期待补充'}} · {{item.resource_count}} 份资料</view></view><text>›</text></view>
+    </view>
+
+    <view class="section" wx:if="{{reviewsVisible}}">
+      <view class="section-head"><view class="section-title">我的评价</view><view class="section-action" bindtap="refresh">刷新</view></view>
+      <view class="card empty-record" wx:if="{{contentLoading}}">正在同步评价…</view>
+      <view class="card empty-record" wx:elif="{{!reviews.length}}">登录后提交的评价会显示在这里</view>
+      <view class="card record-row record-row--detail" wx:for="{{reviews}}" wx:key="id"><view class="record-main"><view class="history-name">{{item.course_title}} · {{item.teacher_name}}</view><view class="micro">{{item.rating}} 分{{item.created_date ? ' · ' + item.created_date : ''}}</view><view class="record-body">{{item.body}}</view></view><view class="status {{item.status_class}}">{{item.status_label}}</view></view>
+    </view>
+
     <view class="section" wx:if="{{history.length}}"><view class="section-head"><view class="section-title">最近浏览</view></view><view class="card history-row" wx:for="{{history}}" wx:key="id" data-id="{{item.id}}" bindtap="openHistory"><view><view class="history-name">{{item.name}}</view><view class="micro">{{item.group || '分类待补充'}} · {{item.term || '学期待补充'}}</view></view><text>›</text></view></view>
     <view class="card menu section"><view class="menu-row" bindtap="feedback"><text>意见反馈</text><text>›</text></view><view class="menu-row" bindtap="about"><text>关于 NKUStudy</text><text>›</text></view></view>
-    <view class="profile-note"><view>微信手机号登录仅保留未来框架，当前不会发起登录请求</view><view>学生共建 · 非南开大学官方平台</view></view>
+    <view class="profile-note"><view>登录仅用于同步收藏、昵称与本人评价，课程资料仍可免登录浏览</view><view>学生共建 · 非南开大学官方平台</view></view>
+  </view>
+
+  <view class="about-mask" wx:if="{{editingProfile}}" bindtap="closeEditProfile">
+    <view class="about-sheet" catchtap="noop"><view class="about-head"><view class="about-title">编辑昵称</view><view class="about-close" bindtap="closeEditProfile">×</view></view><view class="about-lead">昵称只用于本小程序个人页面，不会公开 openid。</view><view class="field profile-field"><label class="field-label">昵称</label><input class="input" type="nickname" maxlength="32" value="{{nicknameDraft}}" bindinput="inputNickname" placeholder="请输入昵称" /></view><button class="button button--primary" loading="{{profileSaving}}" disabled="{{profileSaving}}" bindtap="saveProfile">保存昵称</button></view>
   </view>
 
   <view class="about-mask" wx:if="{{aboutVisible}}" bindtap="closeAbout">
-    <view class="about-sheet" catchtap="noop">
-      <view class="about-head">
-        <view class="about-title">关于 NKUStudy</view>
-        <view class="about-close" bindtap="closeAbout">×</view>
-      </view>
-      <view class="about-lead">南开学生共建的课程资料与选课参考平台</view>
-      <view class="about-block">
-        <view class="about-label">数据来源</view>
-        <view class="about-text">课程、资料与评价来自 NKUStudy.top 及其授权数据源（如 NKUCS.ICU），随网站持续更新。</view>
-      </view>
-      <view class="about-block">
-        <view class="about-label">使用说明</view>
-        <view class="about-text">浏览课程与资料无需登录；写评价默认匿名，提交后进入网站现有审核流程。</view>
-      </view>
-      <view class="about-block">
-        <view class="about-label">免责声明</view>
-        <view class="about-text">本小程序为非官方学生项目，内容仅供参考，选课与考核信息请以教务系统为准。</view>
-      </view>
-      <view class="about-foot">学生共建 · 欢迎通过 NKUStudy.top 贡献课程资料与评价</view>
-    </view>
+    <view class="about-sheet" catchtap="noop"><view class="about-head"><view class="about-title">关于 NKUStudy</view><view class="about-close" bindtap="closeAbout">×</view></view><view class="about-lead">南开学生共建的课程资料与选课参考平台</view><view class="about-block"><view class="about-label">数据来源</view><view class="about-text">课程、资料与评价来自 NKUStudy.top 及其授权数据源（如 NKUCS.ICU），随网站持续更新。</view></view><view class="about-block"><view class="about-label">使用说明</view><view class="about-text">浏览课程与资料无需登录；登录后可同步收藏，评价提交后进入网站现有审核流程。</view></view><view class="about-block"><view class="about-label">免责声明</view><view class="about-text">本小程序为非官方学生项目，内容仅供参考，选课与考核信息请以教务系统为准。</view></view><view class="about-foot">学生共建 · 欢迎通过 NKUStudy.top 贡献课程资料与评价</view></view>
   </view>
 </view>

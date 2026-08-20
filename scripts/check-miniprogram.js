@@ -57,9 +57,7 @@ for (const file of walk(miniRoot)) {
 
 const miniJavaScript = walk(miniRoot).filter(file => file.endsWith('.js')).map(file => fs.readFileSync(file, 'utf8')).join('\n')
 const unsupportedEndpointPatterns = [
-  /['"`]\/auth\/wechat/,
-  /['"`]\/favorites(?:\/|['"`])/,
-  /['"`]\/me\//,
+  /['"`]\/auth\/phone/,
   /['"`]\/resource-submissions/,
   /['"`]\/resources\/\$\{/,
   /\/courses\/\$\{[^}]+\}\/reviews/,
@@ -72,20 +70,23 @@ if (/page_size\s*:\s*(?:10[1-9]|1[1-9]\d|[2-9]\d{2,})/.test(miniJavaScript)) fai
 
 const runtimeJavaScript = walk(miniRoot).filter(file => file.endsWith('.js'))
 const publicApiOwner = path.join(miniRoot, 'services', 'public-api.js')
-const adapterOnlyReadEndpoints = [
+const adapterOnlyEndpoints = [
   ['搜索索引', /['"`]\/search-index(?:['"`?#])/],
-  ['指南读取', /['"`]\/guides(?:\/|\?|['"`])/]
+  ['指南读取', /['"`]\/guides(?:\/|\?|['"`])/],
+  ['微信登录', /['"`]\/auth\/(?:wechat|logout)(?:['"`?#])/],
+  ['个人数据', /['"`]\/me(?:\/|\?|['"`])/],
+  ['收藏', /['"`]\/favorites(?:\/|\?|['"`])/]
 ]
 for (const file of runtimeJavaScript) {
   if (file === publicApiOwner) continue
   const source = fs.readFileSync(file, 'utf8')
-  for (const [name, pattern] of adapterOnlyReadEndpoints) {
+  for (const [name, pattern] of adapterOnlyEndpoints) {
     if (pattern.test(source)) fail(`${name}路径只能由 public-api adapter 持有：${path.relative(root, file)}`)
   }
 }
 
 const pageJavaScript = [path.join(miniRoot, 'pages'), path.join(miniRoot, 'components')].flatMap(walk).filter(file => file.endsWith('.js'))
-const directPublicPath = /['"`]\/(?:health|home|search-index(?:\/|['"`])|guides(?:\/|['"`])|courses(?:\/|['"`])|review-groups(?:\/|['"`]))/
+const directPublicPath = /['"`]\/(?:health|home|search-index(?:\/|['"`])|guides(?:\/|['"`])|courses(?:\/|['"`])|review-groups(?:\/|['"`])|auth(?:\/|['"`])|me(?:\/|['"`])|favorites(?:\/|['"`]))/
 for (const file of pageJavaScript) {
   const source = fs.readFileSync(file, 'utf8')
   if (directPublicPath.test(source)) fail(`页面或组件不得直接拼接生产公开路径：${path.relative(root, file)}`)

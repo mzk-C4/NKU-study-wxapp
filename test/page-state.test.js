@@ -45,3 +45,72 @@ test('write-review load failure has an in-page retry that can recover', async ()
   assert.equal(page.data.error, '')
   assert.deepEqual(page.data.course, { id: 'course-1' })
 })
+
+test('profile restores a valid session and renders server favorites and review states', async () => {
+  const originalPage = global.Page
+  global.Page = () => {}
+  const modulePath = require.resolve('../miniprogram/pages/profile/index.js')
+  delete require.cache[modulePath]
+  const { createProfilePage } = require(modulePath)
+  global.Page = originalPage
+
+  const originalWx = global.wx
+  global.wx = { getStorageSync(key) { return key === 'browse_history' ? [{ id: 'history-1' }] : null } }
+  let updatedUser = null
+  const sessionStore = {
+    readSession() { return { token: 'token', user: { id: 7, nickname: '' } } },
+    updateUser(user) { updatedUser = user },
+    clearSession() {}
+  }
+  const api = {
+    async getMe() { return { id: 7, nickname: '小紫' } },
+    async getFavorites() { return { items: [{ course_id: 'course-1', name: '概率论' }], total: 1 } },
+    async getMyReviews() { return { items: [{ id: 'review-1', course_title: '概率论', teacher_name: '张老师', rating: 5, body: '讲解清晰', status: 'pending' }], total: 1 } }
+  }
+  const page = createProfilePage(api, sessionStore)
+  page.data = { ...page.data }
+  page.setData = patch => Object.assign(page.data, patch)
+
+  await page.refresh()
+  assert.deepEqual(updatedUser, { id: 7, nickname: '小紫' })
+  assert.equal(page.data.isLoggedIn, true)
+  assert.equal(page.data.userInitial, '小')
+  assert.equal(page.data.favoriteTotal, 1)
+  assert.equal(page.data.reviews[0].status_label, '审核中')
+  assert.deepEqual(page.data.history, [{ id: 'history-1' }])
+  global.wx = originalWx
+})
+
+test('profile clears a rejected session without leaving stale personal data', async () => {
+  const originalPage = global.Page
+  global.Page = () => {}
+  const modulePath = require.resolve('../miniprogram/pages/profile/index.js')
+  delete require.cache[modulePath]
+  const { createProfilePage } = require(modulePath)
+  global.Page = originalPage
+
+  const originalWx = global.wx
+  global.wx = { getStorageSync() { return [] } }
+  let cleared = false
+  const sessionStore = {
+    readSession() { return { token: 'token', user: { id: 7, nickname: '旧昵称' } } },
+    updateUser() {},
+    clearSession() { cleared = true }
+  }
+  const authError = Object.assign(new Error('请先登录'), { statusCode: 401, code: 'AUTH_REQUIRED' })
+  const api = {
+    async getMe() { throw authError },
+    async getFavorites() { throw authError },
+    async getMyReviews() { throw authError }
+  }
+  const page = createProfilePage(api, sessionStore)
+  page.data = { ...page.data, favorites: [{ course_id: 'stale' }], reviews: [{ id: 'stale' }] }
+  page.setData = patch => Object.assign(page.data, patch)
+
+  await page.refresh()
+  assert.equal(cleared, true)
+  assert.equal(page.data.isLoggedIn, false)
+  assert.deepEqual(page.data.favorites, [])
+  assert.deepEqual(page.data.reviews, [])
+  global.wx = originalWx
+})

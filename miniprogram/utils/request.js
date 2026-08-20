@@ -1,6 +1,17 @@
 const config = require('../config')
+const authSession = require('./auth-session')
+
+function authRequiredError() {
+  const error = new Error('请先登录后再操作。')
+  error.statusCode = 401
+  error.code = 'AUTH_REQUIRED'
+  return error
+}
 
 function request(path, options = {}) {
+  const authMode = options.auth || 'none'
+  const token = authMode === 'none' ? '' : authSession.getToken()
+  if (authMode === 'required' && !token) return Promise.reject(authRequiredError())
   return new Promise((resolve, reject) => {
     wx.request({
       url: `${config.apiBaseUrl}${path}`,
@@ -9,6 +20,7 @@ function request(path, options = {}) {
       timeout: config.requestTimeout,
       header: {
         'content-type': 'application/json',
+        ...(token ? { authorization: `Bearer ${token}` } : {}),
         ...(options.header || {})
       },
       success(response) {
@@ -24,6 +36,7 @@ function request(path, options = {}) {
         error.statusCode = response.statusCode
         error.code = payload.code || 'REQUEST_FAILED'
         error.payload = payload
+        if (response.statusCode === 401 && token) authSession.clearSession()
         reject(error)
       },
       fail(error) {
@@ -38,6 +51,8 @@ function request(path, options = {}) {
 }
 
 module.exports = {
-  get(path, data) { return request(path, { data }) },
-  post(path, data) { return request(path, { method: 'POST', data }) }
+  request,
+  get(path, data, options = {}) { return request(path, { ...options, data }) },
+  post(path, data, options = {}) { return request(path, { ...options, method: 'POST', data }) },
+  delete(path, data, options = {}) { return request(path, { ...options, method: 'DELETE', data }) }
 }
