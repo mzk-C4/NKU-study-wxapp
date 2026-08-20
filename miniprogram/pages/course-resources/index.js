@@ -3,6 +3,15 @@ const { publicApi } = require('../../services/public-api')
 const { downloadResource } = require('../../utils/resource-download')
 
 Page({
+  onShareAppMessage() {
+    return {
+      title: `「${this.data.course?.name || 'NKUStudy 课程'}」资料 - NKUStudy`,
+      path: `/pages/course-overview/index?id=${encodeURIComponent(this.data.id)}`
+    }
+  },
+  onShareTimeline() {
+    return { title: `${this.data.course?.name || '南开课程'}资料 · NKUStudy` }
+  },
   data: { id: '', loading: true, error: '', course: null, resources: [], visibleResources: [], types: ['全部'], type: '全部' },
   onLoad(options) { reportVisit('/mp/course-resources'); this.setData({ id: options.id || '' }); this.loadResources() },
 
