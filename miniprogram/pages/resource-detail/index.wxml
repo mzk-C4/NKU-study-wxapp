@@ -14,7 +14,7 @@
       <view class="info-row"><text class="info-key">资源描述</text><text class="info-val">{{resource.description || '无'}}</text></view>
     </view>
 
-    <view class="notice"><view class="notice-mark">i</view><text>点击下方按钮可下载或复制链接。链接来自 NKUStudy 资源服务器，可直接访问。</text></view>
+    <view class="notice"><view class="notice-mark">i</view><text>点击下方按钮可下载或复制链接。请确认文件名称和来源后再使用。</text></view>
 
     <button class="button button--primary" bindtap="download">下载并打开</button>
     <button class="button button--ghost copy-btn" bindtap="copyLink">复制链接</button>

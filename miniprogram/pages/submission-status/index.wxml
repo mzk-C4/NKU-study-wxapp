@@ -18,5 +18,5 @@
     </view>
   </view>
 
-  <view class="notice" style="margin-top: 28rpx;"><view class="notice-mark">i</view><text>投稿接口尚未开放，当前投稿记录保存在本地。正式上线后将同步到服务器。</text></view>
+  <view class="notice" style="margin-top: 28rpx;"><view class="notice-mark">i</view><text>当前投稿记录仅保存在本机，在线审核功能开放后可同步查看进度。</text></view>
 </view>
