@@ -460,6 +460,10 @@ function createPublicApi(client = request, options = {}) {
         anonymous: input.anonymous === true
       }, headers)
     },
+    async searchCatalog(keyword, page = 1) {
+      const data = await client.get('/catalog', { q: toText(keyword), page, page_size: 20 })
+      return data
+    },
     validateResourceDownloadUrl,
     isAllowedResourceDownloadUrl(value) { return Boolean(validateResourceDownloadUrl(value)) },
     validatePublicHttpsUrl,
