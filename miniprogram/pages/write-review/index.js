@@ -22,7 +22,7 @@ function createWriteReviewPage(api = publicApi) {
       const groups = await api.getCourseReviewGroups(course)
       const tagOptions = [...new Set(groups.flatMap(group => (group.items || []).flatMap(review => review.tags)))].map(text => ({ text, selected: false }))
       const strictTeacher = home ? home.review_submission?.allow_custom_teacher === false : false
-      let teacherOptions = course.teacher_groups.map(group => group.teacher_name)
+      let teacherOptions = (course.teacher_groups || []).map(group => group.teacher_name)
       if (api.searchCatalog) {
         try {
           const catalog = await api.searchCatalog(course.name, 1)
