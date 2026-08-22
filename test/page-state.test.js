@@ -30,6 +30,8 @@ test('write-review load failure has an in-page retry that can recover', async ()
       return { id: 'course-1' }
     },
     async getCourseReviewGroups() { return [] },
+    async getHome() { return { review_submission: { allow_custom_course: false, allow_custom_teacher: true } } },
+    async searchCatalog() { return { items: [] } },
     async submitReview() {}
   }
   const page = createWriteReviewPage(api)

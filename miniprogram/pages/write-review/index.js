@@ -5,7 +5,7 @@ const auth = require('../../services/auth')
 function createWriteReviewPage(api = publicApi) {
   return {
   data: {
-    courseId: '', loading: true, submitting: false, course: null,
+    courseId: '', loading: true, submitting: false, course: null, strictTeacher: false, teacherOptions: [],
     error: '',
     teacher: '', scoreOptions: [1, 2, 3, 4, 5], rating: 0,
     tagOptions: [],
@@ -15,16 +15,32 @@ function createWriteReviewPage(api = publicApi) {
   async prepare() {
     this.setData({ loading: true, error: '' })
     try {
-      const course = await api.getCourse(this.data.courseId)
+      const [course, home] = await Promise.all([
+        api.getCourse(this.data.courseId),
+        api.getHome().catch(() => null)
+      ])
       const groups = await api.getCourseReviewGroups(course)
       const tagOptions = [...new Set(groups.flatMap(group => (group.items || []).flatMap(review => review.tags)))].map(text => ({ text, selected: false }))
-      this.setData({ course, tagOptions, loading: false, error: '' })
+      const strictTeacher = home ? home.review_submission?.allow_custom_teacher === false : false
+      let teacherOptions = course.teacher_groups.map(group => group.teacher_name)
+      if (api.searchCatalog) {
+        try {
+          const catalog = await api.searchCatalog(course.name, 1)
+          const hit = (catalog.items || []).find(item => item.name === course.name)
+          if (hit && hit.teachers.length) teacherOptions = [...new Set([...teacherOptions, ...hit.teachers])]
+        } catch {}
+      }
+      this.setData({ course, tagOptions, strictTeacher, teacherOptions, loading: false, error: '' })
     } catch (error) {
       this.setData({ loading: false, error: error.message || '暂时无法加载评价页面' })
     }
   },
   inputTeacher(event) { this.setData({ teacher: event.detail.value }) },
   chooseTeacher(event) { this.setData({ teacher: event.currentTarget.dataset.teacher }) },
+  validateTeacherStrict() {
+    if (!this.data.strictTeacher || !this.data.teacherOptions.length) return true
+    return this.data.teacherOptions.includes(this.data.teacher)
+  },
   setRating(event) { this.setData({ rating: Number(event.currentTarget.dataset.score) }) },
   toggleTag(event) {
     const tag = event.currentTarget.dataset.tag
@@ -37,6 +53,10 @@ function createWriteReviewPage(api = publicApi) {
     const { course, teacher, rating, selectedTags, body, anonymous } = this.data
     if (!teacher.trim() || !rating || body.trim().length < 20) {
       wx.showToast({ title: '请填写教师、完成评分并填写至少 20 字', icon: 'none' })
+      return
+    }
+    if (!this.validateTeacherStrict()) {
+      wx.showToast({ title: '请从教师列表中选择', icon: 'none' })
       return
     }
     this.setData({ submitting: true })
