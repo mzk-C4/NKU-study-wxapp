@@ -1,5 +1,6 @@
 const { reportVisit } = require('../../utils/visit-report')
 const { publicApi } = require('../../services/public-api')
+const auth = require('../../services/auth')
 
 function createWriteReviewPage(api = publicApi) {
   return {
@@ -40,8 +41,9 @@ function createWriteReviewPage(api = publicApi) {
     }
     this.setData({ submitting: true })
     try {
-      await api.submitReview({ course_id: course.id, teacher: teacher.trim(), rating, tags: selectedTags, body: body.trim(), anonymous })
-      wx.showModal({ title: '提交成功', content: '评价已进入审核，公开页面将保持匿名。', showCancel: false, success: () => wx.navigateBack() })
+      const headers = (!anonymous && auth.getToken()) ? auth.authHeader() : {}
+      await api.submitReview({ course_id: course.id, teacher: teacher.trim(), rating, tags: selectedTags, body: body.trim(), anonymous }, headers)
+      wx.showModal({ title: '提交成功', content: anonymous || !auth.getToken() ? '评价已提交，公开页面保持匿名。' : '评价已提交并与你的账号绑定，可在「我的-我的评价」查看审核进度；公开展示仍为匿名。', showCancel: false, success: () => wx.navigateBack() })
     } catch (error) {
       wx.showToast({ title: error.message, icon: 'none' })
     } finally {

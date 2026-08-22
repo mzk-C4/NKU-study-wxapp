@@ -445,7 +445,7 @@ function createPublicApi(client = request, options = {}) {
       const result = mapCourseList(await client.get('/courses', courseQuery({ ...options, q: keyword })))
       return { ...result, items: result.items.map(mapCourseSearchItem) }
     },
-    async submitReview(input = {}) {
+    async submitReview(input = {}, headers) {
       if (isReference) {
         const error = new Error('本地参考服务未提供评价提交。')
         error.code = 'REFERENCE_MOCK_UNAVAILABLE'
@@ -458,7 +458,7 @@ function createPublicApi(client = request, options = {}) {
         tags: toTextArray(input.tags),
         body: toText(input.body),
         anonymous: input.anonymous === true
-      })
+      }, headers)
     },
     validateResourceDownloadUrl,
     isAllowedResourceDownloadUrl(value) { return Boolean(validateResourceDownloadUrl(value)) },

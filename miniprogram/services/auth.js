@@ -101,6 +101,7 @@ module.exports = {
   updateProfile,
   getToken,
   getCachedUser,
+  authHeader,
   authedGet,
   authedPost,
   authedDelete
