@@ -5,7 +5,7 @@ const auth = require('../../services/auth')
 function createWriteReviewPage(api = publicApi) {
   return {
   data: {
-    courseId: '', loading: true, submitting: false, course: null, strictTeacher: false, teacherOptions: [],
+    courseId: '', loading: true, submitting: false, course: null, strictTeacher: false, teacherOptions: [], minLength: 20,
     error: '',
     teacher: '', scoreOptions: [1, 2, 3, 4, 5], rating: 0,
     tagOptions: [],
@@ -22,6 +22,7 @@ function createWriteReviewPage(api = publicApi) {
       const groups = await api.getCourseReviewGroups(course)
       const tagOptions = [...new Set(groups.flatMap(group => (group.items || []).flatMap(review => review.tags)))].map(text => ({ text, selected: false }))
       const strictTeacher = home ? home.review_submission?.allow_custom_teacher === false : false
+      const minLength = home?.review_submission?.min_length || 20
       let teacherOptions = (course.teacher_groups || []).map(group => group.teacher_name)
       if (api.searchCatalog) {
         try {
@@ -30,7 +31,7 @@ function createWriteReviewPage(api = publicApi) {
           if (hit && hit.teachers.length) teacherOptions = [...new Set([...teacherOptions, ...hit.teachers])]
         } catch {}
       }
-      this.setData({ course, tagOptions, strictTeacher, teacherOptions, loading: false, error: '' })
+      this.setData({ course, tagOptions, strictTeacher, teacherOptions, minLength, loading: false, error: '' })
     } catch (error) {
       this.setData({ loading: false, error: error.message || '暂时无法加载评价页面' })
     }
@@ -51,8 +52,8 @@ function createWriteReviewPage(api = publicApi) {
   toggleAnonymous(event) { this.setData({ anonymous: event.detail.value }) },
   async submit() {
     const { course, teacher, rating, selectedTags, body, anonymous } = this.data
-    if (!teacher.trim() || !rating || body.trim().length < 20) {
-      wx.showToast({ title: '请填写教师、完成评分并填写至少 20 字', icon: 'none' })
+    if (!teacher.trim() || !rating || body.trim().length < this.data.minLength) {
+      wx.showToast({ title: `请填写教师、完成评分并填写至少 ${this.data.minLength} 字`, icon: 'none' })
       return
     }
     if (!this.validateTeacherStrict()) {
