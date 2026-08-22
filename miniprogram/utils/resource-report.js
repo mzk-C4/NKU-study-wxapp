@@ -1,5 +1,14 @@
 const FEEDBACK_ENDPOINT = 'https://nkustudy.top/feedback-api/submit'
 
+// 尝试读取 auth token（未登录则为空，反馈退化为纯匿名）
+function authHeaders() {
+  try {
+    const { getToken } = require('../services/auth')
+    const token = getToken()
+    return token ? { authorization: `Bearer ${token}` } : {}
+  } catch { return {} }
+}
+
 /**
  * 资源失效反馈：走网站公开反馈通道（免登录、进反馈审核流），
  * resourceRef 携带「课程 / 板块 / 文件」定位，管理端反馈列表直接展示。
@@ -16,7 +25,7 @@ function reportDeadLink(courseName, resource) {
       wx.request({
         url: FEEDBACK_ENDPOINT,
         method: 'POST',
-        header: { 'content-type': 'application/json' },
+        header: { 'content-type': 'application/json', ...authHeaders() },
         data: {
           title: `资源失效：${resource?.title || '未知资源'}`,
           content: (result.content || '').trim() || '下载失败，请检查该资源链接。',

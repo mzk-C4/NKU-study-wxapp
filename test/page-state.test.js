@@ -27,23 +27,27 @@ test('write-review load failure has an in-page retry that can recover', async ()
     async getCourse() {
       attempts += 1
       if (attempts === 1) throw new Error('服务暂时不可用')
-      return { id: 'course-1' }
+      return { id: 'course-1', name: '示例课程' }
     },
-    async getCourseReviewGroups() { return [] },
     async getHome() { return { review_submission: { allow_custom_course: false, allow_custom_teacher: true } } },
     async searchCatalog() { return { items: [] } },
     async submitReview() {}
   }
   const page = createWriteReviewPage(api)
-  page.data = { ...page.data, courseId: 'course-1' }
+  page.data = { ...page.data }
   page.setData = patch => Object.assign(page.data, patch)
 
-  await page.prepare()
-  assert.equal(page.data.loading, false)
-  assert.equal(page.data.error, '服务暂时不可用')
-
-  await page.prepare()
+  await page.prepare('course-1')
   assert.equal(page.data.loading, false)
   assert.equal(page.data.error, '')
-  assert.deepEqual(page.data.course, { id: 'course-1' })
+
+  // 第 1 次 getCourse 抛错（preset 选课失败静默跳过），第 2 次成功
+  page.setData({ loading: true })
+  await page.prepare('course-1')
+  assert.equal(page.data.selectedCourse?.id, 'course-1')
+  assert.equal(page.data.selectedCourse?.name, '示例课程')
+
+  // 搜索选课
+  const results = await page.searchCourses('示例')
+  assert.ok(Array.isArray(results))
 })

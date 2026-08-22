@@ -460,6 +460,9 @@ function createPublicApi(client = request, options = {}) {
         anonymous: input.anonymous === true
       }, headers)
     },
+    async submitFeedback(input = {}, headers) {
+      return client.post('/feedback/submit', input, headers)
+    },
     async searchCatalog(keyword, page = 1) {
       const data = await client.get('/catalog', { q: toText(keyword), page, page_size: 20 })
       return data
