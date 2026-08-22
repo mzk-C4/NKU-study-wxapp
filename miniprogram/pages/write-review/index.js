@@ -5,7 +5,7 @@ const auth = require('../../services/auth')
 function createWriteReviewPage(api = publicApi) {
   return {
   data: {
-    courseId: '', loading: true, submitting: false, course: null, strictTeacher: false, teacherOptions: [], minLength: 20,
+    courseId: '', loading: true, submitting: false, course: null, strictTeacher: false, teacherOptions: [], minLength: 20, hint: '',
     error: '',
     teacher: '', scoreOptions: [1, 2, 3, 4, 5], rating: 0,
     tagOptions: [],
@@ -23,6 +23,7 @@ function createWriteReviewPage(api = publicApi) {
       const tagOptions = [...new Set(groups.flatMap(group => (group.items || []).flatMap(review => review.tags)))].map(text => ({ text, selected: false }))
       const strictTeacher = home ? home.review_submission?.allow_custom_teacher === false : false
       const minLength = home?.review_submission?.min_length || 20
+      const hint = home?.review_submission?.hint || ''
       let teacherOptions = (course.teacher_groups || []).map(group => group.teacher_name)
       if (api.searchCatalog) {
         try {
@@ -31,7 +32,7 @@ function createWriteReviewPage(api = publicApi) {
           if (hit && hit.teachers.length) teacherOptions = [...new Set([...teacherOptions, ...hit.teachers])]
         } catch {}
       }
-      this.setData({ course, tagOptions, strictTeacher, teacherOptions, minLength, loading: false, error: '' })
+      this.setData({ course, tagOptions, strictTeacher, teacherOptions, minLength, hint, loading: false, error: '' })
     } catch (error) {
       this.setData({ loading: false, error: error.message || '暂时无法加载评价页面' })
     }
