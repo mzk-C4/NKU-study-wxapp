@@ -11,8 +11,7 @@
     "pages/guide-detail/index",
     "pages/submit-resource/index",
     "pages/write-review/index",
-    "pages/resource-detail/index",
-    "pages/submission-status/index"
+    "pages/feedback-web/index"
   ],
   "window": {
     "navigationBarTitleText": "NKUStudy",
@@ -25,24 +24,12 @@
     "color": "#817A84",
     "selectedColor": "#4B1F6F",
     "backgroundColor": "#FFFDF8",
-    "borderStyle": "black",
+    "borderStyle": "white",
     "list": [
-      {
-        "pagePath": "pages/home/index",
-        "text": "首页"
-      },
-      {
-        "pagePath": "pages/courses/index",
-        "text": "课程"
-      },
-      {
-        "pagePath": "pages/guides/index",
-        "text": "指南"
-      },
-      {
-        "pagePath": "pages/profile/index",
-        "text": "我的"
-      }
+      { "pagePath": "pages/home/index", "text": "首页" },
+      { "pagePath": "pages/courses/index", "text": "课程" },
+      { "pagePath": "pages/guides/index", "text": "指南" },
+      { "pagePath": "pages/profile/index", "text": "我的" }
     ]
   },
   "usingComponents": {

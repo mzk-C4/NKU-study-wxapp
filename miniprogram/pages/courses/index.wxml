@@ -1,47 +1,11 @@
 <view class="page courses-page">
   <view class="search-box" bindtap="openSearch"><view class="search-icon"></view><text>搜索课程、教师或标签</text></view>
-
-  <scroll-view scroll-x class="filter-scroll section" show-scrollbar="false" bindscroll="handleFilterScroll">
-    <view class="filter-bar">
-      <button class="filter-chip {{filterPanel === 'group' || selectedGroups.length ? 'filter-chip--active' : ''}}" data-panel="group" bindtap="toggleFilterPanel" hover-class="filter-chip--pressed" aria-expanded="{{filterPanel === 'group'}}">{{groupLabel}} {{filterPanel === 'group' ? '⌃' : '⌄'}}</button>
-      <button class="filter-chip {{filterPanel === 'tag' || selectedTags.length ? 'filter-chip--active' : ''}}" data-panel="tag" bindtap="toggleFilterPanel" hover-class="filter-chip--pressed" aria-expanded="{{filterPanel === 'tag'}}">{{tagLabel}} {{filterPanel === 'tag' ? '⌃' : '⌄'}}</button>
-      <picker range="{{termOptions}}" bindtap="closeFilterPanel" bindchange="chooseTerm"><view class="filter-chip {{term ? 'filter-chip--active' : ''}}">{{term || '全部学期'}} ⌄</view></picker>
-      <picker range="{{assessmentOptions}}" bindtap="closeFilterPanel" bindchange="chooseAssessment"><view class="filter-chip {{assessment ? 'filter-chip--active' : ''}}">{{assessment || '全部考核'}} ⌄</view></picker>
-    </view>
-  </scroll-view>
-  <view class="filter-scrollbar section" wx:if="{{filterScrollScrollable}}" aria-hidden="true">
-    <view class="filter-scrollbar-thumb" style="width: {{filterScrollThumbWidth}}%; left: {{filterScrollThumbLeft}}%;"></view>
-  </view>
-
-  <view class="filter-panel section" wx:if="{{filterPanel === 'group'}}">
-    <view class="filter-panel-head"><view><view class="filter-panel-title">课程类别</view><view class="micro">可同时勾选多个类别，匹配其中任一类别</view></view><button class="panel-close" bindtap="closeFilterPanel" aria-label="关闭课程类别选择">完成</button></view>
-    <checkbox-group class="option-list" bindchange="changeGroups" aria-label="课程类别多选">
-      <label wx:for="{{groupOptions}}" wx:key="value" class="checkbox-option {{item.selected ? 'checkbox-option--active' : ''}}">
-        <checkbox class="option-checkbox" value="{{item.value}}" checked="{{item.selected}}" color="#4B1F6F" />
-        <text>{{item.label}}</text>
-      </label>
-    </checkbox-group>
-    <button wx:if="{{selectedGroups.length}}" class="clear-options" bindtap="clearGroups">清空类别</button>
-  </view>
-
-  <view class="filter-panel section" wx:if="{{filterPanel === 'tag'}}">
-    <view class="filter-panel-head"><view><view class="filter-panel-title">课程标签</view><view class="micro">可同时勾选多个标签，匹配其中任一标签</view></view><button class="panel-close" bindtap="closeFilterPanel" aria-label="关闭课程标签选择">完成</button></view>
-    <scroll-view scroll-y class="tag-option-scroll">
-      <checkbox-group class="option-list" bindchange="changeTags" aria-label="课程标签多选">
-        <label wx:for="{{tagOptions}}" wx:key="value" class="checkbox-option tag-option {{item.selected ? 'checkbox-option--active' : ''}}">
-          <checkbox class="option-checkbox" value="{{item.value}}" checked="{{item.selected}}" color="#4B1F6F" />
-          <text>{{item.label}}</text>
-        </label>
-      </checkbox-group>
-    </scroll-view>
-    <button wx:if="{{selectedTags.length}}" class="clear-options" bindtap="clearTags">清空标签</button>
-  </view>
-
-  <view class="active-filter-row" wx:if="{{hasFilters}}"><text>已应用筛选</text><button class="clear-all" bindtap="clearFilters">清空全部</button></view>
-  <view class="section-head section"><view class="section-title">筛选结果</view><view class="micro">共 {{total}} 门</view></view>
+  <scroll-view scroll-x class="category-scroll section"><view class="category-bar"><view wx:for="{{groups}}" wx:key="*this" class="category {{(item === '全部' && !group) || item === group ? 'category--active' : ''}}" data-value="{{item}}" bindtap="chooseGroup">{{item}}</view></view></scroll-view>
+  <view class="filters"><picker range="{{termOptions}}" bindchange="chooseTerm"><view class="filter">{{term || '全部学期'}}</view></picker><picker range="{{tagOptions}}" bindchange="chooseTag"><view class="filter">{{tag || '全部标签'}}</view></picker><picker range="{{assessmentOptions}}" bindchange="chooseAssessment"><view class="filter">{{assessment || '全部考核'}}</view></picker></view>
+  <view class="section-head section"><view class="section-title">全部课程</view><view class="micro">共 {{total}} 门</view></view>
   <state-view loading="{{loading}}" error="{{error}}" empty="{{!loading && !error && !courses.length}}" empty-text="没有找到相关课程" bindretry="loadCourses"></state-view>
   <course-card wx:for="{{courses}}" wx:key="id" course="{{item}}" bindselect="openCourse"></course-card>
-  <button class="load-more-button section" wx:if="{{hasMore}}" bindtap="showMore">显示更多课程</button>
-  <view class="micro section" wx:if="{{!loading && courses.length && !hasMore}}">已显示全部课程</view>
+  <view class="micro section" wx:if="{{loadingMore}}">正在加载更多课程…</view>
+  <view class="micro section" wx:if="{{!loading && courses.length && courses.length >= total}}">已显示全部课程</view>
   <view class="course-fab" bindtap="submitCourse">＋</view>
 </view>

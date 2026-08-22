@@ -24,15 +24,3 @@
 .offering-main { flex: 1; }
 .teacher-name { margin-bottom: 6rpx; font-weight: 700; }
 .tag-list { display: flex; flex-wrap: wrap; gap: 12rpx; margin-top: 22rpx; }
-/* FB-18: 暗色模式 */
-@media (prefers-color-scheme: dark) {
-  .detail-hero { background: #2B123E; }
-  .detail-tabs { background: #211C28; border-color: #2D2838; }
-  .detail-tab { color: #8B8090; }
-  .metric { background: #211C28; border-color: #2D2838; color: #8B8090; }
-  .metric-value { color: #C9B8D8; }
-  .description { color: #A8A0B0; }
-  .md-link { color: #C9B8D8; }
-  .offering { border-color: #2D2838; }
-  .teacher-avatar { background: #4B1F6F; }
-}
