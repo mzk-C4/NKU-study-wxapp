@@ -3,6 +3,11 @@ const navigation = require('../../utils/navigation')
 const { publicApi } = require('../../services/public-api')
 const authSession = require('../../utils/auth-session')
 
+const FEEDBACK_URLS = Object.freeze({
+  website: 'https://nkustudy.top/feedback',
+  github: 'https://github.com/mzk-C4/NKU-study-wxapp/issues/new/choose'
+})
+
 const STATUS_LABELS = {
   approved: '已公开',
   pending: '审核中',
@@ -70,7 +75,9 @@ function createProfilePage(api = publicApi, sessionStore = authSession) {
       editingProfile: false,
       nicknameDraft: '',
       profileSaving: false,
-      aboutVisible: false
+      aboutVisible: false,
+      feedbackVisible: false,
+      feedbackUrls: FEEDBACK_URLS
     },
 
     onLoad() { reportVisit('/mp/profile') },
@@ -217,7 +224,21 @@ function createProfilePage(api = publicApi, sessionStore = authSession) {
     openHistory(event) { navigation.openCourse(event.currentTarget.dataset.id) },
     openFavorite(event) { navigation.openCourse(event.currentTarget.dataset.id) },
     openSubmit() { wx.navigateTo({ url: '/pages/submit-resource/index' }) },
-    feedback() { wx.showModal({ title: '意见反馈', content: '请通过项目 GitHub Issues 或 NKUStudy.top 的反馈入口提交。', showCancel: false }) },
+    feedback() { this.setData({ feedbackVisible: true }) },
+    closeFeedback() { this.setData({ feedbackVisible: false }) },
+    openFeedbackWebsite() {
+      this.setData({ feedbackVisible: false })
+      wx.navigateTo({ url: '/pages/feedback-web/index' })
+    },
+    copyFeedbackLink(event) {
+      const url = FEEDBACK_URLS[event.currentTarget.dataset.kind]
+      if (!url) return
+      wx.setClipboardData({
+        data: url,
+        success: () => wx.showToast({ title: '链接已复制', icon: 'success' }),
+        fail: () => wx.showToast({ title: '复制失败，请稍后重试', icon: 'none' })
+      })
+    },
     about() { this.setData({ aboutVisible: true }) },
     closeAbout() { this.setData({ aboutVisible: false }) },
     noop() {}
@@ -226,4 +247,4 @@ function createProfilePage(api = publicApi, sessionStore = authSession) {
 
 Page(createProfilePage())
 
-module.exports = { createProfilePage, displayDate, presentFavorite, presentReview, getWechatLoginCode }
+module.exports = { createProfilePage, displayDate, presentFavorite, presentReview, getWechatLoginCode, FEEDBACK_URLS }

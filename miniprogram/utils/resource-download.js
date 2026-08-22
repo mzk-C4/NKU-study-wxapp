@@ -14,7 +14,7 @@ function saveTemporaryFile(tempFilePath) {
 
 function downloadResource(resource) {
   if (!validDownloadUrl(resource?.download_url)) {
-    wx.showModal({ title: '下载地址不可用', content: '暂时没有可用的 NKUStudy 资源地址。', showCancel: false })
+    wx.showModal({ title: '下载地址不可用', content: '服务器没有返回合法的 NKUStudy 资源地址。', showCancel: false })
     return
   }
   wx.showLoading({ title: '正在下载' })

@@ -25,13 +25,6 @@ Page({
     const page = tab === 'overview' ? 'course-overview' : 'course-reviews'
     wx.redirectTo({ url: `/pages/${page}/index?id=${this.data.id}` })
   },
-  openResource(event) {
-    const resource = this.data.resources.find(item => item.id === event.currentTarget.dataset.id)
-    if (resource) {
-      wx.navigateTo({ url: `/pages/resource-detail/index?courseId=${this.data.id}&resourceId=${resource.id}` })
-    }
-  },
-  submitResource() {
-    wx.navigateTo({ url: '/pages/submit-resource/index' })
-  }
+  openResource(event) { downloadResource(this.data.resources.find(item => item.id === event.currentTarget.dataset.id)) },
+  submitResource() { wx.showToast({ title: '资料投稿功能建设中', icon: 'none' }) }
 })

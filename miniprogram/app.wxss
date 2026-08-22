@@ -39,24 +39,3 @@ button::after { border: 0; }
 .sticky-footer { position: fixed; z-index: 10; left: 0; right: 0; bottom: 0; padding: 18rpx 32rpx calc(18rpx + env(safe-area-inset-bottom)); background: rgba(255,253,248,.98); border-top: 1rpx solid #E8E2EC; }
 .two-buttons { display: grid; grid-template-columns: 1fr 2fr; gap: 16rpx; }
 .divider { height: 1rpx; background: #E8E2EC; }
-
-/* FB-18: 暗色模式全局适配 */
-@media (prefers-color-scheme: dark) {
-  page { background: #1A1520; color: #E0DCE4; }
-  .page { background: #1A1520; }
-  .muted { color: #8B8090; }
-  .micro { color: #8B8090; }
-  .card { background: #211C28; border-color: #2D2838; }
-  .section-title { color: #E8CF96; }
-  .section-link { color: #C9B8D8; }
-  .search-box { background: #211C28; border-color: #2D2838; color: #8B8090; }
-  .chip { background: #211C28; border-color: #2D2838; color: #8B8090; }
-  .chip--active { background: #4B1F6F; border-color: #4B1F6F; color: #FFFFFF; }
-  .button--ghost { background: #211C28; border-color: #2D2838; color: #C9B8D8; }
-  .button--secondary { background: #2D2438; color: #C9B8D8; }
-  .notice { background: #2D2818; color: #D4BC8A; }
-  .field-label { color: #A8A0B0; }
-  .input, .picker, .textarea { background: #211C28; border-color: #2D2838; color: #E0DCE4; }
-  .sticky-footer { background: rgba(26,21,32,.98); border-top-color: #2D2838; }
-  .divider { background: #2D2838; }
-}
