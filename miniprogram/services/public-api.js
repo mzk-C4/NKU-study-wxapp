@@ -341,6 +341,8 @@ function mapReviewItem(rawItem, groupKey) {
     tags: toTextArray(raw.tags),
     body: toText(raw.body),
     helpful_count: toCount(raw.helpful_count),
+    unhelpful_count: toCount(raw.unhelpful_count),
+    viewer_reaction: raw.viewer_reaction === 'up' || raw.viewer_reaction === 'down' ? raw.viewer_reaction : null,
     created_at: toText(raw.created_at)
   }
 }
@@ -510,14 +512,25 @@ function createPublicApi(client = request, options = {}) {
         error.code = 'REFERENCE_MOCK_UNAVAILABLE'
         throw error
       }
-      return mapReviewGroup(await client.get(`/review-groups/${encodePathSegment(groupKey)}`), true)
+      return mapReviewGroup(await client.get(`/review-groups/${encodePathSegment(groupKey)}`, undefined, { auth: 'optional' }), true)
     },
     async getCourseReviewGroups(course = {}) {
       if (isReference) return []
       const groups = Array.isArray(course.teacher_groups) ? course.teacher_groups : []
       return Promise.all(groups.filter(group => group && group.group_key).map(async group => (
-        mapReviewGroup(await client.get(`/review-groups/${encodePathSegment(group.group_key)}`), true)
+        mapReviewGroup(await client.get(`/review-groups/${encodePathSegment(group.group_key)}`, undefined, { auth: 'optional' }), true)
       )))
+    },
+    async setReviewReaction(reviewId, reaction) {
+      if (isReference) return authenticatedFeatureUnavailable()
+      const normalized = reaction === 'up' || reaction === 'down' ? reaction : null
+      const data = await client.put(`/reviews/${encodePathSegment(reviewId)}/reaction`, { reaction: normalized }, { auth: 'required' })
+      return {
+        review_id: toText(data && data.review_id),
+        helpful_count: toCount(data && data.helpful_count),
+        unhelpful_count: toCount(data && data.unhelpful_count),
+        viewer_reaction: data && (data.viewer_reaction === 'up' || data.viewer_reaction === 'down') ? data.viewer_reaction : null
+      }
     },
     async searchCourses(keyword, options = {}) {
       const result = mapCourseList(await client.get('/courses', courseQuery({ ...options, q: keyword })))

@@ -29,6 +29,10 @@ function transportFixture() {
       if (path === '/favorites') return { favorited: true, created: true, total: 1 }
       return { submitted: true, pending: true }
     },
+    async put(path, data, options) {
+      calls.push({ method: 'PUT', path, data, ...(options ? { options } : {}) })
+      return { review_id: 'review-id', helpful_count: data.reaction === 'up' ? 3 : 2, unhelpful_count: data.reaction === 'down' ? 1 : 0, viewer_reaction: data.reaction }
+    },
     async delete(path, data, options) {
       calls.push({ method: 'DELETE', path, data, ...(options ? { options } : {}) })
       return { favorited: false, removed: true, total: 0 }
@@ -62,6 +66,19 @@ test('reviews use group endpoints and the one-rating submission body', async () 
   assert.equal(groups[0].items[0].rating, 5)
   await api.submitReview({ course_id: course.id, teacher: '张老师', rating: 5, tags: ['讲解清晰'], body: '正文', anonymous: true, difficulty: 1 })
   assert.deepEqual(transport.calls.at(-1), { method: 'POST', path: '/reviews', data: { course_id: course.id, teacher: '张老师', rating: 5, tags: ['讲解清晰'], body: '正文', anonymous: true }, options: { auth: 'optional' } })
+})
+
+test('review reactions use one protected mutually-exclusive endpoint and allow cancellation', async () => {
+  const transport = transportFixture()
+  const api = createPublicApi(transport)
+  const liked = await api.setReviewReaction('review/id', 'up')
+  const cancelled = await api.setReviewReaction('review/id', null)
+  assert.equal(liked.viewer_reaction, 'up')
+  assert.equal(cancelled.viewer_reaction, null)
+  assert.deepEqual(transport.calls, [
+    { method: 'PUT', path: '/reviews/review%2Fid/reaction', data: { reaction: 'up' }, options: { auth: 'required' } },
+    { method: 'PUT', path: '/reviews/review%2Fid/reaction', data: { reaction: null }, options: { auth: 'required' } }
+  ])
 })
 
 test('authentication, favorites and personal reviews follow the protected server contract', async () => {

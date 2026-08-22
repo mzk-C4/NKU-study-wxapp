@@ -54,5 +54,6 @@ module.exports = {
   request,
   get(path, data, options = {}) { return request(path, { ...options, data }) },
   post(path, data, options = {}) { return request(path, { ...options, method: 'POST', data }) },
+  put(path, data, options = {}) { return request(path, { ...options, method: 'PUT', data }) },
   delete(path, data, options = {}) { return request(path, { ...options, method: 'DELETE', data }) }
 }
