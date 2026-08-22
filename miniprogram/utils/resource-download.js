@@ -12,7 +12,21 @@ function saveTemporaryFile(tempFilePath) {
   })
 }
 
-function downloadResource(resource) {
+function showDownloadFailure(resource, options, detail) {
+  const canReport = typeof options.onReport === 'function'
+  wx.showModal({
+    title: '下载失败',
+    content: `${detail}\n\n可以重试${canReport ? '，或反馈该资源失效' : ''}。`,
+    confirmText: '重试',
+    cancelText: canReport ? '反馈失效' : '取消',
+    success(result) {
+      if (result.confirm) downloadResource(resource, options)
+      else if (result.cancel && canReport) options.onReport()
+    }
+  })
+}
+
+function downloadResource(resource, options = {}) {
   if (!validDownloadUrl(resource?.download_url)) {
     wx.showModal({ title: '下载地址不可用', content: '暂时没有可用的 NKUStudy 资源地址。', showCancel: false })
     return
@@ -24,7 +38,7 @@ function downloadResource(resource) {
     success(result) {
       wx.hideLoading()
       if (result.statusCode !== 200 || !result.tempFilePath) {
-        wx.showToast({ title: `下载失败（${result.statusCode || '未知'}）`, icon: 'none' })
+        showDownloadFailure(resource, options, `下载请求返回 ${result.statusCode || '异常状态'}。`)
         return
       }
       wx.openDocument({
@@ -36,9 +50,10 @@ function downloadResource(resource) {
     },
     fail(error) {
       wx.hideLoading()
-      wx.showToast({ title: error.errMsg?.includes('domain') ? '请先配置资源下载合法域名' : '下载失败，请稍后重试', icon: 'none' })
+      const detail = error.errMsg?.includes('domain') ? '资源域名尚未配置为合法下载域名。' : '网络中断或请求超时。'
+      showDownloadFailure(resource, options, detail)
     }
   })
 }
 
-module.exports = { DOWNLOAD_ORIGIN, downloadResource, validDownloadUrl }
+module.exports = { DOWNLOAD_ORIGIN, downloadResource, validDownloadUrl, showDownloadFailure }

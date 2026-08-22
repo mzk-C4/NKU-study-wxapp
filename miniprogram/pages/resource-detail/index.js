@@ -1,6 +1,7 @@
 const { reportVisit } = require('../../utils/visit-report')
 const { publicApi } = require('../../services/public-api')
 const { downloadResource, validDownloadUrl } = require('../../utils/resource-download')
+const { reportDeadLink } = require('../../utils/resource-report')
 
 Page({
   data: {
@@ -52,21 +53,14 @@ Page({
   },
 
   download() {
-    if (this.data.resource) downloadResource(this.data.resource)
+    if (this.data.resource) {
+      downloadResource(this.data.resource, { onReport: () => this.reportExpired() })
+    }
   },
 
   reportExpired() {
-    wx.showModal({
-      title: '反馈链接失效',
-      content: '确认该资源链接已无法访问？我们将记录您的反馈。',
-      confirmText: '确认反馈',
-      confirmColor: '#4B1F6F',
-      success: (res) => {
-        if (res.confirm) {
-          wx.showToast({ title: '反馈已记录', icon: 'success' })
-        }
-      }
-    })
+    const resource = this.data.resource
+    if (resource) reportDeadLink(resource.course_name, resource)
   },
 
   openRelated(event) {

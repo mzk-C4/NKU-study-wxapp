@@ -12,6 +12,15 @@ function presentReview(review) {
 }
 
 Page({
+  onShareAppMessage() {
+    return {
+      title: `「${this.data.course?.name || 'NKUStudy 课程'}」评价 - NKUStudy`,
+      path: `/pages/course-overview/index?id=${encodeURIComponent(this.data.id)}`
+    }
+  },
+  onShareTimeline() {
+    return { title: `${this.data.course?.name || '南开课程'}评价 · NKUStudy` }
+  },
   data: { id: '', groupKey: '', loading: true, error: '', course: null, reviews: [], visibleReviews: [], teacherGroups: [], teacher: '', standaloneGroup: null, scoreStars: starStates(0), reactingReviewId: '' },
   onLoad(options) { reportVisit('/mp/course-reviews'); this.setData({ id: options.id || '', groupKey: options.group_key || '' }); this.loadReviews() },
   async loadReviews() {

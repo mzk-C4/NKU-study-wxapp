@@ -4,6 +4,15 @@ const { parseMarkdown } = require('../../utils/markdown')
 const authSession = require('../../utils/auth-session')
 
 Page({
+  onShareAppMessage() {
+    return {
+      title: `「${this.data.course?.name || 'NKUStudy 课程'}」- NKUStudy`,
+      path: `/pages/course-overview/index?id=${encodeURIComponent(this.data.id)}`
+    }
+  },
+  onShareTimeline() {
+    return { title: `${this.data.course?.name || '南开课程'} · NKUStudy` }
+  },
   data: { id: '', loading: true, error: '', course: null, favorite: false, favoriteLoading: false, favoriteSaving: false, descriptionBlocks: [] },
   onLoad(options) { reportVisit('/mp/course-overview'); this.setData({ id: options.id || '' }); this.loadCourse() },
   onShow() { if (this.data.course) this.loadFavoriteState() },
