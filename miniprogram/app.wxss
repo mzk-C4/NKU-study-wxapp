@@ -21,7 +21,7 @@ button::after { border: 0; }
 .search-icon { width: 30rpx; height: 30rpx; margin-right: 16rpx; border: 4rpx solid currentColor; border-radius: 50%; box-sizing: border-box; position: relative; }
 .search-icon::after { content: ""; position: absolute; width: 13rpx; height: 4rpx; right: -10rpx; bottom: -5rpx; transform: rotate(45deg); border-radius: 2rpx; background: currentColor; }
 .chips { display: flex; gap: 14rpx; overflow-x: auto; white-space: nowrap; }
-.chip { display: inline-flex; align-items: center; justify-content: center; height: 60rpx; padding: 0 24rpx; border: 1rpx solid #E8E2EC; border-radius: 30rpx; background: #FFFFFF; color: #635D66; font-size: 22rpx; box-sizing: border-box; }
+.chip { display: inline-flex; align-items: center; justify-content: center; padding: 6rpx 18rpx; border: 1rpx solid #E8E2EC; border-radius: 22rpx; background: #FFFFFF; color: #635D66; font-size: 22rpx; box-sizing: border-box; white-space: nowrap; }
 .chip--active { color: #FFFFFF; border-color: #4B1F6F; background: #4B1F6F; font-weight: 700; }
 .button { display: flex; align-items: center; justify-content: center; height: 88rpx; border-radius: 22rpx; font-size: 28rpx; font-weight: 700; }
 .button--primary { color: #FFFFFF; background: #4B1F6F; }

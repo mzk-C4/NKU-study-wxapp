@@ -57,6 +57,7 @@ function getWechatLoginCode() {
 function createProfilePage(api = publicApi, sessionStore = authSession) {
   return {
     data: {
+      themeClass: '',
       user: null,
       userInitial: 'N',
       isLoggedIn: false,
@@ -87,7 +88,7 @@ function createProfilePage(api = publicApi, sessionStore = authSession) {
       reportVisit('/mp/profile')
       this.setData({ darkMode: theme.isDark() })
     },
-    onShow() { this.refresh(); theme.onPageShow() },
+    onShow() { this.refresh(); this.setData({ themeClass: theme.onPageShow() || '' }) },
 
     resetLoggedOut(history) {
       this.setData({

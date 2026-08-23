@@ -51,6 +51,7 @@ function copyLink(url, successTitle) {
 
 Page({
   data: {
+      themeClass: '',
     id: '',
     loading: true,
     error: '',

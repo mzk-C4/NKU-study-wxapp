@@ -12,6 +12,7 @@ Page({
   },
 
   data: {
+      themeClass: '',
     form: {
       courseName: '',
       title: '',

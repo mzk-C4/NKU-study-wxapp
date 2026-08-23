@@ -4,7 +4,8 @@ const { publicApi } = require('../../services/public-api')
 const navigation = require('../../utils/navigation')
 
 Page({
-  data: { loading: true, error: '', groups: [], page: 1, hasMore: false },
+  data: {
+      themeClass: '', loading: true, error: '', groups: [], page: 1, hasMore: false },
   onLoad() { reportVisit('/mp/reviews-tab'); this.loadGroups() },
   onPullDownRefresh() { this.setData({ page: 1 }); this.loadGroups().finally(() => wx.stopPullDownRefresh()) },
   onReachBottom() {},
@@ -25,6 +26,6 @@ Page({
   openGroup(event) {
     const group = event.currentTarget.dataset.group
     const key = group.group_key || group.key
-    if (key) wx.navigateTo({ url: `/pages/course-reviews/index?group=${encodeURIComponent(key)}` })
+    if (key) wx.navigateTo({ url: `/pages/course-reviews/index?group_key=${encodeURIComponent(key)}` })
   }
 })

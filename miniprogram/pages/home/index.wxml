@@ -1,4 +1,4 @@
-<view class="home">
+<view class="home {{themeClass}}">
   <view class="brand-row"><view><view class="brand-name">NKUStudy</view><view class="brand-sub">课程资料与选课参考</view></view></view>
   <view class="hero">
     <view class="hero-kicker">南开学生共建</view>

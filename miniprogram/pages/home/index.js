@@ -4,7 +4,8 @@ const { publicApi } = require('../../services/public-api')
 const navigation = require('../../utils/navigation')
 
 Page({
-  data: { loading: true, error: '', home: null, hotCourses: [], latestUpdates: [] },
+  data: {
+      themeClass: '', loading: true, error: '', home: null, hotCourses: [], latestUpdates: [] },
 
   onLoad() { reportVisit('/mp/home'); this.loadHome() },
   onPullDownRefresh() { this.loadHome().finally(() => wx.stopPullDownRefresh()) },

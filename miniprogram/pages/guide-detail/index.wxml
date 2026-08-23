@@ -1,4 +1,4 @@
-<view class="page guide-detail">
+<view class="page guide-detail {{themeClass}}">
   <state-view
     loading="{{loading}}"
     error="{{error}}"

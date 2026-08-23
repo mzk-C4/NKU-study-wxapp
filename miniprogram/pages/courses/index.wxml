@@ -1,4 +1,4 @@
-<view class="page courses-page">
+<view class="page courses-page {{themeClass}}">
   <view class="search-box" bindtap="openSearch"><view class="search-icon"></view><text>搜索课程、教师或标签</text></view>
 
   <scroll-view scroll-x class="filter-scroll section" show-scrollbar="false" bindscroll="handleFilterScroll">

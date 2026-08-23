@@ -1,4 +1,4 @@
-<view class="guides-page">
+<view class="guides-page {{themeClass}}">
   <view class="guide-hero">
     <view class="guide-title">选课指南</view>
     <view class="guide-sub">选课、培养方案、退补选与考试成绩学习事务</view>

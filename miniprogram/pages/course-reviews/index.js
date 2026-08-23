@@ -22,7 +22,8 @@ Page({
   onShareTimeline() {
     return { title: `${this.data.course?.name || '南开课程'}评价 · NKUStudy` }
   },
-  data: { id: '', groupKey: '', loading: true, error: '', course: null, reviews: [], visibleReviews: [], teacherGroups: [], teacher: '', standaloneGroup: null, scoreStars: starStates(0), reactingReviewId: '' },
+  data: {
+      themeClass: '', id: '', groupKey: '', loading: true, error: '', course: null, reviews: [], visibleReviews: [], teacherGroups: [], teacher: '', standaloneGroup: null, scoreStars: starStates(0), reactingReviewId: '' },
   onLoad(options) { reportVisit('/mp/course-reviews'); this.setData({ id: options.id || '', groupKey: options.group_key || '' }); this.loadReviews() },
   async loadReviews() {
     this.setData({ loading: true, error: '' })

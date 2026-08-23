@@ -1,4 +1,4 @@
-<view class="reviews-page">
+<view class="reviews-page {{themeClass}}">
   <view class="detail-tabs" wx:if="{{course}}"><view class="detail-tab" data-tab="overview" bindtap="openTab">概览</view><view class="detail-tab" data-tab="resources" bindtap="openTab">资料 {{course.resource_count || 0}}</view><view class="detail-tab detail-tab--active">评价 {{course.review_count || 0}}</view></view>
   <view class="page reviews-body">
     <view class="card score-card" wx:if="{{course}}"><view class="score-number">{{course.ratings.show_aggregate ? course.ratings.average : '—'}}</view><view class="score-copy"><view class="score-label">{{course.ratings.show_aggregate ? '总体评分' : '评价样本不足'}}</view><view class="stars stars--summary"><text wx:for="{{scoreStars}}" wx:key="value" class="star {{item.active ? 'star--active' : ''}}">★</text></view><view class="micro">基于 {{course.review_count}} 条已发布评价</view></view></view>

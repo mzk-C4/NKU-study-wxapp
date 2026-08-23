@@ -51,6 +51,7 @@ function userErrorMessage(error) {
 
 Page({
   data: {
+      themeClass: '',
     loading: true,
     loadingMore: false,
     error: '',
@@ -72,7 +73,7 @@ Page({
     return this.loadGuides()
   },
   onShow() {
-    theme.onPageShow()
+    this.setData({ themeClass: theme.onPageShow() || '' })
     // Tab 页会被缓存：切回时只恢复已有状态，不能覆盖 error/empty/ready，
     // 也不能为同一个初始请求再发一次读取。
     this._isVisible = true

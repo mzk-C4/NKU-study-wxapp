@@ -59,6 +59,7 @@ function calculateScrollbar(scrollLeft, scrollWidth, viewportWidth) {
 
 Page({
   data: {
+      themeClass: '',
     loading: true,
     loadingMore: false,
     error: '',

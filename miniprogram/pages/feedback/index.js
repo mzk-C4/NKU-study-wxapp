@@ -7,6 +7,7 @@ const { listFeedback, submitFeedback } = require('../../utils/feedback-api')
 
 Page({
   data: {
+      themeClass: '',
     loading: true, error: '', submitting: false,
     feedbacks: [], title: '', content: '', contact: '',
     filterStatus: 'all', statusOptions: [

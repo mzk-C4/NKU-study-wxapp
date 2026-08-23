@@ -6,6 +6,7 @@ const { reportDeadLink } = require('../../utils/resource-report')
 
 Page({
   data: {
+      themeClass: '',
     courseId: '',
     resourceId: '',
     resource: null,

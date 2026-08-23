@@ -89,6 +89,7 @@ function userErrorMessage(error, target) {
 
 Page({
   data: {
+      themeClass: '',
     query: '',
     mode: 'global',
     modeLabel: '四类搜索',

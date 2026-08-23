@@ -21,6 +21,7 @@ Page({
   },
 
   data: {
+      themeClass: '',
     filter: 'all',
     filters: FILTERS,
     allSubmissions: [],
