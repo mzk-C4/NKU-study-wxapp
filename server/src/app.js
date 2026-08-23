@@ -5,6 +5,7 @@ const { URL } = require('node:url')
 const { JsonStore } = require('./store')
 const { signToken, verifyToken, exchangeWechatCode } = require('./auth')
 const { courseView, offeringView, resourceView, reviewView, guideView, buildSearchIndex, GUIDE_CATEGORIES } = require('./model')
+const { GuideAssistantError } = require('./guide-assistant')
 
 class HttpError extends Error {
   constructor(status, message, code = status * 100) { super(message); this.status = status; this.code = code }
@@ -61,6 +62,8 @@ function createApp(options) {
     wechatSecret: options.wechatSecret || ''
   }
   const store = new JsonStore({ dbPath: options.dbPath, seedPath: options.seedPath })
+  const learningCompass = options.learningCompass || null
+  const guideAssistant = options.guideAssistant || null
 
   function requireUser(req, data) {
     const authorization = req.headers.authorization || ''
@@ -149,15 +152,24 @@ function createApp(options) {
       }
 
       if (pathname === '/api/v1/search-index' && req.method === 'GET') {
-        const data = store.read(); return send(res, 200, { items: buildSearchIndex(data), generated_at: now() })
+        const data = store.read()
+        const targetItems = learningCompass ? learningCompass.searchItems() : []
+        const targetKeys = new Set(targetItems.map(item => `${item.type}:${item.id}`))
+        const items = buildSearchIndex(data).filter(item => !targetKeys.has(`${item.type}:${item.id}`))
+        items.push(...targetItems)
+        return send(res, 200, { items, generated_at: now() })
       }
 
       if (pathname === '/api/v1/guides' && req.method === 'GET') {
         const data = store.read()
-        const publicGuides = data.guides.filter(item => item.status === 'published').map(item => guideView(data, item)).filter(item => item.category)
-        const facets = { categories: GUIDE_CATEGORIES.filter(category => publicGuides.some(item => item.category === category)) }
+        const targetGuides = learningCompass ? learningCompass.listPublished() : []
+        const targetGuideIds = new Set(targetGuides.map(item => item.id))
+        const legacyGuides = data.guides.filter(item => item.status === 'published' && !targetGuideIds.has(item.id)).map(item => guideView(data, item)).filter(item => item.category)
+        const publicGuides = [...legacyGuides, ...targetGuides]
+        const allowedCategories = [...new Set([...GUIDE_CATEGORIES, ...(learningCompass ? learningCompass.categories : [])])]
+        const facets = { categories: allowedCategories.filter(category => publicGuides.some(item => item.category === category)) }
         const category = url.searchParams.get('category') || ''
-        if (category && !GUIDE_CATEGORIES.includes(category)) throw new HttpError(400, '指南分类无效')
+        if (category && !allowedCategories.includes(category)) throw new HttpError(400, '指南分类无效')
         const guides = category ? publicGuides.filter(item => item.category === category) : publicGuides
         const page = paginate(guides, url)
         const dataUpdatedAt = publicGuides.map(item => item.updated_at || '').sort().at(-1) || ''
@@ -166,11 +178,23 @@ function createApp(options) {
 
       const guideId = routeParam(pathname, /^\/api\/v1\/guides\/([^/]+)$/)
       if (guideId && req.method === 'GET') {
+        const targetGuide = learningCompass ? learningCompass.getPublished(guideId) : null
+        if (targetGuide) return send(res, 200, targetGuide)
         const data = store.read(); const guide = data.guides.find(item => item.id === guideId && item.status === 'published')
         if (!guide) throw new HttpError(404, '指南不存在')
         const publicGuide = guideView(data, guide, true)
         if (!publicGuide.category) throw new HttpError(404, '指南不存在')
         return send(res, 200, publicGuide)
+      }
+
+      if (pathname === '/api/v1/guide-assistant/answers' && req.method === 'POST' && guideAssistant) {
+        const body = await readBody(req)
+        try {
+          return send(res, 200, await guideAssistant.answer(body))
+        } catch (error) {
+          if (error instanceof GuideAssistantError) throw new HttpError(error.status, error.message, error.code)
+          throw error
+        }
       }
 
       const resourceReportId = routeParam(pathname, /^\/api\/v1\/resources\/([^/]+)\/reports$/)

@@ -1,7 +1,8 @@
 # 学习指南针 AI 已有回答状态视觉设计提示词
 
 > 页面：学习指南针 AI 问答
-> 状态：正常、已有一轮带引用回答
+> 状态：产品负责人已批准最终视觉；批准图优先于本提示词中不同的探索性布局描述
+> 已批准视觉：`图片和附件/learning-compass-ai-answer-approved-20260823.png`
 > 已批准视觉参考：`图片和附件/learning-compass-home-approved-20260823.png`
 > 内容合同：[`LEARNING_COMPASS_UI_CONTENT_CONTRACT.md`](./LEARNING_COMPASS_UI_CONTENT_CONTRACT.md)
 
@@ -46,6 +47,9 @@ HARD PRODUCT TRUTHS
 8. AI must not show internal model names, confidence percentages, retrieval logs, tokens, system prompts, secrets, or debug details.
 9. Multiple versions or scopes must be shown separately rather than silently merged.
 10. AI is not a bottom-tab destination.
+11. The product-owner-approved image adds a shared local-conversation toolbar below the title: a list icon with “对话记录” and a circled plus icon with “新开话题”. This approved structure is required even though it was not part of the earlier exploratory prompt.
+12. “对话记录” opens a left-side drawer rather than a bottom sheet. The drawer contains a conversation search field, pin/unpin controls, and groups for “置顶 / 今天 / 昨天 / 7天内 / 30天内”. It contains no user avatar or profile footer.
+13. “查看原文” is a navigation action, never a copy action. Until the source library and route are ready, keep the visible control but show a truthful “原文跳转正在建设中” placeholder instead of copying a URL or simulating navigation.
 
 CURRENT LOCAL CONTEXT
 
@@ -91,6 +95,9 @@ Relevant location:
 Action:
 “查看原文”
 
+Interaction meaning:
+Navigate to the located original source when the source route is available. The current engineering preview only shows “原文跳转正在建设中”; it must not copy the source URL.
+
 CONTINUATION INPUT
 
 Visible input label or placeholder:
@@ -114,6 +121,8 @@ P0 — MUST BE CLEARLY PRESENT
 - The source marker and the source document with “查看原文”.
 - Version/official-priority reminder.
 - A way to continue asking about the same topic.
+- The visible “对话记录” and “新开话题” actions with their corresponding icons.
+- The left conversation drawer with search, pinning and 30-day time grouping.
 
 P1 — IMPORTANT BUT MAY BE VISUALLY SUBORDINATE
 
@@ -182,6 +191,8 @@ The result must feel like a natural subpage of the approved NKUStudy Learning Co
 
 - [ ] 用户问题、直接回答、适用范围、版本提醒和来源全部清楚；
 - [ ] `[来源1]` 与来源条目、“查看原文”关系明确；
+- [ ] “查看原文”表达跳转而非复制；当前未接资料库时只显示建设中提示；
+- [ ] “对话记录”从左侧抽屉展开，支持搜索、置顶和30天内分组，且没有个人资料区；
 - [ ] `2025级 · 专业未设置` 是可选上下文，不阻塞提问；
 - [ ] 能继续同主题追问，但没有推荐问题或泛聊天功能；
 - [ ] 与批准首页风格一致但没有复制首页结构；

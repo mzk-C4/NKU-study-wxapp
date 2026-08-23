@@ -501,6 +501,22 @@
 - AI已有回答状态：[`LEARNING_COMPASS_AI_ANSWER_DESIGN_PROMPT.md`](./LEARNING_COMPASS_AI_ANSWER_DESIGN_PROMPT.md)；
 - AI不可用降级状态：[`LEARNING_COMPASS_AI_UNAVAILABLE_DESIGN_PROMPT.md`](./LEARNING_COMPASS_AI_UNAVAILABLE_DESIGN_PROMPT.md)。
 
+产品负责人已进一步批准：
+
+- AI已有回答状态：`图片和附件/learning-compass-ai-answer-approved-20260823.png`；
+- AI断网恢复状态：`图片和附件/learning-compass-ai-network-offline-approved-20260823.png`。
+
+批准图片是对应页面状态的最终视觉与结构依据；若图片与早期提示词布局不同，以批准图片为准。两个AI状态共享“对话记录”“新开话题”顶部操作。
+
+产品负责人对共享会话操作进一步确认：
+
+- “对话记录”从屏幕左侧展开，不使用底部 ActionSheet；
+- 抽屉顶部提供“搜索对话内容...”输入框；
+- 会话可置顶/取消置顶，并按“置顶、今天、昨天、7天内、30天内”展示；
+- 会话依据每条记录更新时间在本机保存30天，超过30天后不再展示；
+- 抽屉只承担会话历史，不显示头像、昵称或其他个人资料区；
+- “查看原文”是后续原文定位跳转入口，不是复制按钮；资料库和路由尚未完成时只提示“原文跳转正在建设中”，不得复制链接或伪造跳转成功。
+
 首页批准图中首条指南的更新时间误显示为 `2025-08-17`；正式通知日期为 `2026-08-17`。该错误只作为视觉样稿勘误登记，不进入工程实现或正式内容。
 
 每份提示词必须：

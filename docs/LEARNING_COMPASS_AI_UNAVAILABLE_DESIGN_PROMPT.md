@@ -6,7 +6,7 @@
 > 已批准断网视觉：`图片和附件/learning-compass-ai-network-offline-approved-20260823.png`
 > 内容合同：[`LEARNING_COMPASS_UI_CONTENT_CONTRACT.md`](./LEARNING_COMPASS_UI_CONTENT_CONTRACT.md)
 
-> 产品负责人要求：网络断开状态按批准断网视觉一比一复刻；该批准图的页面骨架、信息层级、恢复入口和整体比例优先于本提示词中较宽泛的设计自由。
+> 产品负责人要求：网络断开状态按批准断网视觉一比一复刻；该批准图的页面骨架、信息层级、恢复入口和整体比例优先于本提示词中较宽泛的设计自由。后续修正要求在标题下方增加“对话记录”“新开话题”文字、列表/加号图标和对应本机行为；“对话记录”统一打开左侧抽屉，不使用底部菜单。
 
 ## 可直接复制的视觉设计提示词
 
@@ -47,6 +47,8 @@ HARD PRODUCT TRUTHS
 7. The current question or input draft should be preserved or visibly recoverable.
 8. A controlled manual retry may be offered, but the design must not imply infinite automatic retry.
 9. NKUStudy is student-built and not an official university AI service.
+10. Under the page title, include two shared local-conversation actions: a list icon with “对话记录” and a circled plus icon with “新开话题”. New topic clears the current view but preserves local history; conversation history can restore a recent question. These actions also exist in the approved answered state.
+11. The conversation history opens as a left-side drawer with “搜索对话内容...” at the top, pin/unpin controls, and “置顶 / 今天 / 昨天 / 7天内 / 30天内” groups. Do not add a user avatar or profile section at the bottom.
 
 PRESERVED QUESTION
 
@@ -79,6 +81,8 @@ P0 — MUST BE CLEARLY PRESENT
 - “浏览知识库” action.
 - “去普通搜索” action.
 - Reassurance that ordinary guide functions remain available and existing local conversation is not cleared.
+- The visible “对话记录” and “新开话题” actions with their corresponding icons.
+- The same searchable, pinnable 30-day left conversation drawer used by the answered state.
 
 P1 — IMPORTANT BUT MAY BE VISUALLY SUBORDINATE
 

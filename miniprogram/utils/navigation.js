@@ -21,7 +21,8 @@ function openGuideAssistant(question = '', options = {}) {
   const normalized = String(question == null ? '' : question).trim().slice(0, 1000)
   const params = []
   if (normalized) params.push(`question=${encodeURIComponent(normalized)}`)
-  if (options.previewNetworkError === true) params.push('preview=network-error')
+  if (options.previewAnswer === true) params.push('preview=answer')
+  else if (options.previewNetworkError === true) params.push('preview=network-error')
   const suffix = params.length ? `?${params.join('&')}` : ''
   wx.navigateTo({ url: `/pages/guide-assistant/index${suffix}` })
 }

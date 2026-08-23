@@ -148,7 +148,7 @@ Page({
   },
   openAssistant() {
     if (isDevelopRuntime()) {
-      navigation.openGuideAssistant(ASSISTANT_PREVIEW_QUESTION, { previewNetworkError: true })
+      navigation.openGuideAssistant(ASSISTANT_PREVIEW_QUESTION, { previewAnswer: true })
       return
     }
     if (typeof wx.getNetworkType !== 'function') {

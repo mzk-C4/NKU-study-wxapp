@@ -2,7 +2,7 @@
 
 > 计划周期：2026-08-17 至 2026-08-30
 >
-> 状态基准：2026-08-21（学习指南针第一阶段八项核心方案已经全部确认；搜索/指南客户端与生产验收事实沿用下方 2026-08-18 快照，其他成员的旧勾选不能据此视为最新审计结果）
+> 状态基准：2026-08-23（学习指南针五篇已审核指南已获授权作为本地published完成真实指南/搜索投影和确定性AI评测；不代表生产发布，正式API、客户端AI接入、部署与生产验收仍未完成）
 >
 > 当前任务与跨聊天交接的唯一状态 owner：本文件
 >
@@ -110,11 +110,11 @@
 
 完整清单见 [`docs/LEARNING_COMPASS_KNOWLEDGE_BASE_HANDOFF.md`](./LEARNING_COMPASS_KNOWLEDGE_BASE_HANDOFF.md) 的“第一阶段核心方案清单”。八项问题已经全部确认；当前改为本地先行：内容文件盘点、接口设计和分阶段实施计划见 [`docs/LEARNING_COMPASS_IMPLEMENTATION_PLAN.md`](./LEARNING_COMPASS_IMPLEMENTATION_PLAN.md)，后端新增接口单独见 [`docs/LEARNING_COMPASS_API_REQUIREMENTS.md`](./LEARNING_COMPASS_API_REQUIREMENTS.md)，材料审查提示词见 [`docs/LEARNING_COMPASS_MATERIAL_REVIEW_PROMPT.md`](./LEARNING_COMPASS_MATERIAL_REVIEW_PROMPT.md)。
 
-当前盘点事实：`Documents/SOURCE_MANIFEST.md`第一版已建立。SRC-001/002/003/004已完成，SRC-006/007核心通知已完成且附件后置；SRC-005转专业独立进行并以父来源登记，不阻塞其他内容。培养方案不进入指南draft或AI来源；自修差异局部冻结；本地seed仍只是fixture，不能进入生产。
+当前盘点事实：阶段一/二、SRC-005与本地published/AI最小闭环已完成。五篇经审核指南仅在本地为`published`，生成版本为`851f17ad3663c9801d32a89c`；五分类列表、详情`sections/sources`、search-index和确定性assistant已通过本地验证。SRC-005父来源为`ready`，backlog为35项candidate、1项blocked、3项deferred。本地seed、生成数据和assistant都不是生产。
 
 2026-08-22 学生手册材料审查：此前七份 DOCX 的审查报告只作为历史工作记录；本轮以内容负责人确认的完整 Markdown 为准。分类报告已经完成；培养方案相关结论后续已移出第一阶段指南范围。在来源、适用范围、时效和人工核验完成前，不进入发布知识库。
 
-当前内容实施顺序确定为：先完成7项源材料的原件、Markdown和最小来源清单，再统一开展五分类、知识条目和指南正文。首页视觉提示词已经生成但与材料准备并行保留；拟议的五分类、`sections/sources`扩展及 `POST /api/v1/guide-assistant/answers` 尚未成为生产契约，生产 owner确认前不更新 `docs/API.md`，客户端也不提前调用生产端点。
+当前不再追加一轮“决定五篇draft是否提交review”：产品负责人已授权它们作为本地published进行投影与评测。后续两条主线并行：一是将现有39项backlog继续整理为更完整的指南内容；二是交由后端owner评审五分类、`sections/sources`与AI请求/响应正式契约，再实现生产审核/撤回、真实provider、30秒超时、每日20次限制、滞用控制和运维。`POST /api/v1/guide-assistant/answers`仍未成为生产契约，生产owner确认前不更新`docs/API.md`，客户端也不调用未开放AI端点。
 
 ### 0.2 状态同步规则
 
@@ -560,7 +560,7 @@
 
 - 以用户提供的教务部附件截图中的29份学院转专业文件为基准，初始缺环境学院PDF、金融学院PDF、信息与传播学院DOCX三项；后续Chrome下载补齐环境学院，核验信息与传播学院已有文件的附件ID与官网2026链接一致并更正名称。
 - 电子信息与光学工程学院两份文件SHA-256完全一致；按用户授权，仅删除项目子文件夹中的“（重复下载）”副本，原下载文件不动。
-- 当前项目子文件夹共有29份文件：28份转专业附件和1份辅修通知PDF。当前只缺金融学院2026版PDF；Chrome两次下载尝试均未完成落盘，等待用户手动下载或后续重试。
+- 当前项目子文件夹共有30份文件：29份转专业附件和1份辅修通知PDF。截图中的29份学院转专业附件现已齐全；金融学院Chrome下载曾未落盘，但文件随后已到位。
 
 ## 二十六、2026-08-23 首页视觉批准与后续页面提示词
 
@@ -600,3 +600,112 @@
 - SRC-005作为转专业父来源独立推进；当前27份学院DOC/DOCX候选不立即冻结子编号，待用户逐份整理后使用`SRC-005-xxx`追加。
 - 发现SRC-006辅修通知PDF在根目录和转专业下载目录各有一份，SHA-256完全一致；清单登记为重复路径，不执行删除。
 - SRC-005不阻塞其他来源和后续内容工作；本轮只建立来源清单并同步文档，没有进行五分类、知识条目或指南正文整理，也没有修改API或生产数据。
+
+## 三十、2026-08-23 阶段一/二执行提示词
+
+- 用户决定在新的聊天框完成内容沉淀和本地知识库建设；方案采用两步法而非一次性实现。
+- 阶段一使用 [`docs/LEARNING_COMPASS_STAGE1_CONTENT_DISTILLATION_PROMPT.md`](./LEARNING_COMPASS_STAGE1_CONTENT_DISTILLATION_PROMPT.md)：只创建五篇指南`draft`、CONTENT_INDEX、CONTENT_BACKLOG和阶段报告，完成后强制停止等待人工审核。
+- 阶段二使用 [`docs/LEARNING_COMPASS_STAGE2_LOCAL_KB_PROMPT.md`](./LEARNING_COMPASS_STAGE2_LOCAL_KB_PROMPT.md)：只有用户明确批准阶段一结果后才允许修改本地脚本、server参考模型和测试。
+- 产品负责人确认不需要把年级、学院、专业、时间做成必填元数据；两份提示词均只保留`id/title/category/status/source_ids`最小头部，必要限制写入正文提醒。
+- 阶段二实现本地Markdown解析、来源校验、五分类校验、状态隔离、多章节/多来源投影和本地指南/search-index行为；AI问答属于后续阶段，本轮不实现。
+- 两步推荐在同一新聊天框连续执行，但中间必须经过产品负责人审核门槛；本轮没有执行阶段一或阶段二，没有修改业务代码、API或生产数据。
+
+## 三十一、2026-08-23 学习指南针阶段一内容沉淀
+
+- 已在`Documents/学习指南针内容草稿/`形成`CONTENT_INDEX.md`、`CONTENT_BACKLOG.md`、`STAGE1_CONTENT_REPORT.md`和五篇指南草稿；五个一级分类各一篇，状态全部保持`draft`。
+- 五篇分别使用：选课时间`SRC-002`、成绩复核`SRC-003`、休学复学`SRC-001`、2026微专业`SRC-007`、AI课程作业规范`SRC-004`；事实段落均保留章节或条款定位。
+- 五分类backlog共39项：`candidate` 34项、`blocked` 2项、`deferred` 3项。自修GPA/门数/日期差异和仍在整理的2026转专业指南保持阻塞，不尝试合并或猜测。
+- 培养方案、课程资料、笔记、试题、评价、同学经验、本地seed/runtime和南发字〔2026〕82号猜测内容均未进入正文或来源。
+- 本轮没有修改`docs/API.md`、源Markdown、原始PDF、`Documents/SOURCE_MANIFEST.md`、业务代码、server、生产接口或生产数据。
+- 定向内容校验确认8/8文件存在、五分类各一篇、状态全部为`draft`、来源ID有效、backlog为34/2/3；`git diff --check`通过，仅有工作区既有LF/CRLF提示。未运行无关代码、真机、体验版或生产验证。
+- 阶段一完成后停止；下一步只由产品负责人审核事实范围、条款定位和未决问题。未获明确批准前不得进入阶段二解析器、数据库、接口、搜索或AI实现。
+
+## 三十二、2026-08-23 阶段一内容产品审核
+
+- 新聊天框已按门槛创建8个阶段一文件：CONTENT_INDEX、39项CONTENT_BACKLOG、STAGE1_CONTENT_REPORT和五篇一类一篇指南草稿；未进入解析器、接口、搜索或AI实现。
+- 产品审核报告见 [`docs/LEARNING_COMPASS_STAGE1_PRODUCT_REVIEW.md`](./LEARNING_COMPASS_STAGE1_PRODUCT_REVIEW.md)；本节记录首轮`changes-requested`，后续最终状态见第34节。
+- 已通过：五分类覆盖、最小头部、来源ID、条款定位、draft状态、排除培养方案/seed/课程资料、自修差异冻结；成绩复核、休学复学、AI课程作业三篇正文可保留。
+- 必须修正：选课指南把“10周（不含）以上”写成了可能包含10周的“10周以上”；微专业指南未先说明2026报名已结束；国际前沿小学期backlog使用了管理者视角“如何建设”。
+- 仅需重新运行内容文件、索引/backlog一致性和`git diff --check`；代码、构建、真机和生产检查继续SKIP。
+- 3项修正后来已完成并通过复核；本节保留为审核历史。
+
+## 三十三、2026-08-23 AI 网络断开恢复页实现
+
+- 产品负责人批准 `图片和附件/learning-compass-ai-network-offline-approved-20260823.png`，要求学习指南针AI问答在网络断开时按该图一比一复刻。
+- 新增第13个小程序页面 `pages/guide-assistant/index`，并由指南首页AI入口在确认断网时进入；在线仍显示“AI问答正在建设中”。
+- 产品负责人反馈联网开发者工具无法进入页面后，已增加仅限 `develop` 的 `preview=network-error` 入口：联网点击“开始提问”直接进入批准断网页；trial/release仍按真实网络状态处理。
+- 页面复刻问题气泡、紫色检查网络按钮、复制/编辑、“请检查网络或重试”、“你可以继续”、知识库/普通搜索卡片、固定输入框和AI提示文案。
+- 页面支持断网提交、本机30天问题/草稿保存、网络恢复监听、受控手动重试、复制、编辑、知识库返回和带问题普通搜索。
+- 附件能力没有开放，图标仅作批准视觉占位，点击提示“暂不支持附件”；运行代码没有AI请求或未开放端点。
+- 新增 `test/guide-assistant.test.js`；加入develop视觉预览回归后，定向25/25、完整客户端89/89、静态门禁13页面/4Tab通过。
+- 微信开发者工具自动打开为`BLOCKED`：脚本未找到安装目录；像素级复刻、375px、大字体、真机和体验版仍待人工验收。
+- 本轮未修改`docs/API.md`、服务端、生产API或生产数据。
+
+## 三十四、2026-08-23 阶段一正式批准
+
+- 产品负责人逐项复核选课10周边界、微专业报名结束提示和国际前沿小学期学生视角，3项修正全部通过。
+- 8个阶段一文件仍齐全；5篇指南均为`draft`；CONTENT_INDEX标题、ID、分类、路径和来源一致；backlog仍为34项candidate、2项blocked、3项deferred。
+- 旧错误表述扫描为0；scoped和当前全局`git diff --check`通过，仅有换行提示。
+- 阶段一状态正式改为`approved`，阶段二人工门槛解除；阶段二仍未在本轮执行。
+- 用户可在原新聊天框明确发送“阶段一内容已审核通过，可以执行阶段二”，并使用 [`docs/LEARNING_COMPASS_STAGE2_LOCAL_KB_PROMPT.md`](./LEARNING_COMPASS_STAGE2_LOCAL_KB_PROMPT.md)。
+- 五篇内容仍保持`draft`，批准只允许建设本地解析与状态隔离，不授权改成`published`、修改生产API或部署。
+
+## 三十五、2026-08-23 AI 问题气泡就地编辑
+
+- 已先将产品负责人验收通过的断网恢复页作为独立本地备份提交：`0f25899 feat: add guide assistant offline recovery`；该提交只包含断网页源码、入口/导航、测试、验收与视觉合同说明，以及批准参考图，没有推送远端。
+- 后续未提交改动把编辑行为从“复制到底部输入框”改为“原问题气泡原位编辑”：点击铅笔后使用原生`textarea`并自动聚焦，底部输入框和已有草稿保持不变。
+- 就地编辑提供“取消”和“发送”；取消保留原问题，发送在断网或`develop`批准视觉预览中更新问题气泡并继续保持断网恢复状态，空白问题不可发送。
+- 当前运行代码仍没有AI请求或未开放端点调用；在线且非预览环境继续诚实提示“AI问答正在建设中”。
+- 根据产品负责人的真机截图，“你可以继续”及两张恢复卡已改为弹性布局中的底部恢复操作区：常规屏幕自动下沉并贴近固定输入框，较矮屏幕、长问题和就地编辑状态下仍随页面自然滚动，不使用可能遮挡内容的固定坐标。
+- 新增就地编辑、取消、发送、空白拦截和底部草稿隔离回归；定向指南测试为27/27通过，完整本地验证为服务端13/13、客户端91/91、静态检查13页面/4Tab全部通过。
+- 本批就地编辑改动按产品负责人要求保持未提交，等待微信开发者工具人工验收后再决定是否创建第二个提交。
+
+## 三十六、2026-08-23 阶段二本地知识库闭环
+
+- 阶段二获阶段一明确批准后执行，完整报告见 [`docs/LEARNING_COMPASS_STAGE2_LOCAL_KB_REPORT.md`](./LEARNING_COMPASS_STAGE2_LOCAL_KB_REPORT.md)。
+- 新增`server/src/learning-compass.js`、`scripts/build-learning-compass.js`、本地生成JSON和`server/test/learning-compass.test.js`；修改reference app/server仅增加可选本地注入，默认行为不变。
+- 五篇真实Markdown全部解析为五分类知识记录，来源ID和章节/条款定位有效，生成版本为`6b2ee20ae676d958f76ca5ea`；五篇继续保持draft，真实公共投影为0。
+- test-only published副本验证本地五分类指南列表、详情`sections/sources`和search-index；draft/review隔离、非法分类/状态、未知来源、重复ID、缺引用、非HTTPS及篡改生成数据均失败关闭。
+- 最终PASS：知识定向10/10、server 23/23、客户端契约91/91、生成数据`--check`、敏感路径扫描和`git diff --check`。
+- 中途新增的篡改测试首次因直接修改被冻结对象而未真正篡改，出现1次预期异常未触发；改为深拷贝模拟磁盘JSON后最终通过，失败和修正已写入报告。
+- 本阶段没有实现AI、没有修改生产API/`docs/API.md`、没有发布真实指南、没有部署、提交或推送。
+
+## 三十七、2026-08-23 AI已有回答状态一比一复刻
+
+- 产品负责人批准 `图片和附件/learning-compass-ai-answer-approved-20260823.png` 作为AI已有回答状态最终视觉与结构依据。
+- 复用现有第13页 `pages/guide-assistant/index`，新增仅本地/`develop`使用的 `preview=answer`；trial/release不展示伪造回答、不调用未开放AI端点。
+- 页面复刻批准图的顶部工具栏、问题气泡、回答卡、引用、来源卡、回答操作、固定输入框和轮次说明；教字〔2024〕2号来源按钮使用复制官方链接降级。
+- 已回答与断网状态共享“对话记录”“新开话题”文字和图标；本机最多保留10条最近问题，原生ActionSheet显示最近6条，新开话题不删除历史。
+- 断网页继续保持批准恢复结构、就地编辑、草稿隔离、手动重试、知识库/普通搜索降级和零AI请求；`preview=network-error`可单独预览。
+- `develop`指南首页AI入口改为默认打开回答预览；真实trial/release在线行为仍为“AI问答正在建设中”，真实断网才进入恢复页。
+- 自动化PASS：助手15/15、完整客户端95/95、静态检查13页面/4Tab；微信开发者工具、375px、大字体、真机和体验版仍需人工验收。
+- 本轮没有修改`docs/API.md`、服务端、生产API或生产数据，也没有提交或推送。
+
+## 三十七、2026-08-23 SRC-005完成与本地发布/AI验收提示词
+
+- 只读核验`Documents/今日Chrome下载_转专业与辅修材料/完整打包/`：共30份Markdown，其中29份为转专业材料、1份为辅修通知；全部非空且有一级标题。
+- `Documents/SOURCE_MANIFEST.md`中的SRC-005已更新为`ready`，登记29份原件与29份转专业Markdown；信息与传播学院文件名年份仍保留单独核验提示。
+- 阶段二已经完成，不再重复运行。产品负责人明确允许五篇已审核指南在本地改为published用于真实指南/搜索/AI测试，但不授权生产发布。
+- 已生成 [`docs/LEARNING_COMPASS_LOCAL_PUBLISH_AI_EVAL_PROMPT.md`](./LEARNING_COMPASS_LOCAL_PUBLISH_AI_EVAL_PROMPT.md)，合并执行：五篇本地published、SRC-005 backlog解锁、确定性AI检索mock、拒答/降级和至少30题验收。
+- 提示词禁止外部模型、生产API、部署、客户端AI在线接入、提交或推送；UI轨道继续独立推进。
+- 本轮只更新来源状态、提示词和计划，没有实际修改五篇status、没有实现AI、没有生产变化。
+
+## 三十八、2026-08-23 本地published与AI最小闭环验收
+
+- 产品负责人授权五篇已审核指南仅在本地改为`published`；五篇frontmatter和CONTENT_INDEX已同步，批准正文、标题、分类、ID、来源与引用定位未改，生产仍未发布。
+- SRC-005的29份转专业Markdown全部非空且有一级标题；“2026年转专业如何申请？”已由blocked改为candidate，backlog现为35项candidate、1项blocked、3项deferred，总数仍为39。
+- 真实生成版本更新为`851f17ad3663c9801d32a89c`：五分类列表各1篇，5篇详情均有sections/sources，search投影含5篇且type:id无重复；draft/review fixture继续隔离。
+- 新增独立`server/src/guide-assistant.js`、local-only可选路由、30题fixture/评测脚本与生成结果；assistant只检索published指南，history不作为事实来源，自修冲突和越界问题拒答，provider连续失败稳定映射AI_UNAVAILABLE。
+- 30题为30/30（100%），命中引用25/25、无依据拒答5/5、内部泄露0、provider降级100%。完整报告见[`docs/LEARNING_COMPASS_LOCAL_PUBLISH_AI_EVAL_REPORT.md`](./LEARNING_COMPASS_LOCAL_PUBLISH_AI_EVAL_REPORT.md)。
+- 本地验证：知识/assistant定向17/17、server 30/30、客户端95/95、13页面/4Tab静态检查、构建与评测`--check`均通过；最终diff检查结果见报告收尾。
+- 本轮未修改`docs/API.md`、小程序AI在线调用或生产服务；未调用外部模型、未部署、未写生产、未提交或推送。下一步是后端owner正式契约评审，不得把本地reference当成生产实现。
+
+## 三十八、2026-08-23 AI会话历史抽屉与原文跳转语义修正
+
+- 产品负责人确认会话历史当前按每条记录更新时间在本机保存30天；保留期以后可以再评审，本轮固定为30天。
+- `pages/guide-assistant/index` 已将原生底部 ActionSheet 替换为左侧会话抽屉；抽屉顶部提供“搜索对话内容...”，支持置顶/取消置顶，并按“置顶、今天、昨天、7天内、30天内”分组，组内按更新时间倒序。
+- 抽屉不显示头像、昵称或个人资料区；可通过右侧遮罩、顶部关闭按钮或选择会话关闭。选择会话只恢复本机已回答/断网状态，不发AI请求；“新开话题”继续保留旧会话。
+- 历史标准化会逐条淘汰超过30天的记录；界面说明改为“会话记录保存30天 · 单个话题最多10轮”，不再把10轮误写成历史会话数量。
+- AI回答来源卡的“查看原文”已明确为未来原文定位跳转入口。由于资料库和来源路由尚未完成，当前只提示“原文跳转正在建设中”，不再复制PDF链接，也不伪造跳转成功。
+- 自动化 `PASS`：助手定向16/16、服务端30/30、完整客户端96/96、小程序静态检查13页面/4Tab、完整`npm test`和`git diff --check`。
+- 微信开发者工具视觉、窄屏、大字体、真机和体验版仍未运行；本轮没有修改API契约、服务端实现或生产数据，也没有提交或推送。

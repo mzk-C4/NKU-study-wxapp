@@ -1,0 +1,343 @@
+{
+  "generated": true,
+  "knowledge_version": "851f17ad3663c9801d32a89c",
+  "summary": {
+    "total": 30,
+    "passed": 30,
+    "failed": 0,
+    "accuracy_percent": 100,
+    "hit_total": 25,
+    "citation_presence_percent": 100,
+    "refusal_total": 5,
+    "refusal_accuracy_percent": 100,
+    "internal_leakage_count": 0
+  },
+  "gates": {
+    "accuracy_at_least_90": true,
+    "hit_citations_100": true,
+    "unsupported_refusal_100": true,
+    "internal_leakage_zero": true
+  },
+  "cases": [
+    {
+      "question": "2025级什么时候预选和正选？",
+      "expected_guide_id": "course-selection-2026-fall",
+      "expected_source_id": "SRC-002",
+      "actual_guide_id": "course-selection-2026-fall",
+      "actual_source_ids": [
+        "SRC-002"
+      ],
+      "internal_leakage": false,
+      "pass": true
+    },
+    {
+      "question": "正选每天几点放出退选名额？",
+      "expected_guide_id": "course-selection-2026-fall",
+      "expected_source_id": "SRC-002",
+      "actual_guide_id": "course-selection-2026-fall",
+      "actual_source_ids": [
+        "SRC-002"
+      ],
+      "internal_leakage": false,
+      "pass": true
+    },
+    {
+      "question": "补退选时还能跨专业选课吗？",
+      "expected_guide_id": "course-selection-2026-fall",
+      "expected_source_id": "SRC-002",
+      "actual_guide_id": "course-selection-2026-fall",
+      "actual_source_ids": [
+        "SRC-002"
+      ],
+      "internal_leakage": false,
+      "pass": true
+    },
+    {
+      "question": "期中退课后成绩单会记W吗？",
+      "expected_guide_id": "course-selection-2026-fall",
+      "expected_source_id": "SRC-002",
+      "actual_guide_id": "course-selection-2026-fall",
+      "actual_source_ids": [
+        "SRC-002"
+      ],
+      "internal_leakage": false,
+      "pass": true
+    },
+    {
+      "question": "2025级能办必修课补登吗？",
+      "expected_guide_id": "course-selection-2026-fall",
+      "expected_source_id": "SRC-002",
+      "actual_guide_id": "course-selection-2026-fall",
+      "actual_source_ids": [
+        "SRC-002"
+      ],
+      "internal_leakage": false,
+      "pass": true
+    },
+    {
+      "question": "课程成绩有异议怎么复核？",
+      "expected_guide_id": "grade-review",
+      "expected_source_id": "SRC-003",
+      "actual_guide_id": "grade-review",
+      "actual_source_ids": [
+        "SRC-003"
+      ],
+      "internal_leakage": false,
+      "pass": true
+    },
+    {
+      "question": "开学多久内可以申请成绩复议？",
+      "expected_guide_id": "grade-review",
+      "expected_source_id": "SRC-003",
+      "actual_guide_id": "grade-review",
+      "actual_source_ids": [
+        "SRC-003"
+      ],
+      "internal_leakage": false,
+      "pass": true
+    },
+    {
+      "question": "任课老师能直接改分吗？",
+      "expected_guide_id": "grade-review",
+      "expected_source_id": "SRC-003",
+      "actual_guide_id": "grade-review",
+      "actual_source_ids": [
+        "SRC-003"
+      ],
+      "internal_leakage": false,
+      "pass": true
+    },
+    {
+      "question": "成绩复核应该找哪个开课单位？",
+      "expected_guide_id": "grade-review",
+      "expected_source_id": "SRC-003",
+      "actual_guide_id": "grade-review",
+      "actual_source_ids": [
+        "SRC-003"
+      ],
+      "internal_leakage": false,
+      "pass": true
+    },
+    {
+      "question": "成绩复核超过三周还会受理吗？",
+      "expected_guide_id": "grade-review",
+      "expected_source_id": "SRC-003",
+      "actual_guide_id": "grade-review",
+      "actual_source_ids": [
+        "SRC-003"
+      ],
+      "internal_leakage": false,
+      "pass": true
+    },
+    {
+      "question": "休学到期后怎么复学？",
+      "expected_guide_id": "resume-study",
+      "expected_source_id": "SRC-001",
+      "actual_guide_id": "resume-study",
+      "actual_source_ids": [
+        "SRC-001"
+      ],
+      "internal_leakage": false,
+      "pass": true
+    },
+    {
+      "question": "因病休学复学要带什么病愈证明？",
+      "expected_guide_id": "resume-study",
+      "expected_source_id": "SRC-001",
+      "actual_guide_id": "resume-study",
+      "actual_source_ids": [
+        "SRC-001"
+      ],
+      "internal_leakage": false,
+      "pass": true
+    },
+    {
+      "question": "复学应在什么时候提出申请？",
+      "expected_guide_id": "resume-study",
+      "expected_source_id": "SRC-001",
+      "actual_guide_id": "resume-study",
+      "actual_source_ids": [
+        "SRC-001"
+      ],
+      "internal_leakage": false,
+      "pass": true
+    },
+    {
+      "question": "休学期满还想继续休学怎么办？",
+      "expected_guide_id": "resume-study",
+      "expected_source_id": "SRC-001",
+      "actual_guide_id": "resume-study",
+      "actual_source_ids": [
+        "SRC-001"
+      ],
+      "internal_leakage": false,
+      "pass": true
+    },
+    {
+      "question": "逾期两周不办复学会怎样？",
+      "expected_guide_id": "resume-study",
+      "expected_source_id": "SRC-001",
+      "actual_guide_id": "resume-study",
+      "actual_source_ids": [
+        "SRC-001"
+      ],
+      "internal_leakage": false,
+      "pass": true
+    },
+    {
+      "question": "2026微专业报名已经结束了吗？",
+      "expected_guide_id": "micro-major-2026",
+      "expected_source_id": "SRC-007",
+      "actual_guide_id": "micro-major-2026",
+      "actual_source_ids": [
+        "SRC-007"
+      ],
+      "internal_leakage": false,
+      "pass": true
+    },
+    {
+      "question": "微专业要在哪个系统报名？",
+      "expected_guide_id": "micro-major-2026",
+      "expected_source_id": "SRC-007",
+      "actual_guide_id": "micro-major-2026",
+      "actual_source_ids": [
+        "SRC-007"
+      ],
+      "internal_leakage": false,
+      "pass": true
+    },
+    {
+      "question": "每人可以报几个微专业？",
+      "expected_guide_id": "micro-major-2026",
+      "expected_source_id": "SRC-007",
+      "actual_guide_id": "micro-major-2026",
+      "actual_source_ids": [
+        "SRC-007"
+      ],
+      "internal_leakage": false,
+      "pass": true
+    },
+    {
+      "question": "微专业考核和录取是什么时间？",
+      "expected_guide_id": "micro-major-2026",
+      "expected_source_id": "SRC-007",
+      "actual_guide_id": "micro-major-2026",
+      "actual_source_ids": [
+        "SRC-007"
+      ],
+      "internal_leakage": false,
+      "pass": true
+    },
+    {
+      "question": "微专业入选后从哪个界面选课？",
+      "expected_guide_id": "micro-major-2026",
+      "expected_source_id": "SRC-007",
+      "actual_guide_id": "micro-major-2026",
+      "actual_source_ids": [
+        "SRC-007"
+      ],
+      "internal_leakage": false,
+      "pass": true
+    },
+    {
+      "question": "本科作业能用AI辅助吗？",
+      "expected_guide_id": "ai-coursework",
+      "expected_source_id": "SRC-004",
+      "actual_guide_id": "ai-coursework",
+      "actual_source_ids": [
+        "SRC-004"
+      ],
+      "internal_leakage": false,
+      "pass": true
+    },
+    {
+      "question": "AI生成的内容需要标注吗？",
+      "expected_guide_id": "ai-coursework",
+      "expected_source_id": "SRC-004",
+      "actual_guide_id": "ai-coursework",
+      "actual_source_ids": [
+        "SRC-004"
+      ],
+      "internal_leakage": false,
+      "pass": true
+    },
+    {
+      "question": "可以把个人隐私上传给AI吗？",
+      "expected_guide_id": "ai-coursework",
+      "expected_source_id": "SRC-004",
+      "actual_guide_id": "ai-coursework",
+      "actual_source_ids": [
+        "SRC-004"
+      ],
+      "internal_leakage": false,
+      "pass": true
+    },
+    {
+      "question": "让AI帮忙写代码后还要自己测试吗？",
+      "expected_guide_id": "ai-coursework",
+      "expected_source_id": "SRC-004",
+      "actual_guide_id": "ai-coursework",
+      "actual_source_ids": [
+        "SRC-004"
+      ],
+      "internal_leakage": false,
+      "pass": true
+    },
+    {
+      "question": "期末论文可以让AI代写吗？",
+      "expected_guide_id": "ai-coursework",
+      "expected_source_id": "SRC-004",
+      "actual_guide_id": "ai-coursework",
+      "actual_source_ids": [
+        "SRC-004"
+      ],
+      "internal_leakage": false,
+      "pass": true
+    },
+    {
+      "question": "申请自修要求GPA是多少？",
+      "expected_guide_id": "refuse",
+      "expected_source_id": null,
+      "actual_guide_id": "refuse",
+      "actual_source_ids": [],
+      "internal_leakage": false,
+      "pass": true
+    },
+    {
+      "question": "我的专业毕业需要多少学分？",
+      "expected_guide_id": "refuse",
+      "expected_source_id": null,
+      "actual_guide_id": "refuse",
+      "actual_source_ids": [],
+      "internal_leakage": false,
+      "pass": true
+    },
+    {
+      "question": "有机化学课程资料在哪里下载？",
+      "expected_guide_id": "refuse",
+      "expected_source_id": null,
+      "actual_guide_id": "refuse",
+      "actual_source_ids": [],
+      "internal_leakage": false,
+      "pass": true
+    },
+    {
+      "question": "宿舍晚上几点断电？",
+      "expected_guide_id": "refuse",
+      "expected_source_id": null,
+      "actual_guide_id": "refuse",
+      "actual_source_ids": [],
+      "internal_leakage": false,
+      "pass": true
+    },
+    {
+      "question": "哪个老师的课程评价最好？",
+      "expected_guide_id": "refuse",
+      "expected_source_id": null,
+      "actual_guide_id": "refuse",
+      "actual_source_ids": [],
+      "internal_leakage": false,
+      "pass": true
+    }
+  ]
+}
