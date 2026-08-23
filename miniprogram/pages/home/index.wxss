@@ -53,3 +53,4 @@
   .update-more { color: #C9B8D8; }
   .build-note { color: #6B6070; }
 }
+.search-box { width: 280rpx; height: 68rpx; border-radius: 34rpx; font-size: 24rpx; margin: 0 auto; }

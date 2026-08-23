@@ -11,7 +11,9 @@
     "pages/guide-detail/index",
     "pages/submit-resource/index",
     "pages/write-review/index",
-    "pages/feedback-web/index"
+    "pages/feedback-web/index",
+    "pages/reviews-tab/index",
+    "pages/feedback/index"
   ],
   "window": {
     "navigationBarTitleText": "NKUStudy",
@@ -26,10 +28,36 @@
     "backgroundColor": "#FFFDF8",
     "borderStyle": "white",
     "list": [
-      { "pagePath": "pages/home/index", "text": "首页" },
-      { "pagePath": "pages/courses/index", "text": "课程" },
-      { "pagePath": "pages/guides/index", "text": "指南" },
-      { "pagePath": "pages/profile/index", "text": "我的" }
+      {
+        "pagePath": "pages/home/index",
+        "text": "首页",
+        "iconPath": "assets/tab/home.png",
+        "selectedIconPath": "assets/tab/home-active.png"
+      },
+      {
+        "pagePath": "pages/courses/index",
+        "text": "课程",
+        "iconPath": "assets/tab/courses.png",
+        "selectedIconPath": "assets/tab/courses-active.png"
+      },
+      {
+        "pagePath": "pages/reviews-tab/index",
+        "text": "评价",
+        "iconPath": "assets/tab/reviews.png",
+        "selectedIconPath": "assets/tab/reviews-active.png"
+      },
+      {
+        "pagePath": "pages/guides/index",
+        "text": "指南",
+        "iconPath": "assets/tab/guides.png",
+        "selectedIconPath": "assets/tab/guides-active.png"
+      },
+      {
+        "pagePath": "pages/profile/index",
+        "text": "我的",
+        "iconPath": "assets/tab/profile.png",
+        "selectedIconPath": "assets/tab/profile-active.png"
+      }
     ]
   },
   "usingComponents": {
