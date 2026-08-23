@@ -540,10 +540,10 @@ test('formal search runtime uses only adapter methods and keeps endpoint ownersh
   assert.doesNotMatch(template, /当前仅开放课程搜索/)
 })
 
-test('home review shortcut remains reachable through the course library instead of the removed review search mode', () => {
+test('home quick-grid removed and search box is compact', () => {
   const source = fs.readFileSync(path.join(projectRoot, 'miniprogram/pages/home/index.wxml'), 'utf8')
-  assert.doesNotMatch(source, /pages\/search\/index\?type=review/)
-  assert.match(source, /data-url="\/pages\/courses\/index"[^>]*>[\s\S]*?<text>看评价<\/text>/)
+  assert.ok(!source.includes('quick-grid'), 'quick-grid should be removed')
+  assert.ok(source.includes('search-box--compact'), 'search box should be compact')
 })
 
 test('search result cards fill the page and the clear action stays inside the search field', () => {

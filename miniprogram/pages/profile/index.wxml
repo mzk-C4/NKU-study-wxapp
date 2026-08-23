@@ -1,31 +1,83 @@
 <view class="profile-page">
-  <view class="profile-hero"><view class="profile-row"><view class="profile-avatar">{{user ? (user.nickname ? user.nickname[0] : 'N') : 'N'}}</view><view><view class="profile-name">{{user ? (user.nickname || '微信用户') : '你好，南开同学'}}</view><view class="profile-sub">{{user ? '微信身份已登录，写评价自动匿名' : '浏览课程、资料和评价无需登录'}}</view></view></view><button wx:if="{{!user}}" class="login-button" loading="{{loading}}" bindtap="login">微信一键登录</button><button wx:else class="login-button" bindtap="logout">退出登录</button></view>
+  <view class="profile-hero">
+    <view class="profile-row">
+      <view class="profile-avatar">{{user ? (user.nickname ? user.nickname[0] : 'N') : 'N'}}</view>
+      <view>
+        <view class="profile-name">{{user ? (user.nickname || '微信用户') : '你好，南开同学'}}</view>
+        <view class="profile-sub">{{user ? '微信身份已登录' : '浏览无需登录'}}</view>
+      </view>
+    </view>
+    <button wx:if="{{!user}}" class="login-button" loading="{{loading}}" bindtap="login">微信一键登录</button>
+  </view>
   <view class="page profile-body">
-    <view class="profile-stats"><view><b>{{history.length}}</b><text>本机浏览</text></view><view><b>{{user ? favorites.length : '—'}}</b><text>收藏课程</text></view><view><b>{{user ? reviews.length : '—'}}</b><text>我的评价</text></view></view>
+    <view class="profile-stats">
+      <view><b>{{history.length}}</b><text>浏览</text></view>
+      <view><b>{{user ? favorites.length : '—'}}</b><text>收藏</text></view>
+      <view><b>{{user ? reviews.length : '—'}}</b><text>评价</text></view>
+    </view>
+
     <view class="section" wx:if="{{user}}">
-      <view class="chips"><view class="chip {{listTab === 'favorites' ? 'chip--active' : ''}}" data-tab="favorites" bindtap="switchList">我的收藏</view><view class="chip {{listTab === 'reviews' ? 'chip--active' : ''}}" data-tab="reviews" bindtap="switchList">我的评价</view></view>
+      <view class="chips">
+        <view class="chip {{listTab === 'favorites' ? 'chip--active' : ''}}" data-tab="favorites" bindtap="switchList">收藏</view>
+        <view class="chip {{listTab === 'reviews' ? 'chip--active' : ''}}" data-tab="reviews" bindtap="switchList">评价</view>
+        <view class="chip {{listTab === 'feedback' ? 'chip--active' : ''}}" data-tab="feedback" bindtap="switchList">反馈</view>
+      </view>
       <block wx:if="{{listTab === 'favorites'}}">
-        <view class="card history-row" wx:for="{{favorites}}" wx:key="course_id" data-id="{{item.course_id}}" bindtap="openFavorite"><view><view class="history-name">{{item.name}}</view><view class="micro">{{item.group || '分类待补充'}} · {{item.term || '学期待补充'}} · {{item.resource_count || 0}} 份资料</view></view><text>›</text></view>
-        <view class="empty-space" wx:if="{{!favorites.length}}"><text class="micro">还没有收藏，在课程资料页点☆收藏</text></view>
+        <view class="card history-row" wx:for="{{favorites}}" wx:key="course_id" data-id="{{item.course_id}}" bindtap="openFavorite">
+          <view><view class="history-name">{{item.name}}</view><view class="micro">{{item.term || ''}} · {{item.resource_count || 0}} 份</view></view>
+          <text>›</text>
+        </view>
+        <view class="empty-space" wx:if="{{!favorites.length}}"><text class="micro">在课程页点☆收藏</text></view>
+      </block>
+      <block wx:elif="{{listTab === 'reviews'}}">
+        <view class="card history-row" wx:for="{{reviews}}" wx:key="id">
+          <view><view class="history-name">{{item.course_title}} · {{item.teacher_name}}</view>
+          <view class="micro">{{item.status === 'pending' ? '待审' : (item.status === 'approved' ? '已通过' : '已隐藏')}}</view>
+          <view class="micro" wx:if="{{item.body}}">{{item.body}}</view></view>
+        </view>
+        <view class="empty-space" wx:if="{{!reviews.length}}"><text class="micro">暂无评价</text></view>
       </block>
       <block wx:else>
-        <view class="card history-row" wx:for="{{reviews}}" wx:key="id"><view><view class="history-name">{{item.course_title}} · {{item.teacher_name}}</view><view class="micro">{{item.created_at}} · {{item.status === 'pending' ? '待审' : (item.status === 'approved' ? '已通过' : (item.hidden ? '已隐藏' : item.status))}}</view><view class="micro" wx:if="{{item.body}}">{{item.body}}</view></view></view>
-        <view class="empty-space" wx:if="{{!reviews.length}}"><text class="micro">还没有写过评价</text></view>
+        <view class="card history-row" wx:for="{{myFeedbacks}}" wx:key="id">
+          <view><view class="history-name">{{item.title}}</view>
+          <view class="micro">{{item.status === 'completed' ? '已完成' : (item.status === 'rejected' ? '不予完成' : '待处理')}}</view>
+          <view class="micro" wx:if="{{item.content}}">{{item.content}}</view></view>
+        </view>
+        <view class="empty-space" wx:if="{{!myFeedbacks.length}}"><text class="micro">暂无反馈</text></view>
       </block>
     </view>
-    <view class="card menu section" wx:if="{{!user}}"><view class="menu-row" bindtap="login"><text>我的收藏 / 我的评价</text><text class="muted">登录后开放 ›</text></view></view>
-    <view class="section" wx:if="{{history.length}}"><view class="section-head"><view class="section-title">最近浏览</view></view><view class="card history-row" wx:for="{{history}}" wx:key="id" data-id="{{item.id}}" bindtap="openHistory"><view><view class="history-name">{{item.name}}</view><view class="micro">{{item.group || '分类待补充'}} · {{item.term || '学期待补充'}}</view></view><text>›</text></view></view>
-        <view class="card menu section">
-      <view class="menu-row" bindtap="openFeedback"><text>我的反馈</text><text>›</text></view>
-      <view class="menu-row" wx:if="{{user}}" bindtap="setWebPassword"><text>设置网页登录密码</text><text class="muted">{{user.has_web_password ? '已设置，点击修改' : '未设置'}} ›</text></view>
+
+    <view class="section" wx:if="{{history.length}}">
+      <view class="section-head"><view class="section-title">最近浏览</view></view>
+      <view class="card history-row" wx:for="{{history}}" wx:key="id" data-id="{{item.id}}" bindtap="openHistory">
+        <view><view class="history-name">{{item.name}}</view><view class="micro">{{item.term || ''}}</view></view>
+        <text>›</text>
+      </view>
+    </view>
+
+    <view class="card menu section">
+      <view class="menu-row" bindtap="openFeedback"><text>问题反馈</text><text>›</text></view>
+      <view class="menu-row" wx:if="{{user}}" bindtap="setWebPassword"><text>设置网页密码</text><text class="muted">{{user.has_web_password ? '已设置' : '未设置'}} ›</text></view>
       <view class="menu-row" style="display:flex;justify-content:space-between;align-items:center;">
         <text>深色模式</text>
         <switch color="#4B1F6F" checked="{{darkMode}}" bindchange="toggleDarkMode" />
       </view>
-      <view class="menu-row" bindtap="feedback"><text>意见反馈</text><text>›</text></view>
       <view class="menu-row" bindtap="about"><text>关于 NKUStudy</text><text>›</text></view>
     </view>
-    <view class="profile-note"><view>学生共建 · 非南开大学官方平台</view></view>
+
+    <view class="section" wx:if="{{user}}" style="margin-top: 24rpx;">
+      <button class="button button--secondary" style="width:100%;font-size:26rpx;height:72rpx;" bindtap="editNickname">编辑昵称</button>
+    </view>
+    <view class="section" wx:if="{{user}}" style="margin-top: 12rpx;">
+      <button class="button" style="width:100%;font-size:26rpx;height:72rpx;background:#dc2626;color:#fff;" bindtap="confirmDeleteAccount">注销账号</button>
+    </view>
+    <view class="section" wx:if="{{user}}" style="margin-top: 12rpx;">
+      <button class="button button--secondary" style="width:100%;font-size:26rpx;height:72rpx;" bindtap="logout">退出登录</button>
+    </view>
+
+    <view class="profile-note" style="text-align:center;padding:40rpx 0 20rpx;">
+      <text class="micro">学生共建 · 非南开大学官方平台</text>
+    </view>
   </view>
 
   <view class="about-mask" wx:if="{{aboutVisible}}" bindtap="closeAbout">
@@ -37,17 +89,17 @@
       <view class="about-lead">南开学生共建的课程资料与选课参考平台</view>
       <view class="about-block">
         <view class="about-label">数据来源</view>
-        <view class="about-text">课程、资料与评价来自 NKUStudy.top 及其授权数据源（如 NKUCS.ICU），随网站持续更新。</view>
+        <view class="about-text">课程、资料与评价来自 NKUStudy.top 及其授权数据源。</view>
       </view>
       <view class="about-block">
         <view class="about-label">使用说明</view>
-        <view class="about-text">浏览课程与资料无需登录；写评价默认匿名，提交后进入网站现有审核流程。</view>
+        <view class="about-text">浏览无需登录；写评价默认匿名，提交后进入审核流程。</view>
       </view>
       <view class="about-block">
         <view class="about-label">免责声明</view>
-        <view class="about-text">本小程序为非官方学生项目，内容仅供参考，选课与考核信息请以教务系统为准。</view>
+        <view class="about-text">非官方学生项目，选课信息以教务系统为准。</view>
       </view>
-      <view class="about-foot">学生共建 · 欢迎通过 NKUStudy.top 贡献课程资料与评价</view>
+      <view class="about-foot">学生共建</view>
     </view>
   </view>
 </view>

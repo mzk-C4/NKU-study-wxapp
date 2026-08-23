@@ -28,3 +28,4 @@
 .update-point-text { flex: 1; color: #4F4951; font-size: 22rpx; line-height: 1.6; }
 .update-more { margin-top: 14rpx; color: #6B3A8E; font-size: 20rpx; font-weight: 600; }
 .build-note { margin-top: 36rpx; text-align: center; color: #817A84; font-size: 20rpx; }
+.search-box--compact { width: 280rpx; height: 68rpx; border-radius: 34rpx; font-size: 24rpx; margin: 0 auto; }
