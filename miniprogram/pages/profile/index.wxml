@@ -15,8 +15,15 @@
     </view>
     <view class="card menu section" wx:if="{{!user}}"><view class="menu-row" bindtap="login"><text>我的收藏 / 我的评价</text><text class="muted">登录后开放 ›</text></view></view>
     <view class="section" wx:if="{{history.length}}"><view class="section-head"><view class="section-title">最近浏览</view></view><view class="card history-row" wx:for="{{history}}" wx:key="id" data-id="{{item.id}}" bindtap="openHistory"><view><view class="history-name">{{item.name}}</view><view class="micro">{{item.group || '分类待补充'}} · {{item.term || '学期待补充'}}</view></view><text>›</text></view></view>
-    <view class="card menu section"><view class="menu-row" bindtap="feedback"><text>意见反馈</text><text>›</text></view><view class="menu-row" bindtap="about"><text>关于 NKUStudy</text><text>›</text></view></view>
-    <view class="profile-note"><view>登录使用微信身份（openid），不收集手机号</view><view>学生共建 · 非南开大学官方平台</view></view>
+        <view class="card menu section">
+      <view class="menu-row" bindtap="openFeedback"><text>我的反馈</text><text>›</text></view>
+      <view class="menu-row" style="display:flex;justify-content:space-between;align-items:center;">
+        <text>深色模式</text>
+        <switch color="#4B1F6F" checked="{{darkMode}}" bindchange="toggleDarkMode" />
+      </view>
+      <view class="menu-row" bindtap="feedback"><text>意见反馈</text><text>›</text></view>
+      <view class="menu-row" bindtap="about"><text>关于 NKUStudy</text><text>›</text></view>
+    </view>><view>学生共建 · 非南开大学官方平台</view></view>
   </view>
 
   <view class="about-mask" wx:if="{{aboutVisible}}" bindtap="closeAbout">

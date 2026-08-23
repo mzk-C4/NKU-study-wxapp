@@ -1,0 +1,2 @@
+.input { height: 80rpx; padding: 0 20rpx; border: 1rpx solid #E8E2EC; border-radius: 16rpx; background: #FFF; font-size: 26rpx; }
+.textarea { padding: 16rpx 20rpx; border: 1rpx solid #E8E2EC; border-radius: 16rpx; background: #FFF; font-size: 26rpx; width: 100%; box-sizing: border-box; }

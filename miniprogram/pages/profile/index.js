@@ -3,7 +3,11 @@ const navigation = require('../../utils/navigation')
 const auth = require('../../services/auth')
 
 Page({
-  onLoad() { reportVisit('/mp/profile'); },
+  onLoad() {
+    reportVisit('/mp/profile');
+    const mode = wx.getStorageSync('nkustudy_dark_mode') === 'on';
+    this.setData({ darkMode: mode });
+  },
   data: {
     user: null,
     history: [],
@@ -11,7 +15,7 @@ Page({
     favorites: [],
     reviews: [],
     listTab: 'favorites',
-    aboutVisible: false
+    aboutVisible: false, darkMode: wx.getStorageSync('nkustudy_dark_mode') === 'on'
   },
   onShow() { this.refresh() },
   refresh() {
@@ -56,5 +60,16 @@ Page({
   feedback() { wx.showModal({ title: '意见反馈', content: '请通过项目 GitHub Issues 或 NKUStudy.top 的反馈入口提交。', showCancel: false }) },
   about() { this.setData({ aboutVisible: true }) },
   closeAbout() { this.setData({ aboutVisible: false }) },
+  openFeedback() { wx.navigateTo({ url: '/pages/feedback/index' }) },
+  toggleDarkMode(event) {
+    const mode = event.detail.value
+    this.setData({ darkMode: mode })
+    wx.setStorageSync('nkustudy_dark_mode', mode ? 'on' : 'off')
+    wx.setNavigationBarColor({
+      frontColor: mode ? '#ffffff' : '#000000',
+      backgroundColor: mode ? '#1a1a2e' : '#FFFDF8'
+    })
+    wx.setPageStyle && wx.setPageStyle({ style: mode ? 'dark' : 'light' })
+  },
   noop() {}
 })

@@ -60,6 +60,7 @@ Page({
     const id = event.currentTarget.dataset.id
     if (id) navigation.openCourse(id)
   },
+  openReviewsTab() { wx.switchTab({ url: '/pages/reviews-tab/index' }) },
   openPage(event) {
     const url = event.currentTarget.dataset.url
     if (url.startsWith('/pages/courses') || url.startsWith('/pages/guides')) wx.switchTab({ url })
