@@ -146,12 +146,16 @@
             <view class="source-document-icon" aria-hidden="true"><view class="source-document-fold"></view><view class="source-document-line"></view></view>
             <view class="source-main">
               <view class="source-title">《南开大学本科课程考试与成绩管理规定》</view>
-              <view class="source-meta">教字〔2024〕2号</view>
-              <view class="source-meta">第十四条、第十五条</view>
+              <view class="source-detail-row">
+                <view class="source-meta-group">
+                  <view class="source-meta">教字〔2024〕2号</view>
+                  <view class="source-meta">第十四条、第十五条</view>
+                </view>
+                <button class="source-open-button" hover-class="source-open-button--pressed" bindtap="openAnswerSource">
+                  <text>查看原文</text><view class="external-link-icon" aria-hidden="true"><view></view></view>
+                </button>
+              </view>
             </view>
-            <button class="source-open-button" hover-class="source-open-button--pressed" bindtap="openAnswerSource">
-              <text>查看原文</text><view class="external-link-icon" aria-hidden="true"><view></view></view>
-            </button>
           </view>
         </view>
 
