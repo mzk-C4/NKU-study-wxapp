@@ -4,18 +4,7 @@ const navigation = require('../../utils/navigation')
 const { publicApi } = require('../../services/public-api')
 const authSession = require('../../utils/auth-session')
 
-const FEEDBACK_URLS = Object.freeze({
-  website: 'https://nkustudy.top/feedback',
-  github: 'https://github.com/mzk-C4/NKU-study-wxapp/issues/new/choose'
-})
-
-const STATUS_LABELS = {
-  approved: '已公开',
-  pending: '审核中',
-  rejected: '未通过',
-  hidden: '已隐藏',
-  needs_changes: '待修改'
-}
+const STATUS_LABELS = { approved: '已公开', pending: '审核中', rejected: '未通过', hidden: '已隐藏', needs_changes: '待修改' }
 
 function displayDate(value) {
   if (!value) return ''
@@ -32,23 +21,14 @@ function presentFavorite(item) {
 
 function presentReview(item) {
   const status = item.hidden ? 'hidden' : item.status
-  return {
-    ...item,
-    status,
-    status_label: STATUS_LABELS[status] || '状态未知',
-    status_class: `status--${status}`,
-    created_date: displayDate(item.created_at)
-  }
+  return { ...item, status, status_label: STATUS_LABELS[status] || '状态未知', status_class: `status--${status}`, created_date: displayDate(item.created_at) }
 }
 
 function getWechatLoginCode() {
   return new Promise((resolve, reject) => {
     wx.login({
       timeout: 10000,
-      success(result) {
-        if (result.code) resolve(result.code)
-        else reject(new Error('微信未返回登录凭证，请重试。'))
-      },
+      success(result) { if (result.code) { resolve(result.code) } else { reject(new Error('微信未返回登录凭证，请重试。')) } },
       fail() { reject(new Error('无法获取微信登录凭证，请检查网络后重试。')) }
     })
   })
@@ -77,20 +57,14 @@ function createProfilePage(api = publicApi, sessionStore = authSession) {
       nicknameDraft: '',
       profileSaving: false,
       aboutVisible: false,
-      feedbackVisible: false,
-      feedbackUrls: FEEDBACK_URLS,
       passwordModalVisible: false,
       passwordInput1: '',
       passwordInput2: '',
       passwordSaving: false,
-      darkMode: false,
       hasWebPassword: false
     },
 
-    onLoad() {
-      reportVisit('/mp/profile')
-      this.setData({ darkMode: theme.isDark() })
-    },
+    onLoad() { reportVisit('/mp/profile') },
     onShow() { this.refresh(); theme.onPageShow() },
 
     resetLoggedOut(history) {
@@ -303,4 +277,4 @@ function createProfilePage(api = publicApi, sessionStore = authSession) {
 
 Page(createProfilePage())
 
-module.exports = { createProfilePage, displayDate, presentFavorite, presentReview, getWechatLoginCode, FEEDBACK_URLS }
+module.exports = { createProfilePage, displayDate, presentFavorite, presentReview, getWechatLoginCode }

@@ -2,7 +2,7 @@
 .filter-bar { display: inline-flex; gap: 14rpx; min-width: 100%; padding: 8rpx 2rpx; box-sizing: border-box; }
 .filter-scrollbar { position: relative; height: 6rpx; margin-top: 6rpx; overflow: hidden; border-radius: 999rpx; background: #E6DFE9; }
 .filter-scrollbar-thumb { position: absolute; top: 0; bottom: 0; border-radius: 999rpx; background: #7A4C99; }
-.filter-chip { padding: 0 20rpx; height: 56rpx; margin: 0; padding: 0 24rpx; display: inline-flex; align-items: center; justify-content: center; border: 1rpx solid #E8E2EC; border-radius: 20rpx; color: #5F5962; background: #FFFFFF; font-size: 22rpx; line-height: normal; white-space: nowrap; }
+.filter-chip { padding: 0 16rpx; height: 52rpx; margin: 0; display: inline-flex; align-items: center; justify-content: center; border: 1rpx solid #E8E2EC; border-radius: 16rpx; color: #5F5962; background: #FFFFFF; font-size: 20rpx; white-space: nowrap; }
 .filter-chip::after, .panel-close::after, .clear-options::after, .clear-all::after, .load-more-button::after { border: 0; }
 .filter-chip--active { color: #4B1F6F; border-color: #B89BC9; background: #F4EEF7; font-weight: 700; }
 .filter-chip--pressed { background: #EEE5F2; }
@@ -25,3 +25,5 @@
 /* 标签缩小 */
 .filter-bar .chip { height: 48rpx; padding: 0 16rpx; font-size: 20rpx; border-radius: 24rpx; }
 .filter-bar { gap: 10rpx; }
+
+.filter-chip::after { border: 0; }

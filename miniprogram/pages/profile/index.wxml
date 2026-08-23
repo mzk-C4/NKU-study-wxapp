@@ -51,7 +51,7 @@
         <text>深色模式</text>
         <switch color="#4B1F6F" checked="{{darkMode}}" bindchange="toggleDarkMode" />
       </view>
-      <view class="menu-row" bindtap="feedback"><text>意见反馈</text><text>›</text></view>
+      <view class="menu-row" bindtap="openMyFeedback"><text>意见反馈</text><text>›</text></view>
       <view class="menu-row" bindtap="about"><text>关于 NKUStudy</text><text>›</text></view>
     </view>
     <view class="section" wx:if="{{isLoggedIn}}" style="margin-top:16rpx;">
@@ -64,9 +64,7 @@
     <view class="about-sheet" catchtap="noop"><view class="about-head"><view class="about-title">编辑昵称</view><view class="about-close" bindtap="closeEditProfile">×</view></view><view class="about-lead">昵称只用于本小程序个人页面，不会公开 openid。</view><view class="field profile-field"><label class="field-label">昵称</label><input class="input" type="nickname" maxlength="32" value="{{nicknameDraft}}" bindinput="inputNickname" placeholder="请输入昵称" /></view><button class="button button--primary" loading="{{profileSaving}}" disabled="{{profileSaving}}" bindtap="saveProfile">保存昵称</button></view>
   </view>
 
-  <view class="about-mask" wx:if="{{feedbackVisible}}" bindtap="closeFeedback">
-    <view class="about-sheet feedback-sheet" catchtap="noop">
-      <view class="about-head"><view class="about-title">意见反馈</view><view class="about-close" bindtap="closeFeedback">×</view></view>
+  
       <view class="about-lead">选择更适合你的反馈方式</view>
       <view class="feedback-option">
         <view class="feedback-option-head"><view class="feedback-icon feedback-icon--site">N</view><view><view class="feedback-title">NKUStudy.top 反馈</view><view class="feedback-desc">适合课程内容、资料失效与使用建议</view></view></view>
