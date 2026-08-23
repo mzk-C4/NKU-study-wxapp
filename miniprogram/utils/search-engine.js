@@ -1,5 +1,10 @@
 const Fuse = require('../lib/fuse')
-const { fuzzyIncludes, normalizeBoundedSearchText, normalizeSearchText } = require('./search-utils')
+const {
+  getSearchTokens,
+  normalizeBoundedSearchText,
+  normalizeSearchText,
+  scatteredIncludes
+} = require('./search-utils')
 
 const DEFAULT_SEARCH_RESULT_LIMIT = 40
 const SEARCH_TYPES = ['course', 'teacher', 'resource', 'guide']
@@ -29,8 +34,22 @@ function createSearchPool(item) {
     ...toTextArray(item && item.aliases),
     ...toTextArray(item && item.tags),
     ...toTextArray(item && item.teachers),
+    item && item.course_name,
+    item && item.resource_type,
+    item && item.term_label,
+    item && item.category,
+    item && item.updated_at,
+    item && item.subtitle,
     item && item.search_text
   ].filter(Boolean).join(' ')
+}
+
+function matchesCandidate(item, query) {
+  const normalizedPool = normalizeSearchText(createSearchPool(item))
+  const abbreviationFields = [item && item.name, item && item.short_name, ...toTextArray(item && item.aliases)]
+  return getSearchTokens(query).every(token =>
+    normalizedPool.includes(token) || abbreviationFields.some(value => scatteredIncludes(value, token))
+  )
 }
 
 function normalizedValues(value) {
@@ -105,7 +124,7 @@ function createSearchEngine(indexItems) {
     search(keyword, options = {}) {
       const query = normalizeBoundedSearchText(keyword)
       const candidates = query
-        ? items.filter(item => fuzzyIncludes(createSearchPool(item), query))
+        ? items.filter(item => matchesCandidate(item, query))
         : items.slice()
       const rankedItems = query ? rankCandidates(candidates, query) : candidates
       const type = normalizeSearchType(options.type)
@@ -122,6 +141,7 @@ module.exports = {
   SEARCH_TYPES,
   FUSE_OPTIONS,
   createSearchPool,
+  matchesCandidate,
   normalizeSearchType,
   createSearchEngine
 }

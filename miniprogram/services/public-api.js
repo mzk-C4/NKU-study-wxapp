@@ -3,6 +3,9 @@ const config = require('../config')
 
 const RESOURCE_DOWNLOAD_HOST = 'resources.nkustudy.top'
 const COURSE_QUERY_KEYS = Object.freeze(['q', 'term', 'group', 'tag', 'assessment', 'page', 'page_size'])
+const GUIDE_QUERY_KEYS = Object.freeze(['category', 'page', 'page_size'])
+const GUIDE_CATEGORIES = Object.freeze(['course-selection', 'training-program', 'add-drop', 'exam-grade'])
+const SEARCH_INDEX_TYPES = new Set(['course', 'teacher', 'resource', 'guide'])
 
 function toText(value) {
   return typeof value === 'string' ? value.trim() : ''
@@ -54,6 +57,16 @@ function buildDevelopCourseQuery(input = {}) {
   return query
 }
 
+function buildGuidesQuery(input = {}) {
+  const query = {
+    page: toPositiveInteger(input.page, 1, 1000000),
+    page_size: toPositiveInteger(input.page_size, 20, 100)
+  }
+  const category = toText(input.category)
+  if (GUIDE_CATEGORIES.includes(category)) query.category = category
+  return query
+}
+
 function encodePathSegment(value) {
   return encodeURIComponent(String(value == null ? '' : value))
 }
@@ -64,6 +77,15 @@ function validateResourceDownloadUrl(value) {
   const match = /^https:\/\/([^/:?#]+)(?=\/|\?|#|$)/i.exec(url)
   if (!match || match[1].toLowerCase() !== RESOURCE_DOWNLOAD_HOST) return ''
   return url
+}
+
+function validatePublicHttpsUrl(value) {
+  if (typeof value !== 'string' || !value || value !== value.trim() || /[\s\\]/.test(value)) return ''
+  const match = /^https:\/\/([^/?#]+)(?:[/?#]|$)/i.exec(value)
+  if (!match || match[1].includes('@')) return ''
+  const authority = match[1]
+  const validAuthority = /^(?:\[[0-9a-f:.]+\]|[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?)(?::\d{1,5})?$/i
+  return validAuthority.test(authority) ? value : ''
 }
 
 function mapRatings(rawRatings, reviewCount) {
@@ -107,6 +129,8 @@ function mapCourse(rawCourse) {
   return {
     id: toText(raw.id),
     name: toText(raw.name),
+    short_name: toText(raw.short_name),
+    aliases: toTextArray(raw.aliases),
     summary: toText(raw.summary || raw.description),
     description: toText(raw.description || raw.summary),
     term,
@@ -121,6 +145,113 @@ function mapCourse(rawCourse) {
     offering_count: toCount(raw.offering_count == null ? teacherGroups.length : raw.offering_count),
     ratings: mapRatings(raw.ratings, reviewCount),
     updated: toText(raw.updated || raw.updated_at)
+  }
+}
+
+function mapSearchIndexItem(rawItem) {
+  const raw = rawItem && typeof rawItem === 'object' ? rawItem : {}
+  const id = toText(raw.id)
+  const type = toText(raw.type)
+  const name = toText(raw.name)
+  if (!id || !name || !SEARCH_INDEX_TYPES.has(type)) return null
+  const mapped = {
+    id,
+    type,
+    type_label: toText(raw.type_label),
+    badge: toText(raw.badge),
+    name,
+    short_name: toText(raw.short_name),
+    aliases: toTextArray(raw.aliases),
+    tags: toTextArray(raw.tags),
+    teachers: toTextArray(raw.teachers),
+    search_text: toText(raw.search_text),
+    subtitle: toText(raw.subtitle)
+  }
+  if (type === 'resource') {
+    mapped.course_id = toText(raw.course_id)
+    mapped.course_name = toText(raw.course_name)
+    mapped.resource_type = toText(raw.resource_type)
+    mapped.term_label = toText(raw.term_label)
+  }
+  if (type === 'guide') {
+    const category = toText(raw.category)
+    mapped.category = GUIDE_CATEGORIES.includes(category) ? category : ''
+    mapped.updated_at = toText(raw.updated_at)
+  }
+  return mapped
+}
+
+function mapSearchIndex(rawData) {
+  const raw = rawData && typeof rawData === 'object' ? rawData : {}
+  const items = Array.isArray(raw.items) ? raw.items.map(mapSearchIndexItem).filter(Boolean) : []
+  return {
+    version: toText(raw.version),
+    generated_at: toText(raw.generated_at),
+    items,
+    total: toCount(raw.total == null ? items.length : raw.total)
+  }
+}
+
+function mapGuideSummary(rawGuide) {
+  const raw = rawGuide && typeof rawGuide === 'object' ? rawGuide : {}
+  const category = toText(raw.category)
+  return {
+    id: toText(raw.id),
+    title: toText(raw.title),
+    summary: toText(raw.summary),
+    category: GUIDE_CATEGORIES.includes(category) ? category : '',
+    updated_at: toText(raw.updated_at),
+    applicable_scope: toText(raw.applicable_scope),
+    related_course_ids: toTextArray(raw.related_course_ids)
+  }
+}
+
+function mapGuideList(rawData) {
+  const raw = rawData && typeof rawData === 'object' ? rawData : {}
+  const items = Array.isArray(raw.items)
+    ? raw.items.map(mapGuideSummary).filter(item => item.id && item.title)
+    : []
+  const rawFacets = raw.facets && typeof raw.facets === 'object' ? raw.facets : {}
+  const categories = [...new Set(toTextArray(rawFacets.categories).filter(item => GUIDE_CATEGORIES.includes(item)))]
+  return {
+    items,
+    total: toCount(raw.total == null ? items.length : raw.total),
+    page: toPositiveInteger(raw.page, 1, 1000000),
+    page_size: toPositiveInteger(raw.page_size, items.length || 20, 100),
+    facets: { categories },
+    data_updated_at: toText(raw.data_updated_at)
+  }
+}
+
+function mapGuideStep(rawStep) {
+  const raw = rawStep && typeof rawStep === 'object' ? rawStep : {}
+  return { title: toText(raw.title), body: toText(raw.body) }
+}
+
+function mapRelatedCourse(rawCourse) {
+  const raw = rawCourse && typeof rawCourse === 'object' ? rawCourse : {}
+  return { id: toText(raw.id), name: toText(raw.name) }
+}
+
+function mapGuide(rawGuide) {
+  const raw = rawGuide && typeof rawGuide === 'object' ? rawGuide : {}
+  const category = toText(raw.category)
+  return {
+    id: toText(raw.id),
+    title: toText(raw.title),
+    summary: toText(raw.summary),
+    category: GUIDE_CATEGORIES.includes(category) ? category : '',
+    updated_at: toText(raw.updated_at),
+    applicable_scope: toText(raw.applicable_scope),
+    steps: Array.isArray(raw.steps)
+      ? raw.steps.map(mapGuideStep).filter(item => item.title || item.body)
+      : [],
+    related_courses: Array.isArray(raw.related_courses)
+      ? raw.related_courses.map(mapRelatedCourse).filter(item => item.id && item.name)
+      : [],
+    source_title: toText(raw.source_title),
+    source_url: validatePublicHttpsUrl(raw.source_url),
+    correction_url: validatePublicHttpsUrl(raw.correction_url)
   }
 }
 
@@ -244,8 +375,8 @@ function mapCourseSearchItem(course) {
     type_label: '课',
     badge: '课',
     name: course.name,
-    short_name: '',
-    aliases: [],
+    short_name: course.short_name,
+    aliases: course.aliases,
     tags: course.tags,
     teachers: course.teachers,
     search_text: [course.name, course.summary, course.term, course.group, course.assessment, ...course.tags, ...course.teachers].filter(Boolean).join(' '),
@@ -258,9 +389,11 @@ function unavailableReferenceResult() {
 }
 
 function createPublicApi(client = request, options = {}) {
-  const envVersion = options.envVersion || config.envVersion
-  const isDevelopReference = envVersion === 'develop'
-  const courseQuery = input => isDevelopReference ? buildDevelopCourseQuery(input) : buildCourseQuery(input)
+  const apiProfile = Object.hasOwn(options, 'apiProfile')
+    ? (options.apiProfile === 'reference' ? 'reference' : 'production')
+    : config.apiProfile
+  const isReference = apiProfile === 'reference'
+  const courseQuery = input => isReference ? buildDevelopCourseQuery(input) : buildCourseQuery(input)
 
   return {
     async getHealth() {
@@ -269,6 +402,15 @@ function createPublicApi(client = request, options = {}) {
     },
     async getHome() {
       return mapHome(await client.get('/home'))
+    },
+    async getSearchIndex() {
+      return mapSearchIndex(await client.get('/search-index'))
+    },
+    async getGuides(query) {
+      return mapGuideList(await client.get('/guides', buildGuidesQuery(query)))
+    },
+    async getGuide(guideId) {
+      return mapGuide(await client.get(`/guides/${encodePathSegment(guideId)}`))
     },
     async getCourses(query) {
       return mapCourseList(await client.get('/courses', courseQuery(query)))
@@ -281,11 +423,11 @@ function createPublicApi(client = request, options = {}) {
       return mapCourseResources(data, courseUid)
     },
     async getReviewGroups() {
-      if (isDevelopReference) return unavailableReferenceResult()
+      if (isReference) return unavailableReferenceResult()
       return mapReviewGroupList(await client.get('/review-groups'))
     },
     async getReviewGroup(groupKey) {
-      if (isDevelopReference) {
+      if (isReference) {
         const error = new Error('本地参考服务未提供公开评价分组。')
         error.code = 'REFERENCE_MOCK_UNAVAILABLE'
         throw error
@@ -297,7 +439,9 @@ function createPublicApi(client = request, options = {}) {
       return { ...result, items: result.items.map(mapCourseSearchItem) }
     },
     validateResourceDownloadUrl,
-    isAllowedResourceDownloadUrl(value) { return Boolean(validateResourceDownloadUrl(value)) }
+    isAllowedResourceDownloadUrl(value) { return Boolean(validateResourceDownloadUrl(value)) },
+    validatePublicHttpsUrl,
+    isAllowedPublicHttpsUrl(value) { return Boolean(validatePublicHttpsUrl(value)) }
   }
 }
 
@@ -306,13 +450,22 @@ const publicApi = createPublicApi()
 module.exports = Object.assign(publicApi, {
   RESOURCE_DOWNLOAD_HOST,
   COURSE_QUERY_KEYS,
+  GUIDE_QUERY_KEYS,
+  GUIDE_CATEGORIES,
   buildCourseQuery,
   buildDevelopCourseQuery,
+  buildGuidesQuery,
   encodePathSegment,
   validateResourceDownloadUrl,
+  validatePublicHttpsUrl,
   mapCourse,
   mapCourseList,
   mapHome,
+  mapSearchIndexItem,
+  mapSearchIndex,
+  mapGuideSummary,
+  mapGuideList,
+  mapGuide,
   mapResource,
   mapCourseResources,
   mapReviewGroup,

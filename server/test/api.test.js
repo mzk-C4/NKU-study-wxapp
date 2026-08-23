@@ -53,6 +53,10 @@ test.after(async () => {
 })
 
 test('public course, resource, review and guide reads use the shared model', async () => {
+  const health = await request('/api/v1/health')
+  assert.equal(health.response.status, 200)
+  assert.equal(health.body.data.status, 'ok')
+
   const home = await request('/api/v1/home')
   assert.equal(home.response.status, 200)
   assert.equal(home.body.code, 0)
@@ -76,6 +80,16 @@ test('public course, resource, review and guide reads use the shared model', asy
 
   const guide = await request('/api/v1/guides/guide_course_selection')
   assert.equal(guide.body.data.steps[0].title, '第 1 步')
+  assert.equal(guide.body.data.category, 'course-selection')
+
+  const guides = await request('/api/v1/guides?category=course-selection&page=1&page_size=20')
+  assert.equal(guides.response.status, 200)
+  assert.equal(guides.body.data.total, 1)
+  assert.equal(guides.body.data.items[0].id, 'guide_course_selection')
+  assert.equal(guides.body.data.page, 1)
+  assert.equal(guides.body.data.page_size, 20)
+  assert.deepEqual(guides.body.data.facets.categories, ['course-selection', 'training-program', 'add-drop', 'exam-grade'])
+  assert.match(guides.body.data.data_updated_at, /^2026-/)
 })
 
 test('search index recalls all chemistry-related courses', async () => {

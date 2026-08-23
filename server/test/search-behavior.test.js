@@ -77,9 +77,10 @@ test('teacher, tag and guide fields participate in deterministic recall', () => 
   assertIncludes(tagResults, 'course:course_data_structures')
   assert.equal(tagResults.find(item => item.id === 'course_data_structures').type, 'course')
 
-  const guideResults = search('隐私')
-  assertFirst(guideResults, 'guide:guide_resource_safety')
+  const guideResults = search('检查清单')
+  assertFirst(guideResults, 'guide:guide_course_selection')
   assert.equal(guideResults[0].type, 'guide')
+  assertExcludes(indexItems, 'guide:guide_resource_safety')
 })
 
 test('type filtering preserves candidate counts and excludes other result types', () => {
@@ -91,8 +92,23 @@ test('type filtering preserves candidate counts and excludes other result types'
   assert.equal(result.results.every(item => item.type === 'course'), true)
   assert.ok(result.counts.course >= 2)
   assert.ok(result.counts.resource >= 1)
-  assert.deepEqual(keys(engine.search('隐私', { type: 'guide' }).results), ['guide:guide_resource_safety'])
-  assert.deepEqual(keys(engine.search('隐私', { type: 'unknown' }).results), ['guide:guide_resource_safety'])
+  assert.deepEqual(keys(engine.search('检查清单', { type: 'guide' }).results), ['guide:guide_course_selection'])
+  assert.deepEqual(keys(engine.search('检查清单', { type: 'unknown' }).results), ['guide:guide_course_selection'])
+})
+
+test('scattered abbreviation matching never joins unrelated long fields into a false candidate', () => {
+  const isolated = createSearchEngine([{
+    id: 'unrelated',
+    type: 'course',
+    name: '中级微观经济学',
+    short_name: '',
+    aliases: [],
+    tags: ['经济'],
+    teachers: [],
+    search_text: '数字化转型 深度学习'
+  }])
+
+  assert.deepEqual(isolated.search('化学').results, [])
 })
 
 test('empty input keeps the existing default-list contract without throwing', () => {

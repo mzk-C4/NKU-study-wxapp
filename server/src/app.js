@@ -4,7 +4,7 @@ const crypto = require('node:crypto')
 const { URL } = require('node:url')
 const { JsonStore } = require('./store')
 const { signToken, verifyToken, exchangeWechatCode } = require('./auth')
-const { courseView, offeringView, resourceView, reviewView, guideView, buildSearchIndex } = require('./model')
+const { courseView, offeringView, resourceView, reviewView, guideView, buildSearchIndex, GUIDE_CATEGORIES } = require('./model')
 
 class HttpError extends Error {
   constructor(status, message, code = status * 100) { super(message); this.status = status; this.code = code }
@@ -92,7 +92,7 @@ function createApp(options) {
         res.writeHead(200, { 'content-type': 'image/png', 'content-length': image.length, 'cache-control': 'public, max-age=86400' })
         return res.end(image)
       }
-      if (pathname === '/health' && req.method === 'GET') return send(res, 200, { status: 'ok', time: now() })
+      if ((pathname === '/health' || pathname === '/api/v1/health') && req.method === 'GET') return send(res, 200, { status: 'ok', time: now() })
       if (!pathname.startsWith('/api/v1')) throw new HttpError(404, '接口不存在')
 
       if (pathname === '/api/v1/home' && req.method === 'GET') {
@@ -153,16 +153,24 @@ function createApp(options) {
       }
 
       if (pathname === '/api/v1/guides' && req.method === 'GET') {
-        const data = store.read(); let guides = data.guides.filter(item => item.status === 'published').map(item => guideView(data, item))
-        const category = url.searchParams.get('category'); if (category) guides = guides.filter(item => item.category === category)
-        return send(res, 200, { items: guides, total: guides.length })
+        const data = store.read()
+        const publicGuides = data.guides.filter(item => item.status === 'published').map(item => guideView(data, item)).filter(item => item.category)
+        const facets = { categories: GUIDE_CATEGORIES.filter(category => publicGuides.some(item => item.category === category)) }
+        const category = url.searchParams.get('category') || ''
+        if (category && !GUIDE_CATEGORIES.includes(category)) throw new HttpError(400, '指南分类无效')
+        const guides = category ? publicGuides.filter(item => item.category === category) : publicGuides
+        const page = paginate(guides, url)
+        const dataUpdatedAt = publicGuides.map(item => item.updated_at || '').sort().at(-1) || ''
+        return send(res, 200, { ...page, facets, data_updated_at: dataUpdatedAt })
       }
 
       const guideId = routeParam(pathname, /^\/api\/v1\/guides\/([^/]+)$/)
       if (guideId && req.method === 'GET') {
         const data = store.read(); const guide = data.guides.find(item => item.id === guideId && item.status === 'published')
         if (!guide) throw new HttpError(404, '指南不存在')
-        return send(res, 200, guideView(data, guide, true))
+        const publicGuide = guideView(data, guide, true)
+        if (!publicGuide.category) throw new HttpError(404, '指南不存在')
+        return send(res, 200, publicGuide)
       }
 
       const resourceReportId = routeParam(pathname, /^\/api\/v1\/resources\/([^/]+)\/reports$/)

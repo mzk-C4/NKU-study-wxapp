@@ -2,6 +2,22 @@ function round(value) {
   return value == null ? null : Math.round(value * 10) / 10
 }
 
+const GUIDE_CATEGORY_MAP = Object.freeze({
+  'course-selection': 'course-selection',
+  'training-program': 'training-program',
+  'add-drop': 'add-drop',
+  'exam-grade': 'exam-grade',
+  '选课流程': 'course-selection',
+  '培养方案': 'training-program',
+  '退补选': 'add-drop',
+  '考试成绩': 'exam-grade'
+})
+const GUIDE_CATEGORIES = Object.freeze(['course-selection', 'training-program', 'add-drop', 'exam-grade'])
+
+function guideCategory(value) {
+  return GUIDE_CATEGORY_MAP[String(value || '').trim()] || ''
+}
+
 function average(items, key) {
   if (!items.length) return null
   return round(items.reduce((sum, item) => sum + Number(item[key] || 0), 0) / items.length)
@@ -99,7 +115,7 @@ function reviewView(data, review) {
 }
 
 function guideView(data, guide, includeDetails = false) {
-  const base = { ...guide }
+  const base = { ...guide, category: guideCategory(guide.category) }
   if (!includeDetails) {
     const { steps, related_course_ids, ...summary } = base
     return summary
@@ -128,8 +144,12 @@ function buildSearchIndex(data) {
     const course = data.courses.find(item => item.id === resource.course_id)
     items.push({ id: resource.id, course_id: resource.course_id, type: 'resource', type_label: '资', badge: '资', name: resource.title, aliases: [], tags: [resource.type, ...(course ? course.tags : [])], teachers: [], search_text: `${resource.title} ${resource.type} ${course ? course.name : ''}`, subtitle: `${course ? course.name : '课程待补充'} · ${resource.type}` })
   })
-  data.guides.filter(item => item.status === 'published').forEach(guide => items.push({ id: guide.id, type: 'guide', type_label: '指', badge: '指', name: guide.title, aliases: [], tags: [guide.category], teachers: [], search_text: `${guide.title} ${guide.category} ${guide.summary}`, subtitle: `${guide.category} · 约 ${guide.read_minutes} 分钟` }))
+  data.guides.filter(item => item.status === 'published').forEach(guide => {
+    const category = guideCategory(guide.category)
+    if (!category) return
+    items.push({ id: guide.id, type: 'guide', type_label: '指', badge: '指', name: guide.title, aliases: [], tags: [category], teachers: [], search_text: `${guide.title} ${category} ${guide.summary}`, subtitle: `${category} · 约 ${guide.read_minutes} 分钟` })
+  })
   return items
 }
 
-module.exports = { courseView, offeringView, resourceView, reviewView, guideView, buildSearchIndex, termLabel }
+module.exports = { courseView, offeringView, resourceView, reviewView, guideView, buildSearchIndex, termLabel, GUIDE_CATEGORIES }

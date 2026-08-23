@@ -4,8 +4,9 @@ const fs = require('node:fs')
 const path = require('node:path')
 
 const publicApi = require('../miniprogram/services/public-api')
-const seed = require('../server/data/seed.json')
-const { buildCoursePresentation, highlightText } = require('../miniprogram/pages/search/presentation')
+const navigation = require('../miniprogram/utils/navigation')
+const { createSearchEngine } = require('../miniprogram/utils/search-engine')
+const { buildCoursePresentation, buildSearchPresentation, highlightText } = require('../miniprogram/pages/search/presentation')
 
 const projectRoot = path.resolve(__dirname, '..')
 
@@ -31,6 +32,8 @@ function createPage(data = {}) {
     data: { ...JSON.parse(JSON.stringify(searchDefinition.data)), ...data },
     _isUnloaded: false,
     _requestId: 0,
+    _indexRequestId: 0,
+    _matchedResults: [],
     _setDataCalls: []
   }
   page.setData = function setData(patch, callback) {
@@ -51,6 +54,10 @@ function deferred() {
   return { promise, resolve, reject }
 }
 
+function flush() {
+  return new Promise(resolve => setImmediate(resolve))
+}
+
 function replaceMethod(t, object, key, implementation) {
   const original = object[key]
   object[key] = implementation
@@ -60,11 +67,7 @@ function replaceMethod(t, object, key, implementation) {
 function installWx(t, implementation = {}) {
   const hadWx = Object.hasOwn(global, 'wx')
   const previousWx = global.wx
-  global.wx = {
-    showToast() {},
-    showActionSheet() {},
-    ...implementation
-  }
+  global.wx = { showToast() {}, navigateTo() {}, ...implementation }
   t.after(() => {
     if (hadWx) global.wx = previousWx
     else delete global.wx
@@ -75,6 +78,8 @@ function course(id, overrides = {}) {
   return {
     id,
     name: `课程 ${id}`,
+    short_name: '',
+    aliases: [],
     summary: '',
     description: '',
     term: '大二上',
@@ -93,7 +98,7 @@ function course(id, overrides = {}) {
   }
 }
 
-function result(items, options = {}) {
+function courseResult(items, options = {}) {
   return {
     items,
     total: options.total == null ? items.length : options.total,
@@ -103,352 +108,436 @@ function result(items, options = {}) {
   }
 }
 
+function item(type, id, name, overrides = {}) {
+  return {
+    id,
+    type,
+    type_label: { course: '课', teacher: '师', resource: '资', guide: '指' }[type],
+    badge: { course: '课', teacher: '师', resource: '资', guide: '指' }[type],
+    name,
+    short_name: '',
+    aliases: [],
+    tags: [],
+    teachers: [],
+    search_text: '',
+    subtitle: '',
+    ...overrides
+  }
+}
+
+function indexSnapshot(items) {
+  return {
+    version: 'fixture-v1',
+    generated_at: '2026-08-18T00:00:00.000Z',
+    items,
+    total: items.length
+  }
+}
+
+const chemistryItems = [
+  item('course', 'course-organic', '有机化学', { short_name: '有化', aliases: ['有机化学基础'], tags: ['化学'], teachers: ['陈老师'], search_text: '专业必修' }),
+  item('course', 'course-environmental', '环境化学', { tags: ['环境', '化学'], search_text: '环境科学' }),
+  item('teacher', 'teacher-chemistry', '化学实验教师', { tags: ['化学'], teachers: ['化学实验教师'], search_text: '实验课程' }),
+  item('resource', 'resource-paper', '期末试题.pdf', { course_id: 'course-organic', course_name: '有机化学', resource_type: '往年真题', term_label: '大二上', tags: ['化学'], search_text: '有机化学 期末试题' }),
+  item('guide', 'guide-chemistry', '化学实验选课指南', { category: 'course-selection', updated_at: '2026-08-18', search_text: '实验选课' }),
+  item('course', 'course-unrelated', '中级微观经济学', { tags: ['经济'], search_text: '数字化转型 深度学习' })
+]
+
 const searchDefinition = capturePage('miniprogram/pages/search/index.js')
 
-test('course-name search sends the formal first-page query and preserves server order', async t => {
-  const calls = []
-  replaceMethod(t, publicApi, 'getCourses', async query => {
-    calls.push(query)
-    return result([
-      course('second', { name: '高等数学（二）' }),
-      course('first', { name: '高等数学（一）' })
-    ])
+test('initial load fetches one search-index snapshot and later input stays local', async t => {
+  let indexCalls = 0
+  let courseCalls = 0
+  replaceMethod(t, publicApi, 'getSearchIndex', async () => {
+    indexCalls += 1
+    return indexSnapshot(chemistryItems)
   })
-  const page = createPage({ query: '  高等数学  ' })
+  replaceMethod(t, publicApi, 'getCourses', async () => {
+    courseCalls += 1
+    return courseResult([], { facets: { groups: ['专业课'], terms: [], tags: ['化学'], assessments: [] } })
+  })
+  const page = createPage()
 
+  await page.onLoad({ q: '化学' })
+  page.setData({ query: '有机' })
+  await page.search()
+  page.setData({ query: '环境' })
   await page.search()
 
-  assert.deepEqual(calls, [{
-    page: 1,
-    page_size: 20,
-    q: '高等数学',
-    term: '',
-    group: '',
-    tag: '',
-    assessment: ''
-  }])
-  assert.deepEqual(page.data.results.map(item => item.id), ['second', 'first'])
+  assert.equal(indexCalls, 1)
+  assert.equal(courseCalls, 1)
+  assert.equal(page.data.mode, 'global')
+  assert.deepEqual(page.data.results.map(result => result.id), ['course-environmental'])
+  assert.equal(page.data.indexVersion, 'fixture-v1')
 })
 
-test('teacher and tag queries still render course DTOs with honest match explanations', async t => {
-  const responses = [
-    result([course('teacher-course', { name: '概率论', teachers: ['张老师'] })]),
-    result([course('tag-course', { name: '数据分析', tags: ['机器学习'] })])
+test('four result types expose counts and collision-safe type:id keys', async t => {
+  replaceMethod(t, publicApi, 'getSearchIndex', async () => indexSnapshot(chemistryItems))
+  replaceMethod(t, publicApi, 'getCourses', async () => courseResult([]))
+  const page = createPage()
+
+  await page.onLoad({ q: '化学' })
+
+  assert.equal(new Set(page.data.results.map(result => result.type)).size, 4)
+  assert.equal(page.data.results.every(result => result.key === `${result.type}:${result.id}`), true)
+  assert.deepEqual(
+    Object.fromEntries(page.data.typeTabs.slice(1).map(tab => [tab.type, tab.count])),
+    { course: 2, teacher: 1, resource: 1, guide: 1 }
+  )
+})
+
+test('local results show 20 at a time and reaching bottom never requests the index again', async t => {
+  const many = Array.from({ length: 45 }, (_, index) => item('course', `course-${index}`, `化学课程 ${index}`))
+  let indexCalls = 0
+  replaceMethod(t, publicApi, 'getSearchIndex', async () => {
+    indexCalls += 1
+    return indexSnapshot(many)
+  })
+  replaceMethod(t, publicApi, 'getCourses', async () => courseResult([]))
+  const page = createPage()
+
+  await page.onLoad({ q: '化学' })
+  assert.equal(page.data.results.length, 20)
+  assert.equal(page.data.hasMore, true)
+
+  page.onReachBottom()
+  assert.equal(page.data.results.length, 40)
+  page.onReachBottom()
+  assert.equal(page.data.results.length, 45)
+  assert.equal(page.data.hasMore, false)
+  assert.equal(indexCalls, 1)
+})
+
+test('type switching filters locally and resets the visible batch', async t => {
+  replaceMethod(t, publicApi, 'getSearchIndex', async () => indexSnapshot(chemistryItems))
+  replaceMethod(t, publicApi, 'getCourses', async () => courseResult([]))
+  const page = createPage()
+
+  await page.onLoad({ q: '化学' })
+  page.setData({ visibleLimit: 40 })
+  page.changeType({ currentTarget: { dataset: { type: 'resource' } } })
+
+  assert.equal(page.data.selectedType, 'resource')
+  assert.equal(page.data.visibleLimit, 20)
+  assert.deepEqual(page.data.results.map(result => result.key), ['resource:resource-paper'])
+  assert.equal(page.data.typeTabs.find(tab => tab.type === 'resource').active, true)
+})
+
+test('teacher results refine the same index to courses instead of opening a fake detail page', async t => {
+  const items = [
+    item('teacher', 'teacher-chen', '陈老师', { teachers: ['陈老师'] }),
+    item('course', 'course-organic', '有机化学', { teachers: ['陈老师'] }),
+    item('course', 'course-other', '大学物理', { teachers: ['李老师'] })
   ]
-  replaceMethod(t, publicApi, 'getCourses', async () => responses.shift())
-  const page = createPage({ query: '张老师' })
+  replaceMethod(t, publicApi, 'getSearchIndex', async () => indexSnapshot(items))
+  replaceMethod(t, publicApi, 'getCourses', async () => courseResult([]))
+  let navigationCalls = 0
+  replaceMethod(t, navigation, 'openCourse', () => { navigationCalls += 1 })
+  const page = createPage()
 
-  await page.search()
-  assert.deepEqual(page.data.results.map(item => item.id), ['teacher-course'])
-  assert.match(page.data.results[0].match_html, /^教师匹配：/)
-  assert.equal(page.data.results[0].type, 'course')
+  await page.onLoad({ q: '陈老师' })
+  page.openResult({ currentTarget: { dataset: { key: 'teacher:teacher-chen' } } })
 
-  page.setData({ query: '机器学习' })
-  await page.search()
-  assert.deepEqual(page.data.results.map(item => item.id), ['tag-course'])
-  assert.match(page.data.results[0].match_html, /^标签匹配：/)
-  assert.equal(page.data.results[0].type, 'course')
+  assert.equal(page.data.query, '陈老师')
+  assert.equal(page.data.selectedType, 'course')
+  assert.deepEqual(page.data.results.map(result => result.key), ['course:course-organic'])
+  assert.equal(navigationCalls, 0)
 })
 
-test('term group tag and assessment are the only filter parameters sent by the page', async t => {
+test('course resource and guide navigation use stable public identifiers', async t => {
+  const routes = []
+  replaceMethod(t, navigation, 'openCourse', id => routes.push(['course', id]))
+  replaceMethod(t, navigation, 'openCourseResources', id => routes.push(['resource', id]))
+  replaceMethod(t, navigation, 'openGuide', id => routes.push(['guide', id]))
+  const page = createPage({
+    results: [
+      buildSearchPresentation(item('course', 'course/id', '课程'), '课程'),
+      buildSearchPresentation(item('resource', 'resource-id', '资料', { course_id: 'course/id' }), '资料'),
+      buildSearchPresentation(item('guide', 'guide/id', '指南'), '指南')
+    ]
+  })
+
+  for (const key of ['course:course/id', 'resource:resource-id', 'guide:guide/id']) {
+    page.openResult({ currentTarget: { dataset: { key } } })
+  }
+
+  assert.deepEqual(routes, [
+    ['course', 'course/id'],
+    ['resource', 'course/id'],
+    ['guide', 'guide/id']
+  ])
+})
+
+test('resource and guide navigation helpers URL-encode stable identifiers', t => {
+  const routes = []
+  installWx(t, { navigateTo(options) { routes.push(options.url) } })
+
+  navigation.openCourseResources('course/一 ?')
+  navigation.openGuide('指南/一 ?')
+
+  assert.deepEqual(routes, [
+    '/pages/course-resources/index?id=course%2F%E4%B8%80%20%3F',
+    '/pages/guide-detail/index?id=%E6%8C%87%E5%8D%97%2F%E4%B8%80%20%3F'
+  ])
+})
+
+test('resource without course_id does not navigate and shows an honest safe message', t => {
+  const toasts = []
+  let navigations = 0
+  installWx(t, { showToast(options) { toasts.push(options) } })
+  replaceMethod(t, navigation, 'openCourseResources', () => { navigations += 1 })
+  const missing = buildSearchPresentation(item('resource', 'orphan', '孤立资料'), '资料')
+  const page = createPage({ results: [missing] })
+
+  page.openResult({ currentTarget: { dataset: { key: missing.key } } })
+
+  assert.equal(navigations, 0)
+  assert.deepEqual(toasts, [{ title: '该资料缺少所属课程，暂时无法打开。', icon: 'none' }])
+})
+
+test('index network errors are sanitized and retry replaces the complete snapshot', async t => {
+  let attempts = 0
+  replaceMethod(t, publicApi, 'getSearchIndex', async () => {
+    attempts += 1
+    if (attempts === 1) {
+      const error = new Error('request:fail https://private-provider.example/token=secret')
+      error.code = 'NETWORK_ERROR'
+      throw error
+    }
+    return indexSnapshot(chemistryItems)
+  })
+  replaceMethod(t, publicApi, 'getCourses', async () => courseResult([]))
+  const page = createPage()
+
+  await page.onLoad({ q: '化学' })
+  assert.equal(page.data.error, '网络连接失败，请检查网络后重试。')
+  assert.doesNotMatch(page.data.error, /https?:|provider|token|secret/i)
+
+  await page.retry()
+  assert.equal(page.data.indexReady, true)
+  assert.equal(page.data.error, '')
+  assert.equal(page.data.results.length > 0, true)
+  assert.equal(attempts, 2)
+})
+
+test('an in-flight index response cannot update state after unload', async t => {
+  const pending = deferred()
+  replaceMethod(t, publicApi, 'getSearchIndex', () => pending.promise)
+  replaceMethod(t, publicApi, 'getCourses', async () => courseResult([]))
+  const page = createPage()
+
+  const loading = page.onLoad({ q: '化学' })
+  await flush()
+  page.onUnload()
+  const callsAtUnload = page._setDataCalls.length
+  pending.resolve(indexSnapshot(chemistryItems))
+  await loading
+
+  assert.equal(page._setDataCalls.length, callsAtUnload)
+  assert.equal(page.data.indexReady, false)
+})
+
+test('activating a facet forces course server mode and sends only formal parameters', async t => {
   let captured
   replaceMethod(t, publicApi, 'getCourses', async query => {
     captured = query
-    return result([])
+    return courseResult([course('filtered', { name: '有机化学' })], {
+      facets: { groups: ['专业课'], terms: [], tags: ['化学'], assessments: [] }
+    })
   })
   const page = createPage({
-    query: '课程',
-    term: '大二上',
-    group: '专业课',
-    tag: '数学',
-    assessment: '考试',
-    category: '禁止字段',
-    sort: '禁止字段'
+    query: '化学',
+    tagChoices: ['不限', '化学'],
+    tagOptions: ['化学'],
+    indexReady: true
   })
 
-  await page.search()
+  page.changeFacet({ currentTarget: { dataset: { key: 'tag' } }, detail: { value: '1' } })
+  await flush()
 
+  assert.equal(page.data.mode, 'facet')
+  assert.equal(page.data.selectedType, 'course')
   assert.deepEqual(captured, {
     page: 1,
     page_size: 20,
-    q: '课程',
-    term: '大二上',
-    group: '专业课',
-    tag: '数学',
-    assessment: '考试'
+    q: '化学',
+    term: '',
+    group: '',
+    tag: '化学',
+    assessment: ''
   })
-  assert.equal(Object.keys(captured).every(key => publicApi.COURSE_QUERY_KEYS.includes(key)), true)
+  assert.deepEqual(page.data.results.map(result => result.key), ['course:filtered'])
 })
 
-test('facets populate the four filter controls without hard-coded production values', async t => {
-  const facets = {
-    groups: ['通识必修课'],
-    terms: ['大一下'],
-    tags: ['数学'],
-    assessments: ['绩点制']
-  }
-  replaceMethod(t, publicApi, 'getCourses', async () => result([course('facet-course')], { facets }))
-  const page = createPage({ query: '课程' })
-
-  await page.search()
-
-  assert.deepEqual(page.data.groupOptions, facets.groups)
-  assert.deepEqual(page.data.termOptions, facets.terms)
-  assert.deepEqual(page.data.tagOptions, facets.tags)
-  assert.deepEqual(page.data.assessmentOptions, facets.assessments)
-  assert.deepEqual(page.data.tagChoices, ['不限', '数学'])
-})
-
-test('native facet selection applies a server-provided value and starts a new search', () => {
-  const page = createPage({
-    tagChoices: ['不限', '数学', '化学'],
-    tagOptions: ['数学', '化学']
+test('clearing the final facet returns to four-type Fuse mode without another course request', t => {
+  let calls = 0
+  replaceMethod(t, publicApi, 'getCourses', async () => {
+    calls += 1
+    return courseResult([])
   })
-  let searches = 0
-  page.search = () => { searches += 1 }
-
-  page.changeFacet({ currentTarget: { dataset: { key: 'tag' } }, detail: { value: '2' } })
-
-  assert.equal(page.data.tag, '化学')
-  assert.equal(page.data.tagChoiceIndex, 2)
-  assert.equal(page.data.hasActiveFilters, true)
-  assert.equal(searches, 1)
-})
-
-test('one filter can be cleared and all filters can be reset independently of the query', () => {
   const page = createPage({
     query: '化学',
-    term: '大二上',
-    group: '专业课',
+    mode: 'facet',
     tag: '化学',
-    assessment: '考试',
-    hasActiveFilters: true
+    tagChoiceIndex: 1,
+    hasActiveFilters: true,
+    indexReady: true
   })
-  let searches = 0
-  page.search = () => { searches += 1 }
+  page._searchEngine = createSearchEngine(chemistryItems)
 
   page.clearFilter({ currentTarget: { dataset: { key: 'tag' } } })
-  assert.equal(page.data.tag, '')
-  assert.equal(page.data.term, '大二上')
-  assert.equal(page.data.hasActiveFilters, true)
 
-  page.resetFilters()
-  assert.deepEqual(
-    [page.data.term, page.data.group, page.data.tag, page.data.assessment],
-    ['', '', '', '']
-  )
-  assert.equal(page.data.query, '化学')
+  assert.equal(page.data.mode, 'global')
+  assert.equal(page.data.modeLabel, '四类搜索')
   assert.equal(page.data.hasActiveFilters, false)
-  assert.equal(searches, 2)
+  assert.equal(page.data.results.some(result => result.type !== 'course'), true)
+  assert.equal(calls, 0)
 })
 
-test('a stale search success cannot overwrite the latest results', async t => {
-  const pending = [deferred(), deferred()]
-  let index = 0
-  replaceMethod(t, publicApi, 'getCourses', () => pending[index++].promise)
-  const page = createPage({ query: '旧搜索' })
-
-  const oldSearch = page.search()
-  page.setData({ query: '新搜索' })
-  const latestSearch = page.search()
-  pending[1].resolve(result([course('latest')]))
-  await latestSearch
-  pending[0].resolve(result([course('stale')]))
-  await oldSearch
-
-  assert.deepEqual(page.data.results.map(item => item.id), ['latest'])
-  assert.equal(page.data.loading, false)
-})
-
-test('a stale search failure cannot clear the current loading state or expose its details', async t => {
-  const pending = [deferred(), deferred()]
-  let index = 0
-  replaceMethod(t, publicApi, 'getCourses', () => pending[index++].promise)
-  const page = createPage({ query: '旧搜索' })
-
-  const oldSearch = page.search()
-  page.setData({ query: '新搜索' })
-  const latestSearch = page.search()
-  pending[0].reject(new Error('https://private-provider.example/token=secret'))
-  await oldSearch
-
-  assert.equal(page.data.loading, true)
-  assert.equal(page.data.error, '')
-
-  pending[1].resolve(result([course('latest')]))
-  await latestSearch
-  assert.deepEqual(page.data.results.map(item => item.id), ['latest'])
-})
-
-test('a new search invalidates an older load-more response', async t => {
-  const pending = [deferred(), deferred()]
+test('course facet pagination preserves server order, deduplicates and reaches no-more state', async t => {
   const calls = []
-  replaceMethod(t, publicApi, 'getCourses', query => {
+  replaceMethod(t, publicApi, 'getCourses', async query => {
     calls.push(query)
-    return pending[calls.length - 1].promise
+    if (query.page === 1) return courseResult([course('a'), course('b')], { total: 3, page: 1, pageSize: 2 })
+    return courseResult([course('b'), course('c')], { total: 3, page: 2, pageSize: 2 })
   })
   const page = createPage({
-    query: '旧搜索',
-    results: [buildCoursePresentation(course('old-first'), '旧搜索')],
-    total: 40,
-    page: 1,
-    hasMore: true,
-    loading: false,
-    hasSearched: true
+    query: '课程',
+    mode: 'facet',
+    tag: '数学',
+    hasActiveFilters: true,
+    pageSize: 2
   })
 
-  const oldAppend = page.loadCourses({ append: true })
-  page.setData({ query: '新搜索' })
-  const newSearch = page.search()
-  pending[1].resolve(result([course('new-first')]))
-  await newSearch
-  pending[0].resolve(result([course('old-second')], { total: 40, page: 2 }))
-  await oldAppend
+  await page.loadCourses()
+  await page.loadCourses({ append: true })
 
-  assert.deepEqual(calls.map(call => [call.q, call.page]), [['旧搜索', 2], ['新搜索', 1]])
-  assert.deepEqual(page.data.results.map(item => item.id), ['new-first'])
+  assert.deepEqual(calls.map(call => call.page), [1, 2])
+  assert.deepEqual(page.data.results.map(result => result.id), ['a', 'b', 'c'])
+  assert.equal(page.data.hasMore, false)
 })
 
-test('an in-flight response cannot call setData after page unload', async t => {
+test('latest facet request wins and an older response cannot overwrite it', async t => {
+  const pending = [deferred(), deferred()]
+  let callIndex = 0
+  replaceMethod(t, publicApi, 'getCourses', () => pending[callIndex++].promise)
+  const page = createPage({ query: '旧搜索', mode: 'facet', tag: '数学', hasActiveFilters: true })
+
+  const oldSearch = page.loadCourses()
+  page.setData({ query: '新搜索' })
+  const latestSearch = page.loadCourses()
+  pending[1].resolve(courseResult([course('latest')]))
+  await latestSearch
+  pending[0].resolve(courseResult([course('stale')]))
+  await oldSearch
+
+  assert.deepEqual(page.data.results.map(result => result.id), ['latest'])
+})
+
+test('facet response cannot call setData after page unload', async t => {
   const pending = deferred()
   replaceMethod(t, publicApi, 'getCourses', () => pending.promise)
-  const page = createPage({ query: '课程' })
+  const page = createPage({ query: '课程', mode: 'facet', tag: '数学', hasActiveFilters: true })
 
-  const request = page.search()
+  const request = page.loadCourses()
   page.onUnload()
   const callsAtUnload = page._setDataCalls.length
-  pending.resolve(result([course('late')]))
+  pending.resolve(courseResult([course('late')]))
   await request
 
   assert.equal(page._setDataCalls.length, callsAtUnload)
-  assert.deepEqual(page.data.results, [])
 })
 
-test('pagination appends in server order, removes duplicate courses and reaches no-more state', async t => {
-  const calls = []
-  replaceMethod(t, publicApi, 'getCourses', async query => {
-    calls.push(query)
-    if (query.page === 1) return result([course('a'), course('b')], { total: 3, page: 1, pageSize: 2 })
-    return result([course('b'), course('c')], { total: 3, page: 2, pageSize: 2 })
-  })
-  const page = createPage({ query: '课程', pageSize: 2 })
+test('chemistry recall covers names tags resource course context stable order and type filtering', () => {
+  const engine = createSearchEngine(chemistryItems)
+  const first = engine.search('化学', { limit: Number.MAX_SAFE_INTEGER })
+  const second = engine.search('化学', { limit: Number.MAX_SAFE_INTEGER })
+  const keys = first.results.map(result => `${result.type}:${result.id}`)
 
-  await page.search()
-  assert.deepEqual(page.data.results.map(item => item.id), ['a', 'b'])
-  assert.equal(page.data.hasMore, true)
-
-  await page.loadCourses({ append: true })
-  assert.deepEqual(calls.map(call => call.page), [1, 2])
-  assert.deepEqual(page.data.results.map(item => item.id), ['a', 'b', 'c'])
-  assert.equal(page.data.hasMore, false)
-  assert.equal(page.data.loadingMore, false)
+  assert.deepEqual(second.results.map(result => `${result.type}:${result.id}`), keys)
+  assert.equal(keys.includes('course:course-organic'), true)
+  assert.equal(keys.includes('course:course-environmental'), true)
+  assert.equal(keys.includes('resource:resource-paper'), true)
+  assert.equal(keys.includes('course:course-unrelated'), false)
+  assert.deepEqual(
+    engine.search('化学', { type: 'resource' }).results.map(result => result.id),
+    ['resource-paper']
+  )
 })
 
-test('network errors use a fixed recovery message and retry the current search', async t => {
-  let attempts = 0
-  replaceMethod(t, publicApi, 'getCourses', async () => {
-    attempts += 1
-    if (attempts === 1) {
-      const error = new Error('request:fail https://private-provider.example')
-      error.code = 'NETWORK_ERROR'
-      error.kind = 'network_error'
-      throw error
-    }
-    return result([course('recovered')])
-  })
-  const page = createPage({ query: '课程' })
+test('NFKC 80-character cap and token AND semantics remain in the page search path', async t => {
+  const items = [
+    item('course', 'data-structures', '数据结构', { short_name: 'DS', tags: ['算法'] }),
+    item('course', 'data-science', '数据科学', { short_name: 'DS', tags: ['统计'] })
+  ]
+  replaceMethod(t, publicApi, 'getSearchIndex', async () => indexSnapshot(items))
+  replaceMethod(t, publicApi, 'getCourses', async () => courseResult([]))
+  const page = createPage()
 
-  await page.search()
-  assert.equal(page.data.error, '网络连接失败，请检查网络后重试。')
-  assert.doesNotMatch(page.data.error, /https?:|provider|request:fail/i)
+  await page.onLoad({ q: 'ＤＳ，算法' })
+  assert.deepEqual(page.data.results.map(result => result.id), ['data-structures'])
 
-  await page.retry()
-  assert.deepEqual(page.data.results.map(item => item.id), ['recovered'])
-  assert.equal(page.data.error, '')
-})
-
-test('initial idle and searched-empty are separate states', async t => {
-  replaceMethod(t, publicApi, 'getCourses', async () => result([]))
-  const page = createPage({ loading: false })
-
-  page.enterIdle()
-  assert.equal(page.data.idle, true)
-  assert.equal(page.data.hasSearched, false)
-  assert.deepEqual(page.data.results, [])
-
-  page.setData({ query: '不存在的课程' })
-  await page.search()
-  assert.equal(page.data.idle, false)
-  assert.equal(page.data.hasSearched, true)
-  assert.equal(page.data.total, 0)
-  assert.deepEqual(page.data.results, [])
-})
-
-test('local chemistry fixture recalls all related seed courses and a tag-only course', async t => {
-  const seedCourses = seed.courses.map(item => course(item.id, {
-    name: item.name,
-    summary: item.description,
-    description: item.description,
-    term: item.recommended_stage,
-    group: item.requirement_type,
-    category_name: item.requirement_type,
-    tags: item.tags,
-    assessment: '',
-    teachers: []
-  }))
-  const tagOnlyCourse = course('course_chemistry_tag_only', {
-    name: '实验安全基础',
-    summary: '实验室规范与风险识别。',
-    tags: ['化学', '实验安全']
-  })
-  const fixture = [...seedCourses, tagOnlyCourse]
-  replaceMethod(t, publicApi, 'getCourses', async query => {
-    const needle = query.q.toLocaleLowerCase()
-    const items = fixture.filter(item => [
-      item.name,
-      item.summary,
-      item.term,
-      item.group,
-      item.assessment,
-      ...item.tags,
-      ...item.teachers
-    ].some(value => String(value || '').toLocaleLowerCase().includes(needle)))
-    return result(items)
-  })
-  const expectedSeedIds = seedCourses
-    .filter(item => [item.name, item.summary, item.term, item.group, ...item.tags].some(value => String(value || '').includes('化学')))
-    .map(item => item.id)
-  const page = createPage({ query: '化学' })
-
-  await page.search()
-
-  assert.deepEqual(expectedSeedIds, ['course_organic_chemistry', 'course_environmental_chemistry'])
-  assert.deepEqual(page.data.results.map(item => item.id), [...expectedSeedIds, 'course_chemistry_tag_only'])
-  assert.match(page.data.results.at(-1).match_html, /^标签匹配：/)
+  page.input({ detail: { value: 'A'.repeat(100) } })
+  assert.equal(page.data.query.length, 80)
+  page.cancelSearchTimer()
 })
 
 test('highlighting locates plain text first and separately escapes every rendered segment', () => {
   const value = '<script>"CHEMISTRY" & \'course\'</script>'
   const highlighted = highlightText(value, 'chemistry')
-  const presented = buildCoursePresentation(course('unsafe', { name: value }), 'chemistry')
+  const presented = buildSearchPresentation(item('course', 'unsafe', value), 'chemistry')
 
   assert.equal(highlighted.matched, true)
   assert.match(highlighted.html, /^&lt;script&gt;&quot;<span [^>]+>CHEMISTRY<\/span>&quot; &amp; &#39;course&#39;&lt;\/script&gt;$/)
   assert.doesNotMatch(highlighted.html, /<script>|<\/script>/)
   assert.equal(presented.highlighted_name, highlighted.html)
-  assert.match(presented.match_html, /^课程名匹配：&lt;script&gt;/)
+  assert.match(presented.match_html, /^名称匹配：&lt;script&gt;/)
 })
 
-test('formal search runtime has no direct request, unopened endpoint, Fuse or legacy DTO dependency', () => {
+test('highlighting preserves continuous spans and marks each scattered name character once', () => {
+  assert.equal(highlightText('有机化学', '有机化学').html, '<span style="color:#4B1F6F;background:#F8EFD9;font-weight:700">有机化学</span>')
+  assert.equal(highlightText('高等数学', '高数').html, '<span style="color:#4B1F6F;background:#F8EFD9;font-weight:700">高</span>等<span style="color:#4B1F6F;background:#F8EFD9;font-weight:700">数</span>学')
+  assert.equal(highlightText('有机化学', '有学').html, '<span style="color:#4B1F6F;background:#F8EFD9;font-weight:700">有</span>机化<span style="color:#4B1F6F;background:#F8EFD9;font-weight:700">学</span>')
+  assert.equal(highlightText('有机化学', '机学').matched, true)
+  assert.equal(highlightText('概率论与数理统计', '概统').matched, true)
+  assert.equal(highlightText('高等数学', '数高').matched, false)
+  assert.equal((highlightText('高等数学', '高 高').html.match(/>高<\/span>/g) || []).length, 1)
+})
+
+test('highlighting keeps NFKC semantics, escapes unsafe input and does not invent a match', () => {
+  assert.equal(highlightText('Data Structures', 'ｄａｔａ').matched, true)
+  assert.equal(highlightText('Data Structures', 'data structures').matched, true)
+  const unsafe = highlightText('<高>&数', '高数')
+  assert.match(unsafe.html, /&lt;<span [^>]+>高<\/span>&gt;&amp;<span [^>]+>数<\/span>/)
+  assert.doesNotMatch(unsafe.html, /<script>|<高>/)
+  assert.equal(highlightText('课程名称', '<script>').matched, false)
+  assert.equal(buildSearchPresentation(item('course', 'plain', '完全不同'), '高数').highlighted_name, '完全不同')
+})
+
+test('type tabs stay in one visible horizontal scroller with an explicit discovery cue', () => {
+  const template = fs.readFileSync(path.join(projectRoot, 'miniprogram/pages/search/index.wxml'), 'utf8')
+  const style = fs.readFileSync(path.join(projectRoot, 'miniprogram/pages/search/index.wxss'), 'utf8')
+
+  assert.match(template, /class="type-tabs-hint">左右滑动/)
+  assert.match(template, /class="type-tabs-edge"[^>]*>›<\/view>/)
+  assert.match(template, /<scroll-view[^>]*class="type-tabs"[^>]*scroll-x[^>]*show-scrollbar="\{\{true\}\}"[^>]*>[\s\S]*<button[^>]*class="type-tab[^>]*hover-class="control--pressed"[^>]*wx:for="\{\{typeTabs\}\}"[^>]*data-type="\{\{item.type\}\}"[^>]*bindtap="changeType"/)
+  assert.match(style, /\.type-tabs\s*\{[^}]*white-space:\s*nowrap/)
+  assert.match(style, /\.type-tab\s*\{[^}]*display:\s*inline-flex;[^}]*width:\s*auto;[^}]*min-width:\s*150rpx;[^}]*min-height:\s*72rpx;[^}]*white-space:\s*nowrap/)
+  assert.match(style, /\.type-tabs-edge\s*\{[^}]*linear-gradient\([^}]*pointer-events:\s*none/)
+})
+
+test('formal search runtime uses only adapter methods and keeps endpoint ownership static', () => {
   const source = fs.readFileSync(path.join(projectRoot, 'miniprogram/pages/search/index.js'), 'utf8')
   const template = fs.readFileSync(path.join(projectRoot, 'miniprogram/pages/search/index.wxml'), 'utf8')
 
-  assert.doesNotMatch(source, /wx\.request|utils\/request|searchCourses|search-engine|Fuse/)
-  assert.doesNotMatch(source, /search-index|guides|resources/)
-  assert.doesNotMatch(source, /short_name|aliases/)
+  assert.doesNotMatch(source, /wx\.request|utils\/request|['"`]\/search-index/)
+  assert.match(source, /publicApi\.getSearchIndex\(\)/)
   assert.match(source, /publicApi\.getCourses\(query\)/)
+  assert.match(source, /setTimeout\([^]*250\)/)
   assert.match(template, /maxlength="80"/)
   assert.match(template, /bindretry="retry"/)
+  assert.match(template, /wx:key="key"/)
+  assert.doesNotMatch(template, /当前仅开放课程搜索/)
 })
 
 test('search result cards fill the page and the clear action stays inside the search field', () => {

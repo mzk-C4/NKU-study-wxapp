@@ -83,14 +83,12 @@ if (!/^\s*<button\b[^>]*\bclass="[^"]*\bcourse\b[^"]*"/i.test(courseCardTemplate
 
 const runtimeJavaScript = walk(miniRoot).filter(file => file.endsWith('.js'))
 const forbiddenEndpoints = [
-  ['微信登录', /['"`]\/auth\/wechat(?:['"`/?])/],
+  ['微信登录', /['"`]\/auth(?:\/|['"`?#])/],
   ['收藏', /['"`]\/favorites(?:['"`/?])/],
-  ['个人数据', /['"`]\/me\//],
+  ['个人数据', /['"`]\/me(?:\/|['"`?#])/],
   ['资料投稿', /['"`]\/resource-submissions(?:['"`/?])/],
   ['资料详情或举报', /['"`]\/resources\//],
   ['旧课程评价', /['"`]\/courses\/[^\r\n]*\/reviews(?:['"`/?])/],
-  ['旧搜索索引', /['"`]\/search-index(?:['"`/?])/],
-  ['旧指南', /['"`]\/guides(?:['"`/?])/],
   ['评价写入', /['"`]\/reviews(?:['"`?#])/]
 ]
 
@@ -101,12 +99,26 @@ for (const file of runtimeJavaScript) {
   }
 }
 
+const publicApiOwner = path.join(miniRoot, 'services', 'public-api.js')
+const adapterOnlyReadEndpoints = [
+  ['搜索索引', /['"`]\/search-index(?:['"`?#])/],
+  ['指南读取', /['"`]\/guides(?:\/|\?|['"`])/]
+]
+for (const file of runtimeJavaScript) {
+  if (file === publicApiOwner) continue
+  const source = fs.readFileSync(file, 'utf8')
+  for (const [name, pattern] of adapterOnlyReadEndpoints) {
+    if (pattern.test(source)) fail(`${name}路径只能由 public-api adapter 持有：${path.relative(root, file)}`)
+  }
+}
+
 const pageJavaScript = [path.join(miniRoot, 'pages'), path.join(miniRoot, 'components')].flatMap(walk).filter(file => file.endsWith('.js'))
-const directPublicPath = /['"`]\/(?:health|home|courses(?:\/|['"`])|review-groups(?:\/|['"`]))/
+const directPublicPath = /['"`]\/(?:health|home|search-index(?:\/|['"`])|guides(?:\/|['"`])|courses(?:\/|['"`])|review-groups(?:\/|['"`]))/
 for (const file of pageJavaScript) {
   const source = fs.readFileSync(file, 'utf8')
   if (directPublicPath.test(source)) fail(`页面或组件不得直接拼接生产公开路径：${path.relative(root, file)}`)
   if (/utils\/request|utils\\request/.test(source)) fail(`页面或组件必须通过 public-api adapter 请求：${path.relative(root, file)}`)
+  if (/\bwx\.request\s*\(/.test(source)) fail(`页面或组件不得直接调用 wx.request：${path.relative(root, file)}`)
 }
 
 if (!fs.existsSync(path.join(miniRoot, 'lib/fuse.js'))) fail('缺少本地 Fuse.js 搜索库')

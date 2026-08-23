@@ -1,7 +1,67 @@
 <view class="page guide-detail">
-  <view class="card unavailable-card">
-    <view class="article-title">指南详情建设中</view>
-    <view class="article-lead">暂未连接线上指南服务，本页面不会发送网络请求。请以教务系统最新通知为准。</view>
-    <button class="button button--secondary section" bindtap="openGuides">返回指南页</button>
+  <state-view
+    loading="{{loading}}"
+    error="{{error}}"
+    empty="{{unavailable}}"
+    empty-text="该指南暂时不可用"
+    bindretry="retry"
+  ></state-view>
+
+  <view wx:if="{{!loading && !error && guide}}">
+    <view class="article-title">{{guide.title}}</view>
+    <view class="article-meta">
+      <text class="meta-category">{{guide.category_label}}</text>
+      <text>更新时间：{{guide.updated_label}}</text>
+    </view>
+    <view class="article-lead" wx:if="{{guide.summary}}">{{guide.summary}}</view>
+
+    <view class="scope-card">
+      <view class="scope-label">适用范围</view>
+      <view class="scope-value">{{guide.applicable_scope_label}}</view>
+    </view>
+
+    <view class="section">
+      <view class="rule-title">办理步骤</view>
+      <view wx:if="{{guide.steps.length}}">
+        <view class="step" wx:for="{{guide.steps}}" wx:key="index">
+          <view class="step-number">{{index + 1}}</view>
+          <view>
+            <view class="step-title" wx:if="{{item.title}}">{{item.title}}</view>
+            <view class="step-text" wx:if="{{item.body}}">{{item.body}}</view>
+          </view>
+        </view>
+      </view>
+      <view class="section-empty" wx:else>暂无可展示的步骤。</view>
+    </view>
+
+    <view class="section" wx:if="{{guide.related_courses.length}}">
+      <view class="rule-title">相关课程</view>
+      <view class="related-courses">
+        <button
+          class="related-course"
+          wx:for="{{guide.related_courses}}"
+          wx:key="id"
+          data-id="{{item.id}}"
+          bindtap="openRelatedCourse"
+          hover-class="related-course--pressed"
+        >
+          <text>{{item.name}}</text><text class="related-arrow">›</text>
+        </button>
+      </view>
+    </view>
+
+    <view class="section source-card" wx:if="{{guide.source_title || guide.source_url}}">
+      <view class="source-label">内容来源</view>
+      <view class="source-title" wx:if="{{guide.source_title}}">{{guide.source_title}}</view>
+      <button class="link-button" wx:if="{{guide.source_url}}" bindtap="copySourceUrl">复制来源链接</button>
+    </view>
+
+    <view class="section correction-card" wx:if="{{guide.correction_url}}">
+      <view>
+        <view class="source-label">发现内容需要更新？</view>
+        <view class="correction-help">复制公开纠错链接后提交说明。</view>
+      </view>
+      <button class="link-button link-button--compact" bindtap="copyCorrectionUrl">复制纠错链接</button>
+    </view>
   </view>
 </view>

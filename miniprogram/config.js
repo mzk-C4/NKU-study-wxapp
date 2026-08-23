@@ -1,29 +1,54 @@
-const API_BASE_URLS = Object.freeze({
-  develop: 'http://127.0.0.1:3000/api/v1',
-  trial: 'https://nkustudy.top/api/v1',
-  release: 'https://nkustudy.top/api/v1'
+const API_PROFILE_STORAGE_KEY = 'nkustudy_api_profile'
+const API_PROFILES = Object.freeze({
+  production: 'https://nkustudy.top/api/v1',
+  reference: 'http://127.0.0.1:3000/api/v1'
 })
 
-function resolveApiBaseUrl(envVersion = 'develop') {
-  return API_BASE_URLS[envVersion] || API_BASE_URLS.develop
+function resolveApiProfile(envVersion, storedProfile) {
+  if (envVersion !== 'develop') return 'production'
+  return storedProfile === 'reference' ? 'reference' : 'production'
+}
+
+function resolveApiBaseUrl(envVersion, storedProfile) {
+  return API_PROFILES[resolveApiProfile(envVersion, storedProfile)]
 }
 
 function getEnvironmentVersion() {
   try {
     if (typeof wx !== 'undefined' && typeof wx.getAccountInfoSync === 'function') {
-      return wx.getAccountInfoSync()?.miniProgram?.envVersion || 'develop'
+      const value = wx.getAccountInfoSync()?.miniProgram?.envVersion
+      return ['develop', 'trial', 'release'].includes(value) ? value : ''
     }
   } catch (_) {
-    // 开发者工具初始化早期可能暂时无法读取账号信息，回退到开发环境。
+    // 读取失败时保持生产 profile；不要把未知运行环境当成本地 reference。
   }
-  return 'develop'
+  return ''
+}
+
+function getStoredApiProfile(envVersion) {
+  if (envVersion !== 'develop') return ''
+  try {
+    if (typeof wx !== 'undefined' && typeof wx.getStorageSync === 'function') {
+      return wx.getStorageSync(API_PROFILE_STORAGE_KEY)
+    }
+  } catch (_) {
+    // 本地设置读取失败时安全回退 production。
+  }
+  return ''
 }
 
 const envVersion = getEnvironmentVersion()
+const apiProfile = resolveApiProfile(envVersion, getStoredApiProfile(envVersion))
 
 module.exports = {
-  apiBaseUrl: resolveApiBaseUrl(envVersion),
+  apiBaseUrl: API_PROFILES[apiProfile],
   requestTimeout: 10000,
   envVersion,
-  resolveApiBaseUrl
+  apiProfile,
+  API_PROFILE_STORAGE_KEY,
+  API_PROFILES,
+  resolveApiProfile,
+  resolveApiBaseUrl,
+  getEnvironmentVersion,
+  getStoredApiProfile
 }
