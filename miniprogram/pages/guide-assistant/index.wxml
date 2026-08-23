@@ -44,10 +44,11 @@
           <view class="history-conversation-row" wx:for="{{group.items}}" wx:key="question" wx:for-item="conversation">
             <button
               class="history-conversation-button"
-              aria-label="打开对话：{{conversation.question}}"
+              aria-label="打开对话：{{conversation.question}}，长按管理"
               data-question="{{conversation.question}}"
               hover-class="history-conversation-button--pressed"
               bindtap="selectHistory"
+              bindlongpress="openHistoryActions"
             >{{conversation.question}}</button>
             <button
               class="history-pin-button {{conversation.pinned ? 'history-pin-button--active' : ''}}"
@@ -55,7 +56,7 @@
               data-question="{{conversation.question}}"
               hover-class="history-pin-button--pressed"
               bindtap="toggleHistoryPin"
-            >{{conversation.pinned ? '★' : '☆'}}</button>
+            ><view class="history-pin-mark" aria-hidden="true"><view></view></view></button>
           </view>
         </block>
         <view class="history-empty" wx:if="{{!historyGroups.length}}">
@@ -184,6 +185,8 @@
         placeholder-class="composer-placeholder"
         aria-label="给学习指南针发送消息"
         bindinput="inputQuestion"
+        bindfocus="focusComposer"
+        bindblur="blurComposer"
         bindconfirm="sendQuestion"
       />
       <button class="attachment-button" aria-label="附件功能暂未开放" hover-class="icon-pressed" bindtap="showAttachmentUnavailable"><view class="paperclip-icon"></view></button>

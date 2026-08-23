@@ -52,6 +52,8 @@ function installWx(t, implementation = {}) {
     navigateBack() {},
     switchTab() {},
     setClipboardData(options) { options.success() },
+    showActionSheet() {},
+    showModal() {},
     showToast() {},
     ...implementation
   }
@@ -81,6 +83,11 @@ test('AI assistant offline page is registered and matches the approved recovery 
   assert.match(template, /class="history-drawer"/)
   assert.match(template, /placeholder="搜索对话内容\.\.\."/)
   assert.match(template, /bindtap="toggleHistoryPin"/)
+  assert.match(template, /bindlongpress="openHistoryActions"/)
+  assert.match(template, /class="history-pin-mark"/)
+  assert.doesNotMatch(template, /★|☆/)
+  assert.match(template, /bindfocus="focusComposer"/)
+  assert.match(template, /bindblur="blurComposer"/)
   assert.match(template, /没有找到相关对话/)
   assert.match(template, /学习指南针回答/)
   assert.match(template, /《南开大学本科课程考试与成绩管理规定》/)
@@ -101,6 +108,8 @@ test('AI assistant offline page is registered and matches the approved recovery 
   assert.match(styles, /\.question-state\s*\{[^}]*padding-left:\s*184rpx/s)
   assert.match(styles, /\.assistant-actions\s*\{[^}]*justify-content:\s*space-between/s)
   assert.match(styles, /\.history-drawer\s*\{[^}]*left:\s*0[^}]*width:\s*86%/s)
+  assert.match(styles, /\.history-pin-mark\s*\{[^}]*transform:\s*rotate\(28deg\)/s)
+  assert.match(styles, /\.paperclip-icon::before,[\s\S]*\.paperclip-icon::after/)
   assert.match(styles, /\.answer-question-bubble\s*\{[^}]*width:\s*74%/s)
   assert.match(styles, /\.answer-card\s*\{[^}]*border-radius:\s*30rpx/s)
   assert.match(styles, /\.assistant-content\s*\{[^}]*display:\s*flex[^}]*flex-direction:\s*column/s)
@@ -108,7 +117,7 @@ test('AI assistant offline page is registered and matches the approved recovery 
   assert.match(styles, /\.continue-card\s*\{[^}]*width:\s*100%\s*!important/s)
   assert.match(styles, /\.composer-area\s*\{[^}]*position:\s*fixed/s)
   assert.doesNotMatch(source, /public-api|wx\.request|guide-assistant\/answers/)
-  assert.doesNotMatch(source, /showActionSheet/)
+  assert.match(source, /showActionSheet/)
 })
 
 test('loading the assistant while offline restores the question and registers network recovery', async t => {
@@ -157,6 +166,24 @@ test('sending while offline preserves the question without calling an AI endpoin
   assert.equal(page.data.canSend, false)
   assert.equal(page.data.networkError, true)
   assert.equal(saved.at(-1).value.lastQuestion, page.data.lastQuestion)
+})
+
+test('composer keeps focus while consecutive characters update the draft', t => {
+  const saved = []
+  installWx(t, { setStorageSync(key, value) { saved.push({ key, value }) } })
+  const page = createPage(assistantDefinition)
+
+  page.focusComposer()
+  page.inputQuestion({ detail: { value: '成' } })
+  page.inputQuestion({ detail: { value: '成绩' } })
+
+  assert.equal(page.data.focusInput, true)
+  assert.equal(page.data.draft, '成绩')
+  assert.equal(page.data.canSend, true)
+  assert.equal(saved.at(-1).value.draft, '成绩')
+
+  page.blurComposer()
+  assert.equal(page.data.focusInput, false)
 })
 
 test('assistant recovery controls copy, edit in place, browse and search without leaking diagnostics', async t => {
@@ -248,6 +275,57 @@ test('conversation drawer searches, groups, pins and restores a local answer', t
   assert.equal(page.data.history[0].state, 'network-error')
   assert.equal(page.data.history[0].pinned, true)
   assert.equal(saved.at(-1).value.history[0].question, yesterdayQuestion)
+})
+
+test('long pressing a conversation offers pinning and confirmed deletion', t => {
+  const actionIndexes = [0, 1]
+  const actionSheets = []
+  const modals = []
+  const toasts = []
+  installWx(t, {
+    showActionSheet(options) {
+      actionSheets.push(options.itemList)
+      options.success({ tapIndex: actionIndexes.shift() })
+    },
+    showModal(options) {
+      modals.push({ title: options.title, content: options.content })
+      options.success({ confirm: true })
+    },
+    showToast(options) { toasts.push(options.title) }
+  })
+  const now = Date.now()
+  const pinnedQuestion = '成绩复核怎么申请？'
+  const deletedQuestion = '休学后如何复学？'
+  const page = createPage(assistantDefinition, {
+    lastQuestion: deletedQuestion,
+    previewMode: true,
+    previewState: 'network-error',
+    networkError: true,
+    history: [
+      { question: pinnedQuestion, state: 'answer', updatedAt: now, pinned: false },
+      { question: deletedQuestion, state: 'network-error', updatedAt: now - 1000, pinned: false }
+    ]
+  })
+
+  page.openConversationHistory()
+  page.openHistoryActions({ currentTarget: { dataset: { question: pinnedQuestion } } })
+  page.openHistoryActions({ currentTarget: { dataset: { question: deletedQuestion } } })
+
+  assert.deepEqual(actionSheets, [
+    ['置顶', '删除会话'],
+    ['置顶', '删除会话']
+  ])
+  assert.equal(page.data.history.find(item => item.question === pinnedQuestion).pinned, true)
+  assert.equal(page.data.history.some(item => item.question === deletedQuestion), false)
+  assert.equal(page.data.lastQuestion, '')
+  assert.equal(page.data.newTopicMode, true)
+  assert.equal(page.data.historyDrawerOpen, false)
+  assert.equal(page.data.focusInput, true)
+  assert.deepEqual(modals, [{
+    title: '删除这条会话？',
+    content: '删除后无法从本机会话记录中恢复。'
+  }])
+  assert.deepEqual(toasts, ['已置顶', '会话已删除'])
 })
 
 test('conversation history keeps only entries from the latest 30 days', async t => {

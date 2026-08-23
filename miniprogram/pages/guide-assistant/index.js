@@ -270,8 +270,18 @@ Page({
   inputQuestion(event) {
     if (this._isUnloaded) return
     const draft = String(event && event.detail ? event.detail.value : '').slice(0, MAX_QUESTION_LENGTH)
-    this.setData({ draft, canSend: Boolean(boundedQuestion(draft)), focusInput: false })
+    this.setData({ draft, canSend: Boolean(boundedQuestion(draft)) })
     saveLocalState(this.data.lastQuestion, draft, this.data.history)
+  },
+
+  focusComposer() {
+    if (this._isUnloaded || this.data.focusInput) return
+    this.setData({ focusInput: true })
+  },
+
+  blurComposer() {
+    if (this._isUnloaded || !this.data.focusInput) return
+    this.setData({ focusInput: false })
   },
 
   async sendQuestion() {
@@ -413,17 +423,103 @@ Page({
     saveLocalState(item.question, '', history)
   },
 
-  toggleHistoryPin(event) {
-    if (this._isUnloaded) return
-    const question = boundedQuestion(event && event.currentTarget && event.currentTarget.dataset.question)
+  toggleHistoryPinByQuestion(question, notify = false) {
+    if (this._isUnloaded) return false
+    const normalizedQuestion = boundedQuestion(question)
+    const current = normalizeHistory(this.data.history).find(item => item.question === normalizedQuestion)
+    if (!current) return false
+    const pinned = !current.pinned
     const history = normalizeHistory(this.data.history).map(item => (
-      item.question === question ? { ...item, pinned: !item.pinned } : item
+      item.question === normalizedQuestion ? { ...item, pinned } : item
     ))
     this.setData({
       history,
       historyGroups: buildHistoryGroups(history, this.data.historySearch)
     })
     saveLocalState(this.data.lastQuestion, this.data.draft, history)
+    if (notify) wx.showToast({ title: pinned ? '已置顶' : '已取消置顶', icon: 'none' })
+    return true
+  },
+
+  toggleHistoryPin(event) {
+    const question = event && event.currentTarget && event.currentTarget.dataset.question
+    return this.toggleHistoryPinByQuestion(question)
+  },
+
+  openHistoryActions(event) {
+    if (this._isUnloaded) return
+    const question = boundedQuestion(event && event.currentTarget && event.currentTarget.dataset.question)
+    const item = normalizeHistory(this.data.history).find(entry => entry.question === question)
+    if (!item || typeof wx.showActionSheet !== 'function') return
+    wx.showActionSheet({
+      itemList: [item.pinned ? '取消置顶' : '置顶', '删除会话'],
+      success: result => {
+        if (this._isUnloaded) return
+        const tapIndex = Number(result && result.tapIndex)
+        if (tapIndex === 0) this.toggleHistoryPinByQuestion(question, true)
+        if (tapIndex === 1) this.confirmDeleteHistory(question)
+      }
+    })
+  },
+
+  confirmDeleteHistory(question) {
+    if (this._isUnloaded || typeof wx.showModal !== 'function') return
+    wx.showModal({
+      title: '删除这条会话？',
+      content: '删除后无法从本机会话记录中恢复。',
+      confirmText: '删除',
+      confirmColor: '#B42318',
+      success: result => {
+        if (!this._isUnloaded && result && result.confirm) this.deleteHistoryByQuestion(question)
+      }
+    })
+  },
+
+  deleteHistoryByQuestion(question) {
+    if (this._isUnloaded) return false
+    const normalizedQuestion = boundedQuestion(question)
+    const previousHistory = normalizeHistory(this.data.history)
+    if (!previousHistory.some(item => item.question === normalizedQuestion)) return false
+    const history = previousHistory.filter(item => item.question !== normalizedQuestion)
+    if (boundedQuestion(this.data.lastQuestion) !== normalizedQuestion) {
+      this.setData({
+        history,
+        historyGroups: buildHistoryGroups(history, this.data.historySearch)
+      })
+      saveLocalState(this.data.lastQuestion, this.data.draft, history)
+      wx.showToast({ title: '会话已删除', icon: 'none' })
+      return true
+    }
+
+    const stayOffline = this.data.networkError && this.data.previewState === 'network-error'
+    this.setData({
+      lastQuestion: '',
+      draft: '',
+      canSend: false,
+      focusInput: false,
+      editingQuestion: false,
+      editingQuestionValue: '',
+      canSendEditedQuestion: false,
+      focusQuestionEditor: false,
+      previewMode: stayOffline,
+      previewState: stayOffline ? 'network-error' : '',
+      answerMode: false,
+      newTopicMode: true,
+      historyDrawerOpen: false,
+      historySearch: '',
+      historyGroups: [],
+      answerFeedback: '',
+      networkConnected: !stayOffline,
+      networkError: stayOffline,
+      retrying: false,
+      networkHint: stayOffline ? '请检查网络或重试' : '',
+      history
+    }, () => {
+      if (!this._isUnloaded) this.setData({ focusInput: true })
+    })
+    saveLocalState('', '', history)
+    wx.showToast({ title: '会话已删除', icon: 'none' })
+    return true
   },
 
   stopPropagation() {},

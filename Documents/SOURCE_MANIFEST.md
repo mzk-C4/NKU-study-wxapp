@@ -1,7 +1,7 @@
 # 学习指南针源材料清单
 
 > 建立日期：2026-08-23
-> 当前阶段：原件与Markdown登记；尚未进行五分类、知识条目拆分或指南写作
+> 当前阶段：SRC-001至SRC-007已登记；五分类backlog已形成，5篇指南已获授权用于本地published投影，其余候选内容尚未全量成文
 > 准备规则：[`../docs/LEARNING_COMPASS_SOURCE_MATERIAL_PREPARATION_CHECKLIST.md`](../docs/LEARNING_COMPASS_SOURCE_MATERIAL_PREPARATION_CHECKLIST.md)
 > 内容范围：[`../docs/LEARNING_COMPASS_UI_CONTENT_CONTRACT.md`](../docs/LEARNING_COMPASS_UI_CONTENT_CONTRACT.md)
 
@@ -97,7 +97,7 @@
 - 当前学期期末考试安排；
 - 南发字〔2026〕82号；
 - 学生手册七份分批DOCX；
-- 辅修、微专业和转专业的尚未稳定附件子清单；
+- 辅修学院计划、微专业项目附件正文，以及只在进入个性化问答时才需建立的转专业学院子来源编号；
 - 开课单位联系电话正文转录。
 
 ## 六、后续更新规则

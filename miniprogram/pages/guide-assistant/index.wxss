@@ -301,12 +301,53 @@ button::after { border: 0; }
   padding: 0;
   color: #9A9DA5;
   background: transparent;
-  font-size: 34rpx;
-  line-height: 1;
 }
 
 .history-pin-button--active { color: #6A35B1; }
 .history-pin-button--pressed { background: #F1EDF6; }
+
+.history-pin-mark {
+  position: relative;
+  width: 30rpx;
+  height: 40rpx;
+  color: currentColor;
+  transform: rotate(28deg);
+}
+
+.history-pin-mark > view {
+  position: absolute;
+  left: 6rpx;
+  top: 6rpx;
+  width: 18rpx;
+  height: 16rpx;
+  border: 3rpx solid currentColor;
+  border-radius: 4rpx 4rpx 8rpx 8rpx;
+  box-sizing: border-box;
+}
+
+.history-pin-mark > view::before {
+  content: "";
+  position: absolute;
+  left: -5rpx;
+  top: -7rpx;
+  width: 22rpx;
+  height: 4rpx;
+  border-radius: 3rpx;
+  background: currentColor;
+}
+
+.history-pin-mark > view::after {
+  content: "";
+  position: absolute;
+  left: 5rpx;
+  top: 13rpx;
+  width: 3rpx;
+  height: 18rpx;
+  border-radius: 2rpx;
+  background: currentColor;
+}
+
+.history-pin-button--active .history-pin-mark > view { background: currentColor; }
 
 .history-empty {
   padding: 110rpx 30rpx 50rpx;
@@ -910,13 +951,37 @@ button::after { border: 0; }
 }
 
 .paperclip-icon {
-  width: 18rpx;
-  height: 38rpx;
-  border: 4rpx solid #263451;
-  border-top-color: transparent;
-  border-radius: 0 0 15rpx 15rpx;
-  transform: rotate(4deg);
+  position: relative;
+  width: 24rpx;
+  height: 40rpx;
+  color: #1F2531;
+}
+
+.paperclip-icon::before,
+.paperclip-icon::after {
+  content: "";
+  position: absolute;
+  border: solid currentColor;
+  border-top: 0;
   box-sizing: border-box;
+}
+
+.paperclip-icon::before {
+  left: 1rpx;
+  top: 1rpx;
+  width: 22rpx;
+  height: 38rpx;
+  border-width: 4rpx;
+  border-radius: 0 0 12rpx 12rpx;
+}
+
+.paperclip-icon::after {
+  left: 7rpx;
+  top: 7rpx;
+  width: 10rpx;
+  height: 25rpx;
+  border-width: 3rpx;
+  border-radius: 0 0 7rpx 7rpx;
 }
 
 .send-button {
