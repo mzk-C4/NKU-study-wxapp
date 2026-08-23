@@ -21,7 +21,7 @@
         <text>{{item.label}}</text>
       </label>
     </checkbox-group>
-    <button wx:if="{{selectedGroups.length}}" class="clear-options" bindtap="clearGroups">清空类别</view>
+    <view wx:if="{{selectedGroups.length}}" class="clear-options" bindtap="clearGroups">清空类别</view>
   </view>
 
   <view class="filter-panel section" wx:if="{{filterPanel === 'tag'}}">
@@ -34,14 +34,14 @@
         </label>
       </checkbox-group>
     </scroll-view>
-    <button wx:if="{{selectedTags.length}}" class="clear-options" bindtap="clearTags">清空标签</view>
+    <view wx:if="{{selectedTags.length}}" class="clear-options" bindtap="clearTags">清空标签</view>
   </view>
 
   <view class="active-filter-row" wx:if="{{hasFilters}}"><text>已应用筛选</text><button class="clear-all" bindtap="clearFilters">清空全部</button></view>
   <view class="section-head section"><view class="section-title">筛选结果</view><view class="micro">共 {{total}} 门</view></view>
   <state-view loading="{{loading}}" error="{{error}}" empty="{{!loading && !error && !courses.length}}" empty-text="没有找到相关课程" bindretry="loadCourses"></state-view>
   <course-card wx:for="{{courses}}" wx:key="id" course="{{item}}" bindselect="openCourse"></course-card>
-  <button class="load-more-button section" wx:if="{{hasMore}}" bindtap="showMore">显示更多课程</view>
+  <view class="load-more-button section" wx:if="{{hasMore}}" bindtap="showMore">显示更多课程</view>
   <view class="micro section" wx:if="{{!loading && courses.length && !hasMore}}">已显示全部课程</view>
   <view class="course-fab" bindtap="submitCourse">＋</view>
 </view>
