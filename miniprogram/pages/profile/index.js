@@ -77,10 +77,15 @@ function createProfilePage(api = publicApi, sessionStore = authSession) {
       profileSaving: false,
       aboutVisible: false,
       feedbackVisible: false,
-      feedbackUrls: FEEDBACK_URLS
+      feedbackUrls: FEEDBACK_URLS,
+      darkMode: false,
+      hasWebPassword: false
     },
 
-    onLoad() { reportVisit('/mp/profile') },
+    onLoad() {
+      reportVisit('/mp/profile')
+      this.setData({ darkMode: wx.getStorageSync('nkustudy_dark_mode') === 'on' })
+    },
     onShow() { this.refresh() },
 
     resetLoggedOut(history) {
@@ -241,7 +246,50 @@ function createProfilePage(api = publicApi, sessionStore = authSession) {
     },
     about() { this.setData({ aboutVisible: true }) },
     closeAbout() { this.setData({ aboutVisible: false }) },
-    noop() {}
+    noop() {},
+    openMyFeedback() { wx.navigateTo({ url: '/pages/feedback/index' }) },
+    toggleDarkMode(event) {
+      const mode = event.detail.value
+      this.setData({ darkMode: mode })
+      wx.setStorageSync('nkustudy_dark_mode', mode ? 'on' : 'off')
+    },
+    async setWebPassword() {
+      const that = this
+      wx.showModal({
+        title: this.data.hasWebPassword ? '修改网页密码' : '设置网页密码',
+        editable: true,
+        placeholderText: '密码（8位以上）',
+        success: async (res) => {
+          if (!res.confirm || !res.content || res.content.length < 8) {
+            if (res.confirm) wx.showToast({ title: '密码至少 8 位', icon: 'none' })
+            return
+          }
+          try {
+            await api.setWebPassword(res.content)
+            wx.showToast({ title: '密码已设置', icon: 'success' })
+            that.setData({ hasWebPassword: true })
+          } catch (error) { wx.showToast({ title: error.message || '设置失败', icon: 'none' }) }
+        }
+      })
+    },
+    confirmDeleteAccount() {
+      const that = this
+      wx.showModal({
+        title: '注销账号',
+        content: '将删除你的账号绑定关系（收藏、评价绑定、反馈绑定）。\n已发布的评价和反馈内容不会被删除。\n如需彻底删除内容或因黑名单无法注销，请联系管理员。',
+        confirmText: '确认注销',
+        confirmColor: '#dc2626',
+        cancelText: '取消',
+        success: async (res) => {
+          if (!res.confirm) return
+          try {
+            await api.deleteMyAccount()
+            that.resetLoggedOut(wx.getStorageSync('browse_history') || [])
+            wx.showToast({ title: '已注销', icon: 'success' })
+          } catch (error) { wx.showToast({ title: error.message || '注销失败', icon: 'none' }) }
+        }
+      })
+    }
   }
 }
 

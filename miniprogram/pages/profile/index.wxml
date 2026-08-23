@@ -44,7 +44,19 @@
     </view>
 
     <view class="section" wx:if="{{history.length}}"><view class="section-head"><view class="section-title">最近浏览</view></view><view class="card history-row" wx:for="{{history}}" wx:key="id" data-id="{{item.id}}" bindtap="openHistory"><view><view class="history-name">{{item.name}}</view><view class="micro">{{item.group || '分类待补充'}} · {{item.term || '学期待补充'}}</view></view><text>›</text></view></view>
-    <view class="card menu section"><view class="menu-row" bindtap="feedback"><text>意见反馈</text><text>›</text></view><view class="menu-row" bindtap="about"><text>关于 NKUStudy</text><text>›</text></view></view>
+    <view class="card menu section">
+      <view class="menu-row" bindtap="openMyFeedback"><text>我的反馈</text><text>›</text></view>
+      <view class="menu-row" wx:if="{{isLoggedIn}}" bindtap="setWebPassword"><text>设置网页密码</text><text class="muted">{{hasWebPassword ? '已设置' : '未设置'}} ›</text></view>
+      <view class="menu-row" style="display:flex;justify-content:space-between;align-items:center;">
+        <text>深色模式</text>
+        <switch color="#4B1F6F" checked="{{darkMode}}" bindchange="toggleDarkMode" />
+      </view>
+      <view class="menu-row" bindtap="feedback"><text>意见反馈</text><text>›</text></view>
+      <view class="menu-row" bindtap="about"><text>关于 NKUStudy</text><text>›</text></view>
+    </view>
+    <view class="section" wx:if="{{isLoggedIn}}" style="margin-top:16rpx;">
+      <button class="hero-button hero-button--quiet" style="width:100%;color:#dc2626;border-color:#fecaca;" bindtap="confirmDeleteAccount">注销账号</button>
+    </view>
     <view class="profile-note"><view>登录仅用于同步收藏、昵称与本人评价，课程资料仍可免登录浏览</view><view>学生共建 · 非南开大学官方平台</view></view>
   </view>
 
