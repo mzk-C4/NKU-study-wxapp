@@ -1,5 +1,5 @@
 <view class="home">
-  <view class="brand-row"><image class="brand-logo" src="/assets/brand.png" mode="aspectFill"></image><view><view class="brand-name">NKUStudy</view><view class="brand-sub">课程资料与选课参考</view></view></view>
+  <view class="brand-row"><view><view class="brand-name">NKUStudy</view><view class="brand-sub">课程资料与选课参考</view></view></view>
   <view class="hero">
     <view class="hero-kicker">南开学生共建</view>
     <view class="hero-title">选课前，先来查一查</view>

@@ -1,4 +1,5 @@
 const { reportVisit } = require('../../utils/visit-report')
+const theme = require('../../utils/theme')
 const { publicApi } = require('../../services/public-api')
 const navigation = require('../../utils/navigation')
 const { createRequestGeneration } = require('../../utils/request-generation')
@@ -90,6 +91,7 @@ Page({
     reportVisit('/mp/courses')
     this.loadCourses()
   },
+    onShow() { theme.onPageShow() },
 
   onReady() { this.measureFilterScroll() },
 

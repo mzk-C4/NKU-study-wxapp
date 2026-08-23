@@ -1,4 +1,5 @@
 const { reportVisit } = require('../../utils/visit-report')
+const theme = require('../../utils/theme')
 const { publicApi } = require('../../services/public-api')
 
 function starStates(value) {
@@ -8,7 +9,8 @@ function starStates(value) {
 
 function presentReview(review) {
   const rating = Math.max(0, Math.min(5, Number(review.rating) || 0))
-  return { ...review, rating, stars: starStates(rating) }
+  return {
+    onShow() { theme.onPageShow() }, ...review, rating, stars: starStates(rating) }
 }
 
 Page({
@@ -21,7 +23,8 @@ Page({
   onShareTimeline() {
     return { title: `${this.data.course?.name || '南开课程'}评价 · NKUStudy` }
   },
-  data: { id: '', groupKey: '', loading: true, error: '', course: null, reviews: [], visibleReviews: [], teacherGroups: [], teacher: '', standaloneGroup: null, scoreStars: starStates(0), reactingReviewId: '' },
+  data: {
+ id: '', groupKey: '', loading: true, error: '', course: null, reviews: [], visibleReviews: [], teacherGroups: [], teacher: '', standaloneGroup: null, scoreStars: starStates(0), reactingReviewId: '' },
   onLoad(options) { reportVisit('/mp/course-reviews'); this.setData({ id: options.id || '', groupKey: options.group_key || '' }); this.loadReviews() },
   async loadReviews() {
     this.setData({ loading: true, error: '' })

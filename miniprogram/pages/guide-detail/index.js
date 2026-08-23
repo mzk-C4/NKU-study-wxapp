@@ -1,4 +1,5 @@
 const { reportVisit } = require('../../utils/visit-report')
+const theme = require('../../utils/theme')
 const publicApi = require('../../services/public-api')
 const navigation = require('../../utils/navigation')
 
@@ -17,6 +18,7 @@ function normalizeGuideId(value) {
 
 function presentGuide(guide) {
   return {
+    onShow() { theme.onPageShow() },
     ...guide,
     category_label: CATEGORY_LABELS[guide.category] || '学习事务',
     updated_label: guide.updated_at || '未提供',

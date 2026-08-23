@@ -1,4 +1,5 @@
 const { reportVisit } = require('../../utils/visit-report')
+const theme = require('../../utils/theme')
 
 const STATUS_CONFIG = {
   pending: { label: '审核中', tone: 'gold' },
@@ -18,6 +19,7 @@ Page({
     reportVisit('/mp/submission-status')
     this.loadSubmissions()
   },
+    onShow() { theme.onPageShow() },
 
   data: {
     filter: 'all',

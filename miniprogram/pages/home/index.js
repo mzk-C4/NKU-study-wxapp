@@ -1,11 +1,14 @@
 const { reportVisit } = require('../../utils/visit-report')
+const theme = require('../../utils/theme')
 const { publicApi } = require('../../services/public-api')
 const navigation = require('../../utils/navigation')
 
 Page({
-  data: { loading: true, error: '', home: null, hotCourses: [], latestUpdates: [] },
+  data: {
+ loading: true, error: '', home: null, hotCourses: [], latestUpdates: [] },
 
   onLoad() { reportVisit('/mp/home'); this.loadHome() },
+    onShow() { theme.onPageShow() },
   onPullDownRefresh() { this.loadHome().finally(() => wx.stopPullDownRefresh()) },
 
   async loadHome() {

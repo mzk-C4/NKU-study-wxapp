@@ -1,4 +1,5 @@
 const { reportVisit } = require('../../utils/visit-report')
+const theme = require('../../utils/theme')
 const { listFeedback, submitFeedback } = require('../../utils/feedback-api')
 
 
@@ -16,6 +17,7 @@ Page({
     ]
   },
   onLoad() { reportVisit('/mp/feedback'); this.loadFeedback() },
+    onShow() { theme.onPageShow() },
   onPullDownRefresh() { this.loadFeedback().finally(() => wx.stopPullDownRefresh()) },
   async loadFeedback() {
     this.setData({ loading: true, error: '' })

@@ -1,4 +1,5 @@
 const { reportVisit } = require('../../utils/visit-report')
+const theme = require('../../utils/theme')
 const publicApi = require('../../services/public-api')
 const navigation = require('../../utils/navigation')
 const { createSearchEngine, SEARCH_TYPES } = require('../../utils/search-engine')
@@ -40,6 +41,7 @@ function facetPatch(facets, snapshot) {
   const tagOptions = uniqueTextValues(source.tags, snapshot.tag)
   const assessmentOptions = uniqueTextValues(source.assessments, snapshot.assessment)
   return {
+    onShow() { theme.onPageShow() },
     groupOptions,
     groupChoices: ['不限', ...groupOptions],
     groupChoiceIndex: snapshot.group ? groupOptions.indexOf(snapshot.group) + 1 : 0,

@@ -60,21 +60,3 @@
 .load-more-state { padding: 28rpx 0 8rpx; color: #817A84; font-size: 22rpx; text-align: center; }
 .load-more-error { display: flex; align-items: center; justify-content: center; gap: 18rpx; padding-top: 24rpx; color: #817A84; font-size: 22rpx; }
 .load-more-button { height: 72rpx; margin: 0; padding: 0 28rpx; border-radius: 36rpx; color: #4B1F6F; background: #EFE8F4; font-size: 22rpx; line-height: 72rpx; }
-
-/* FB-18: 暗色模式 */
-@media (prefers-color-scheme: dark) {
-  .guide-hero { background: #2B123E; }
-  .category-button { background: #211C28; border-color: #2D2838; color: #8B8090; }
-  .category-button--unavailable { background: #1A1520; color: #4A4450; }
-  .guide-list { background: #211C28; border-color: #2D2838; }
-  .guide-row { color: #E0DCE4; border-bottom-color: #2D2838; }
-  .guide-row--pressed { background: #2D2438; }
-  .guide-summary { color: #A8A0B0; }
-  .guide-meta { color: #8B8090; }
-  .guide-category-label { color: #C9B8D8; }
-  .guide-arrow { color: #8B8090; }
-  .empty-help { color: #8B8090; }
-  .load-more-state { color: #8B8090; }
-  .load-more-error { color: #8B8090; }
-  .load-more-button { background: #2D2438; color: #C9B8D8; }
-}

@@ -1,8 +1,10 @@
 const { reportVisit } = require('../../utils/visit-report')
+const theme = require('../../utils/theme')
 const { publicApi } = require('../../services/public-api')
 
 function createWriteReviewPage(api = publicApi) {
   return {
+    onShow() { theme.onPageShow() },
   data: {
     courseId: '', loading: true, submitting: false, course: null,
     error: '',

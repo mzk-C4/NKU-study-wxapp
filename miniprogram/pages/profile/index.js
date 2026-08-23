@@ -1,20 +1,10 @@
 const { reportVisit } = require('../../utils/visit-report')
+const theme = require('../../utils/theme')
 const navigation = require('../../utils/navigation')
 const { publicApi } = require('../../services/public-api')
 const authSession = require('../../utils/auth-session')
 
-const FEEDBACK_URLS = Object.freeze({
-  website: 'https://nkustudy.top/feedback',
-  github: 'https://github.com/mzk-C4/NKU-study-wxapp/issues/new/choose'
-})
-
-const STATUS_LABELS = {
-  approved: '已公开',
-  pending: '审核中',
-  rejected: '未通过',
-  hidden: '已隐藏',
-  needs_changes: '待修改'
-}
+const STATUS_LABELS = { approved: '已公开', pending: '审核中', rejected: '未通过', hidden: '已隐藏', needs_changes: '待修改' }
 
 function displayDate(value) {
   if (!value) return ''
@@ -31,23 +21,14 @@ function presentFavorite(item) {
 
 function presentReview(item) {
   const status = item.hidden ? 'hidden' : item.status
-  return {
-    ...item,
-    status,
-    status_label: STATUS_LABELS[status] || '状态未知',
-    status_class: `status--${status}`,
-    created_date: displayDate(item.created_at)
-  }
+  return { ...item, status, status_label: STATUS_LABELS[status] || '状态未知', status_class: `status--${status}`, created_date: displayDate(item.created_at) }
 }
 
 function getWechatLoginCode() {
   return new Promise((resolve, reject) => {
     wx.login({
       timeout: 10000,
-      success(result) {
-        if (result.code) resolve(result.code)
-        else reject(new Error('微信未返回登录凭证，请重试。'))
-      },
+      success(result) { if (result.code) { resolve(result.code) } else { reject(new Error('微信未返回登录凭证，请重试。')) } },
       fail() { reject(new Error('无法获取微信登录凭证，请检查网络后重试。')) }
     })
   })
@@ -76,17 +57,15 @@ function createProfilePage(api = publicApi, sessionStore = authSession) {
       nicknameDraft: '',
       profileSaving: false,
       aboutVisible: false,
-      feedbackVisible: false,
-      feedbackUrls: FEEDBACK_URLS,
-      darkMode: false,
+      passwordModalVisible: false,
+      passwordInput1: '',
+      passwordInput2: '',
+      passwordSaving: false,
       hasWebPassword: false
     },
 
-    onLoad() {
-      reportVisit('/mp/profile')
-      this.setData({ darkMode: wx.getStorageSync('nkustudy_dark_mode') === 'on' })
-    },
-    onShow() { this.refresh() },
+    onLoad() { reportVisit('/mp/profile') },
+    onShow() { this.refresh(); theme.onPageShow() },
 
     resetLoggedOut(history) {
       this.setData({
@@ -229,48 +208,32 @@ function createProfilePage(api = publicApi, sessionStore = authSession) {
     openHistory(event) { navigation.openCourse(event.currentTarget.dataset.id) },
     openFavorite(event) { navigation.openCourse(event.currentTarget.dataset.id) },
     openSubmit() { wx.navigateTo({ url: '/pages/submit-resource/index' }) },
-    feedback() { this.setData({ feedbackVisible: true }) },
-    closeFeedback() { this.setData({ feedbackVisible: false }) },
-    openFeedbackWebsite() {
-      this.setData({ feedbackVisible: false })
-      wx.navigateTo({ url: '/pages/feedback-web/index' })
-    },
-    copyFeedbackLink(event) {
-      const url = FEEDBACK_URLS[event.currentTarget.dataset.kind]
-      if (!url) return
-      wx.setClipboardData({
-        data: url,
-        success: () => wx.showToast({ title: '链接已复制', icon: 'success' }),
-        fail: () => wx.showToast({ title: '复制失败，请稍后重试', icon: 'none' })
-      })
-    },
-    about() { this.setData({ aboutVisible: true }) },
+    about() { this.setData({ aboutVisible: true, passwordModalVisible: false }) },
     closeAbout() { this.setData({ aboutVisible: false }) },
     noop() {},
     openMyFeedback() { wx.navigateTo({ url: '/pages/feedback/index' }) },
-    toggleDarkMode(event) {
-      const mode = event.detail.value
-      this.setData({ darkMode: mode })
-      wx.setStorageSync('nkustudy_dark_mode', mode ? 'on' : 'off')
+    setWebPassword() {
+      this.setData({ aboutVisible: false, passwordModalVisible: true, passwordInput1: '', passwordInput2: '' })
     },
-    async setWebPassword() {
-      const that = this
-      wx.showModal({
-        title: this.data.hasWebPassword ? '修改网页密码' : '设置网页密码',
-        editable: true,
-        placeholderText: '密码（8位以上）',
-        success: async (res) => {
-          if (!res.confirm || !res.content || res.content.length < 8) {
-            if (res.confirm) wx.showToast({ title: '密码至少 8 位', icon: 'none' })
-            return
-          }
-          try {
-            await api.setWebPassword(res.content)
-            wx.showToast({ title: '密码已设置', icon: 'success' })
-            that.setData({ hasWebPassword: true })
-          } catch (error) { wx.showToast({ title: error.message || '设置失败', icon: 'none' }) }
-        }
-      })
+    closePasswordModal() {
+      this.setData({ passwordModalVisible: false })
+    },
+    inputPassword1(e) { this.setData({ passwordInput1: e.detail.value }) },
+    inputPassword2(e) { this.setData({ passwordInput2: e.detail.value }) },
+    async saveWebPassword() {
+      const pw1 = this.data.passwordInput1
+      const pw2 = this.data.passwordInput2
+      if (pw1.length < 8) { wx.showToast({ title: '密码至少 8 位', icon: 'none' }); return }
+      if (pw1 !== pw2) { wx.showToast({ title: '两次密码不一致', icon: 'none' }); return }
+      this.setData({ passwordSaving: true })
+      try {
+        await api.setWebPassword(pw1)
+        wx.showToast({ title: '密码已设置', icon: 'success' })
+        this.setData({ passwordModalVisible: false, passwordSaving: false, hasWebPassword: true })
+      } catch (error) {
+        wx.showToast({ title: error.message || '设置失败', icon: 'none' })
+        this.setData({ passwordSaving: false })
+      }
     },
     confirmDeleteAccount() {
       const that = this
@@ -295,4 +258,4 @@ function createProfilePage(api = publicApi, sessionStore = authSession) {
 
 Page(createProfilePage())
 
-module.exports = { createProfilePage, displayDate, presentFavorite, presentReview, getWechatLoginCode, FEEDBACK_URLS }
+module.exports = { createProfilePage, displayDate, presentFavorite, presentReview, getWechatLoginCode }
