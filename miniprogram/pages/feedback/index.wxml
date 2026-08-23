@@ -1,11 +1,7 @@
 <view class="page">
   <state-view loading="{{loading}}" error="{{error}}" empty="{{!loading && !error && !feedbacks.length}}" empty-text="暂无反馈" bindretry="loadFeedback"></state-view>
 
-  <view class="chips section" style="margin-top: 0;">
-    <view wx:for="{{statusOptions}}" wx:key="value" class="chip {{filterStatus === item.value ? 'chip--active' : ''}}" data-value="{{item.value}}" bindtap="chooseStatus">{{item.label}}</view>
-  </view>
-
-  <view class="card" wx:for="{{feedbacks}}" wx:key="id" wx:if="{{filterStatus === 'all' || item.status === filterStatus}}" style="margin-bottom: 16rpx;">
+  <view class="card" wx:for="{{feedbacks}}" wx:key="id" style="margin-bottom: 16rpx;">
     <view style="display:flex;justify-content:space-between;align-items:center;">
       <text style="font-weight:700;font-size:28rpx;">{{item.title}}</text>
       <text class="micro" style="color:{{item.status === 'completed' ? '#16a34a' : item.status === 'rejected' ? '#dc2626' : '#6F6972'}};">{{item.statusLabel}}</text>

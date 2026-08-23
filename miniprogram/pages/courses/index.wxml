@@ -5,8 +5,8 @@
     <view class="filter-bar">
       <button class="filter-chip {{filterPanel === 'group' || selectedGroups.length ? 'filter-chip--active' : ''}}" data-panel="group" bindtap="toggleFilterPanel" hover-class="filter-chip--pressed" aria-expanded="{{filterPanel === 'group'}}">{{groupLabel}} {{filterPanel === 'group' ? '⌃' : '⌄'}}</button>
       <button class="filter-chip {{filterPanel === 'tag' || selectedTags.length ? 'filter-chip--active' : ''}}" data-panel="tag" bindtap="toggleFilterPanel" hover-class="filter-chip--pressed" aria-expanded="{{filterPanel === 'tag'}}">{{tagLabel}} {{filterPanel === 'tag' ? '⌃' : '⌄'}}</button>
-      <picker range="{{termOptions}}" bindtap="closeFilterPanel" bindchange="chooseTerm"><view class="filter-chip {{term ? 'filter-chip--active' : ''}}">{{term || '全部学期'}} ⌄</view></picker>
-      <picker range="{{assessmentOptions}}" bindtap="closeFilterPanel" bindchange="chooseAssessment"><view class="filter-chip {{assessment ? 'filter-chip--active' : ''}}">{{assessment || '全部考核'}} ⌄</view></picker>
+      <view class="filter-chip {{term ? 'filter-chip--active' : ''}}" data-panel="term" bindtap="toggleFilterPanel">{{term || '全部学期'}} {{filterPanel === 'term' ? '⌃' : '⌄'}}</view>
+      <view class="filter-chip {{assessment ? 'filter-chip--active' : ''}}" data-panel="assessment" bindtap="toggleFilterPanel">{{assessment || '全部考核'}} {{filterPanel === 'assessment' ? '⌃' : '⌄'}}</view>
     </view>
   </scroll-view>
   <view class="filter-scrollbar section" wx:if="{{filterScrollScrollable}}" aria-hidden="true">

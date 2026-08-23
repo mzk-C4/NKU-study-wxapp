@@ -79,6 +79,10 @@ function createProfilePage(api = publicApi, sessionStore = authSession) {
       aboutVisible: false,
       feedbackVisible: false,
       feedbackUrls: FEEDBACK_URLS,
+      passwordModalVisible: false,
+      passwordInput1: '',
+      passwordInput2: '',
+      passwordSaving: false,
       darkMode: false,
       hasWebPassword: false
     },
@@ -245,7 +249,7 @@ function createProfilePage(api = publicApi, sessionStore = authSession) {
         fail: () => wx.showToast({ title: '复制失败，请稍后重试', icon: 'none' })
       })
     },
-    about() { this.setData({ aboutVisible: true }) },
+    about() { this.setData({ aboutVisible: true, passwordModalVisible: false }) },
     closeAbout() { this.setData({ aboutVisible: false }) },
     noop() {},
     openMyFeedback() { wx.navigateTo({ url: '/pages/feedback/index' }) },
@@ -254,7 +258,7 @@ function createProfilePage(api = publicApi, sessionStore = authSession) {
       this.setData({ darkMode: theme.isDark(), themeClass: theme.themeClass() })
     },
     setWebPassword() {
-      this.setData({ passwordModalVisible: true, passwordInput1: '', passwordInput2: '', passwordError: '' })
+      this.setData({ aboutVisible: false, passwordModalVisible: true, passwordInput1: '', passwordInput2: '' })
     },
     closePasswordModal() {
       this.setData({ passwordModalVisible: false })

@@ -43,7 +43,7 @@
       <view class="card record-row record-row--detail" wx:for="{{reviews}}" wx:key="id"><view class="record-main"><view class="history-name">{{item.course_title}} · {{item.teacher_name}}</view><view class="micro">{{item.rating}} 分{{item.created_date ? ' · ' + item.created_date : ''}}</view><view class="record-body">{{item.body}}</view></view><view class="status {{item.status_class}}">{{item.status_label}}</view></view>
     </view>
 
-    <view class="section" wx:if="{{history.length}}"><view class="section-head"><view class="section-title">最近浏览</view></view><view class="card history-row" wx:for="{{history}}" wx:key="id" data-id="{{item.id}}" bindtap="openHistory"><view><view class="history-name">{{item.name}}</view><view class="micro">{{item.group || '分类待补充'}} · {{item.term || '学期待补充'}}</view></view><text>›</text></view></view>
+    <view class="section" wx:if="{{history.length}}"><view class="section-head"><view class="section-title">最近浏览</view></view><view class="card history-row" wx:for="{{history}}" wx:key="id" data-id="{{item.id}}" bindtap="openHistory"><view><view class="history-name">{{item.name}}</view><view class="micro">{{item.group || '分类待补充'}} · {{item.term || '学期待补充'}}</view></view></view></view>
     <view class="card menu section">
       <view class="menu-row" bindtap="openMyFeedback"><text>我的反馈</text><text>›</text></view>
       <view class="menu-row" wx:if="{{isLoggedIn}}" bindtap="setWebPassword"><text>设置网页密码</text><text class="muted">{{hasWebPassword ? '已设置' : '未设置'}} ›</text></view>
