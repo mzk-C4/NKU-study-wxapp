@@ -208,29 +208,10 @@ function createProfilePage(api = publicApi, sessionStore = authSession) {
     openHistory(event) { navigation.openCourse(event.currentTarget.dataset.id) },
     openFavorite(event) { navigation.openCourse(event.currentTarget.dataset.id) },
     openSubmit() { wx.navigateTo({ url: '/pages/submit-resource/index' }) },
-    feedback() { this.setData({ feedbackVisible: true }) },
-    closeFeedback() { this.setData({ feedbackVisible: false }) },
-    openFeedbackWebsite() {
-      this.setData({ feedbackVisible: false })
-      wx.navigateTo({ url: '/pages/feedback-web/index' })
-    },
-    copyFeedbackLink(event) {
-      const url = FEEDBACK_URLS[event.currentTarget.dataset.kind]
-      if (!url) return
-      wx.setClipboardData({
-        data: url,
-        success: () => wx.showToast({ title: '链接已复制', icon: 'success' }),
-        fail: () => wx.showToast({ title: '复制失败，请稍后重试', icon: 'none' })
-      })
-    },
     about() { this.setData({ aboutVisible: true, passwordModalVisible: false }) },
     closeAbout() { this.setData({ aboutVisible: false }) },
     noop() {},
     openMyFeedback() { wx.navigateTo({ url: '/pages/feedback/index' }) },
-    toggleDarkMode(event) {
-      theme.setDark(event.detail.value)
-      this.setData({ darkMode: theme.isDark(), themeClass: theme.themeClass() })
-    },
     setWebPassword() {
       this.setData({ aboutVisible: false, passwordModalVisible: true, passwordInput1: '', passwordInput2: '' })
     },
