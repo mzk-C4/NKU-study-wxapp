@@ -10,6 +10,7 @@
     "pages/course-reviews/index",
     "pages/resource-detail/index",
     "pages/guide-detail/index",
+    "pages/guide-assistant/index",
     "pages/submit-resource/index",
     "pages/write-review/index"
   ],

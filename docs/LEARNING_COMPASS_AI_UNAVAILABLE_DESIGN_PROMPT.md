@@ -1,9 +1,12 @@
 # 学习指南针 AI 不可用降级状态视觉设计提示词
 
 > 页面：学习指南针 AI 问答
-> 状态：请求等待并自动重试后仍不可用
+> 状态：网络连接断开后的可恢复错误页
 > 已批准视觉参考：`图片和附件/learning-compass-home-approved-20260823.png`
+> 已批准断网视觉：`图片和附件/learning-compass-ai-network-offline-approved-20260823.png`
 > 内容合同：[`LEARNING_COMPASS_UI_CONTENT_CONTRACT.md`](./LEARNING_COMPASS_UI_CONTENT_CONTRACT.md)
+
+> 产品负责人要求：网络断开状态按批准断网视觉一比一复刻；该批准图的页面骨架、信息层级、恢复入口和整体比例优先于本提示词中较宽泛的设计自由。
 
 ## 可直接复制的视觉设计提示词
 

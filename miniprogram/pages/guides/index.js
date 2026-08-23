@@ -27,6 +27,15 @@ const GUIDE_PRESENTATION = Object.freeze({
   'exam-grade': { symbol: '≡', tone: 'gold' },
   'training-program': { symbol: '●', tone: 'green' }
 })
+const ASSISTANT_PREVIEW_QUESTION = '我对一门课程的成绩有异议，应该怎么申请复核？'
+
+function isDevelopRuntime() {
+  try {
+    return typeof wx.getAccountInfoSync === 'function' && wx.getAccountInfoSync()?.miniProgram?.envVersion === 'develop'
+  } catch (_) {
+    return false
+  }
+}
 
 function categoryOptions(facets = [], resolved = false) {
   const available = new Set(Array.isArray(facets) ? facets : [])
@@ -138,7 +147,26 @@ Page({
     this.setData({ activeHomeCategory: category.value }, () => navigation.openSearch(category.query))
   },
   openAssistant() {
-    wx.showToast({ title: 'AI问答正在建设中', icon: 'none' })
+    if (isDevelopRuntime()) {
+      navigation.openGuideAssistant(ASSISTANT_PREVIEW_QUESTION, { previewNetworkError: true })
+      return
+    }
+    if (typeof wx.getNetworkType !== 'function') {
+      wx.showToast({ title: 'AI问答正在建设中', icon: 'none' })
+      return
+    }
+    wx.getNetworkType({
+      success(result) {
+        if (result && result.networkType === 'none') {
+          navigation.openGuideAssistant()
+          return
+        }
+        wx.showToast({ title: 'AI问答正在建设中', icon: 'none' })
+      },
+      fail() {
+        wx.showToast({ title: '暂时无法检查网络', icon: 'none' })
+      }
+    })
   },
 
   async loadGuides(options = {}) {

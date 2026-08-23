@@ -17,4 +17,13 @@ function openGuide(guideId) {
   wx.navigateTo({ url: `/pages/guide-detail/index?id=${encodeURIComponent(guideId)}` })
 }
 
-module.exports = { openCourse, openSearch, openCourseResources, openGuide }
+function openGuideAssistant(question = '', options = {}) {
+  const normalized = String(question == null ? '' : question).trim().slice(0, 1000)
+  const params = []
+  if (normalized) params.push(`question=${encodeURIComponent(normalized)}`)
+  if (options.previewNetworkError === true) params.push('preview=network-error')
+  const suffix = params.length ? `?${params.join('&')}` : ''
+  wx.navigateTo({ url: `/pages/guide-assistant/index${suffix}` })
+}
+
+module.exports = { openCourse, openSearch, openCourseResources, openGuide, openGuideAssistant }

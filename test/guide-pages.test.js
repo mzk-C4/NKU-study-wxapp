@@ -277,7 +277,8 @@ test('guide home search, category and AI controls have honest recoverable behavi
   const toasts = []
   installWx(t, {
     navigateTo(options) { routes.push(options.url) },
-    showToast(options) { toasts.push(options) }
+    showToast(options) { toasts.push(options) },
+    getNetworkType(options) { options.success({ networkType: 'wifi' }) }
   })
   const page = createPage(guidesDefinition)
 

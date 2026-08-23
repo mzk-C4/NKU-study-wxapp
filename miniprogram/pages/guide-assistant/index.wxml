@@ -1,0 +1,64 @@
+<view class="assistant-page">
+  <view class="custom-nav" style="padding-top: {{statusBarHeight}}px;">
+    <button class="back-button" aria-label="返回学习指南针" hover-class="icon-pressed" bindtap="goBack"><view class="back-arrow"></view></button>
+    <view class="nav-title">学习指南针 AI 问答</view>
+    <view class="nav-capsule-space" aria-hidden="true"></view>
+  </view>
+
+  <view class="assistant-content">
+    <view class="question-state" wx:if="{{networkError && lastQuestion}}">
+      <button class="retry-button {{retrying ? 'retry-button--loading' : ''}}" aria-label="重新检查网络" disabled="{{retrying}}" hover-class="retry-button--pressed" bindtap="retryNetwork"><text>↻</text></button>
+      <view class="question-bubble">{{lastQuestion}}</view>
+      <view class="question-tools">
+        <button class="tool-button copy-button" aria-label="复制问题" hover-class="icon-pressed" bindtap="copyQuestion"><view class="copy-shape"><view></view></view></button>
+        <button class="tool-button edit-button" aria-label="编辑问题" hover-class="icon-pressed" bindtap="editQuestion"><text>✎</text></button>
+      </view>
+      <view class="network-hint">{{networkHint}}</view>
+    </view>
+
+    <view class="offline-empty" wx:elif="{{networkError}}">
+      <view class="offline-title">网络已断开</view>
+      <view class="offline-copy">输入问题后仍可保留内容，恢复网络后再尝试。</view>
+    </view>
+
+    <view class="building-state" wx:else>
+      <view class="building-mark">AI</view>
+      <view class="building-title">AI 问答正在建设中</view>
+      <view class="building-copy">普通指南和搜索已经可以使用。</view>
+    </view>
+
+    <view class="continue-section" wx:if="{{networkError}}">
+      <view class="continue-title">你可以继续</view>
+      <button class="continue-card" hover-class="continue-card--pressed" bindtap="openLibrary">
+        <view class="continue-icon book-icon"><view class="book-left"></view><view class="book-right"></view></view>
+        <view class="continue-main"><view class="continue-name">浏览知识库</view><view class="continue-copy">查看学习指南、通知与规定等</view></view>
+        <view class="continue-arrow">›</view>
+      </button>
+      <button class="continue-card" hover-class="continue-card--pressed" bindtap="openSearch">
+        <view class="continue-icon search-card-icon"><view class="search-ring"></view></view>
+        <view class="continue-main"><view class="continue-name">去普通搜索</view><view class="continue-copy">使用关键词查找相关指南或文件</view></view>
+        <view class="continue-arrow">›</view>
+      </button>
+    </view>
+  </view>
+
+  <view class="composer-area">
+    <view class="composer">
+      <input
+        class="composer-input"
+        value="{{draft}}"
+        maxlength="1000"
+        focus="{{focusInput}}"
+        confirm-type="send"
+        placeholder="给学习指南针发送消息"
+        placeholder-class="composer-placeholder"
+        aria-label="给学习指南针发送消息"
+        bindinput="inputQuestion"
+        bindconfirm="sendQuestion"
+      />
+      <button class="attachment-button" aria-label="附件功能暂未开放" hover-class="icon-pressed" bindtap="showAttachmentUnavailable"><view class="paperclip-icon"></view></button>
+      <button class="send-button" aria-label="发送问题" disabled="{{!canSend}}" hover-class="send-button--pressed" bindtap="sendQuestion"><text>↑</text></button>
+    </view>
+    <view class="ai-note">内容由 AI 生成，请仔细甄别</view>
+  </view>
+</view>
