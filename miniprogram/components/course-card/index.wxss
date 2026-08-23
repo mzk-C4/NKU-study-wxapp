@@ -8,14 +8,6 @@
 .arrow { color: #817A84; font-size: 44rpx; line-height: 1; }
 .tags { display: flex; flex-wrap: wrap; gap: 10rpx; margin-top: 18rpx; }
 .stats { display: flex; gap: 26rpx; margin-top: 20rpx; padding-top: 18rpx; border-top: 1rpx dashed #E8E2EC; color: #6F6972; font-size: 20rpx; }
-/* FB-18: 暗色模式 */
-@media (prefers-color-scheme: dark) {
-  .course { background: #211C28; border-color: #2D2838; }
-  .course-name { color: #E0DCE4; }
-  .course-sub { color: #8B8090; }
-  .arrow { color: #8B8090; }
-  .stats { border-top-color: #2D2838; color: #8B8090; }
-}
 
 .course-head { align-items: center; }
 .course-main { flex: 1; min-width: 0; }

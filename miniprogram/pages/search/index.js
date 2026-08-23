@@ -41,6 +41,7 @@ function facetPatch(facets, snapshot) {
   const tagOptions = uniqueTextValues(source.tags, snapshot.tag)
   const assessmentOptions = uniqueTextValues(source.assessments, snapshot.assessment)
   return {
+    onShow() { theme.onPageShow() },
     groupOptions,
     groupChoices: ['不限', ...groupOptions],
     groupChoiceIndex: snapshot.group ? groupOptions.indexOf(snapshot.group) + 1 : 0,
@@ -89,7 +90,6 @@ function userErrorMessage(error, target) {
 
 Page({
   data: {
-      themeClass: '',
     query: '',
     mode: 'global',
     modeLabel: '四类搜索',

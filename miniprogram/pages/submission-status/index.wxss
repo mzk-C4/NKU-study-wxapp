@@ -7,19 +7,3 @@
 .sub-status--red { background: #FBEAEA; color: #BF4B55; }
 .sub-title { display: block; font-size: 28rpx; font-weight: 600; margin-bottom: 8rpx; }
 .sub-meta { margin-bottom: 16rpx; }
-
-/* FB-18: 暗色模式 */
-@media (prefers-color-scheme: dark) {
-  .sub-card { background: #211C28; border-color: #2D2838; }
-  .sub-title { color: #E0DCE4; }
-  .sub-meta { color: #8B8090; }
-  .sub-review { background: #1A1520; }
-  .review-label { color: #8B8090; }
-  .review-text { color: #A8A0B0; }
-  .sub-actions { border-top-color: #2D2838; }
-  .sub-action-btn.ghost { background: #211C28; border-color: #2D2838; color: #C9B8D8; }
-  .sub-status--gold { background: #3D3520; color: #D4BC8A; }
-  .sub-status--green { background: #1E3028; color: #8BC4A8; }
-  .sub-status--purple { background: #3D2A4E; color: #C9B8D8; }
-  .sub-status--red { background: #3A2228; color: #C89098; }
-}

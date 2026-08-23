@@ -1,4 +1,4 @@
-<view class="page review-form-page {{themeClass}}">
+<view class="page review-form-page">
   <state-view loading="{{loading}}" error="{{error}}" bindretry="prepare"></state-view>
   <block wx:if="{{course}}">
     <view class="card selected-course"><view class="course-zone">{{course.group}}</view><view><view class="selected-name">{{course.name}}</view><view class="micro">沿用网站方式：教师名称直接填写</view></view></view>

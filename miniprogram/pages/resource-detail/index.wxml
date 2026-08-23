@@ -1,4 +1,4 @@
-<view class="page {{themeClass}}">
+<view class="page">
   <state-view loading="{{loading}}" error="{{error}}" empty="{{!loading && !error && !resource}}" empty-text="资源不存在" bindretry="loadDetail"></state-view>
 
   <block wx:if="{{!loading && !error && resource}}">

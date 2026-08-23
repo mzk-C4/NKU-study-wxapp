@@ -5,9 +5,10 @@ const navigation = require('../../utils/navigation')
 
 Page({
   data: {
-      themeClass: '', loading: true, error: '', home: null, hotCourses: [], latestUpdates: [] },
+ loading: true, error: '', home: null, hotCourses: [], latestUpdates: [] },
 
   onLoad() { reportVisit('/mp/home'); this.loadHome() },
+    onShow() { theme.onPageShow() },
   onPullDownRefresh() { this.loadHome().finally(() => wx.stopPullDownRefresh()) },
 
   async loadHome() {

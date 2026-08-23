@@ -57,7 +57,6 @@ function getWechatLoginCode() {
 function createProfilePage(api = publicApi, sessionStore = authSession) {
   return {
     data: {
-      themeClass: '',
       user: null,
       userInitial: 'N',
       isLoggedIn: false,
@@ -88,7 +87,7 @@ function createProfilePage(api = publicApi, sessionStore = authSession) {
       reportVisit('/mp/profile')
       this.setData({ darkMode: theme.isDark() })
     },
-    onShow() { this.refresh(); this.setData({ themeClass: theme.onPageShow() || '' }) },
+    onShow() { this.refresh(); theme.onPageShow() },
 
     resetLoggedOut(history) {
       this.setData({
@@ -251,28 +250,31 @@ function createProfilePage(api = publicApi, sessionStore = authSession) {
     noop() {},
     openMyFeedback() { wx.navigateTo({ url: '/pages/feedback/index' }) },
     toggleDarkMode(event) {
-      const wantDark = event.detail.value
-      theme.setTheme(wantDark ? 'dark' : 'light')
-      this.setData({ darkMode: theme.isDark() })
+      theme.setDark(event.detail.value)
+      this.setData({ darkMode: theme.isDark(), themeClass: theme.themeClass() })
     },
-    async setWebPassword() {
-      const that = this
-      wx.showModal({
-        title: this.data.hasWebPassword ? '修改网页密码' : '设置网页密码',
-        editable: true,
-        placeholderText: '密码（8位以上）',
-        success: async (res) => {
-          if (!res.confirm || !res.content || res.content.length < 8) {
-            if (res.confirm) wx.showToast({ title: '密码至少 8 位', icon: 'none' })
-            return
-          }
-          try {
-            await api.setWebPassword(res.content)
-            wx.showToast({ title: '密码已设置', icon: 'success' })
-            that.setData({ hasWebPassword: true })
-          } catch (error) { wx.showToast({ title: error.message || '设置失败', icon: 'none' }) }
-        }
-      })
+    setWebPassword() {
+      this.setData({ passwordModalVisible: true, passwordInput1: '', passwordInput2: '', passwordError: '' })
+    },
+    closePasswordModal() {
+      this.setData({ passwordModalVisible: false })
+    },
+    inputPassword1(e) { this.setData({ passwordInput1: e.detail.value }) },
+    inputPassword2(e) { this.setData({ passwordInput2: e.detail.value }) },
+    async saveWebPassword() {
+      const pw1 = this.data.passwordInput1
+      const pw2 = this.data.passwordInput2
+      if (pw1.length < 8) { wx.showToast({ title: '密码至少 8 位', icon: 'none' }); return }
+      if (pw1 !== pw2) { wx.showToast({ title: '两次密码不一致', icon: 'none' }); return }
+      this.setData({ passwordSaving: true })
+      try {
+        await api.setWebPassword(pw1)
+        wx.showToast({ title: '密码已设置', icon: 'success' })
+        this.setData({ passwordModalVisible: false, passwordSaving: false, hasWebPassword: true })
+      } catch (error) {
+        wx.showToast({ title: error.message || '设置失败', icon: 'none' })
+        this.setData({ passwordSaving: false })
+      }
     },
     confirmDeleteAccount() {
       const that = this

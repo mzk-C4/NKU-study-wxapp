@@ -59,7 +59,6 @@ function calculateScrollbar(scrollLeft, scrollWidth, viewportWidth) {
 
 Page({
   data: {
-      themeClass: '',
     loading: true,
     loadingMore: false,
     error: '',
@@ -92,6 +91,7 @@ Page({
     reportVisit('/mp/courses')
     this.loadCourses()
   },
+    onShow() { theme.onPageShow() },
 
   onReady() { this.measureFilterScroll() },
 

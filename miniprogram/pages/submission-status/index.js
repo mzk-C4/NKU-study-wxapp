@@ -19,9 +19,9 @@ Page({
     reportVisit('/mp/submission-status')
     this.loadSubmissions()
   },
+    onShow() { theme.onPageShow() },
 
   data: {
-      themeClass: '',
     filter: 'all',
     filters: FILTERS,
     allSubmissions: [],

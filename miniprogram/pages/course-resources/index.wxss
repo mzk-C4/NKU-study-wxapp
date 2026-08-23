@@ -8,14 +8,3 @@
 .resource-title { margin-bottom: 10rpx; font-size: 27rpx; line-height: 1.45; font-weight: 700; }
 .resource-foot { display: flex; justify-content: flex-end; margin-top: 20rpx; padding-top: 18rpx; border-top: 1rpx dashed #E8E2EC; font-size: 21rpx; }
 .open-link { color: #4B1F6F; font-weight: 700; }
-
-/* FB-18: 暗色模式 */
-@media (prefers-color-scheme: dark) {
-  .detail-tabs { background: #211C28; border-color: #2D2838; }
-  .detail-tab { color: #8B8090; }
-  .resource-card { background: #211C28; border-color: #2D2838; }
-  .file-icon { background: #3D2A4E; color: #C9B8D8; }
-  .resource-title { color: #E0DCE4; }
-  .resource-foot { border-top-color: #2D2838; }
-  .open-link { color: #C9B8D8; }
-}

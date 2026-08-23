@@ -5,8 +5,9 @@ const navigation = require('../../utils/navigation')
 
 Page({
   data: {
-      themeClass: '', loading: true, error: '', groups: [], page: 1, hasMore: false },
+ loading: true, error: '', groups: [], page: 1, hasMore: false },
   onLoad() { reportVisit('/mp/reviews-tab'); this.loadGroups() },
+    onShow() { theme.onPageShow() },
   onPullDownRefresh() { this.setData({ page: 1 }); this.loadGroups().finally(() => wx.stopPullDownRefresh()) },
   onReachBottom() {},
   async loadGroups() {

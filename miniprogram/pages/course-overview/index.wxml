@@ -1,4 +1,4 @@
-<view class="course-detail {{themeClass}}">
+<view class="course-detail">
   <state-view loading="{{loading}}" error="{{error}}" bindretry="loadCourse"></state-view>
   <block wx:if="{{course}}">
     <view class="detail-hero"><view class="detail-row"><view><view class="detail-title">{{course.name}}</view><view class="detail-meta">{{course.group || '分类待补充'}} · {{course.term || '学期待补充'}}{{course.assessment ? ' · ' + course.assessment : ''}}</view></view><view class="favorite {{favorite ? 'favorite--active' : ''}} {{favoriteSaving ? 'favorite--busy' : ''}}" aria-role="button" aria-label="{{favorite ? '取消收藏' : '收藏课程'}}" bindtap="toggleFavorite"><text wx:if="{{favoriteSaving || favoriteLoading}}">…</text><text wx:else>{{favorite ? '♥' : '♡'}}</text></view></view></view>

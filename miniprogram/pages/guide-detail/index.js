@@ -18,6 +18,7 @@ function normalizeGuideId(value) {
 
 function presentGuide(guide) {
   return {
+    onShow() { theme.onPageShow() },
     ...guide,
     category_label: CATEGORY_LABELS[guide.category] || '学习事务',
     updated_label: guide.updated_at || '未提供',
@@ -51,7 +52,6 @@ function copyLink(url, successTitle) {
 
 Page({
   data: {
-      themeClass: '',
     id: '',
     loading: true,
     error: '',

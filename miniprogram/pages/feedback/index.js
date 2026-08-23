@@ -7,7 +7,6 @@ const { listFeedback, submitFeedback } = require('../../utils/feedback-api')
 
 Page({
   data: {
-      themeClass: '',
     loading: true, error: '', submitting: false,
     feedbacks: [], title: '', content: '', contact: '',
     filterStatus: 'all', statusOptions: [
@@ -18,6 +17,7 @@ Page({
     ]
   },
   onLoad() { reportVisit('/mp/feedback'); this.loadFeedback() },
+    onShow() { theme.onPageShow() },
   onPullDownRefresh() { this.loadFeedback().finally(() => wx.stopPullDownRefresh()) },
   async loadFeedback() {
     this.setData({ loading: true, error: '' })

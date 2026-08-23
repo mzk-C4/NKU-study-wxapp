@@ -1,4 +1,4 @@
-<view class="page {{themeClass}}">
+<view class="page">
   <view class="notice"><view class="notice-mark">!</view><text>请先删除资料中的姓名、学号等个人信息，并确认拥有分享权限。</text></view>
 
   <view class="field">

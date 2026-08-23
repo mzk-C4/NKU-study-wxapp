@@ -1,4 +1,4 @@
-<view class="page {{themeClass}}">
+<view class="page">
   <view class="search-box" bindtap="" style="margin-bottom: 20rpx;"><view class="search-icon"></view><text>浏览全部课程评价</text></view>
   <state-view loading="{{loading}}" error="{{error}}" empty="{{!loading && !error && !groups.length}}" empty-text="暂无评价" bindretry="loadGroups"></state-view>
   <view class="card review-group-card" wx:for="{{groups}}" wx:key="group_key" data-group="{{item}}" bindtap="openGroup">

@@ -10,9 +10,9 @@ Page({
     reportVisit('/mp/submit-resource')
     this.restoreDraft()
   },
+    onShow() { theme.onPageShow() },
 
   data: {
-      themeClass: '',
     form: {
       courseName: '',
       title: '',

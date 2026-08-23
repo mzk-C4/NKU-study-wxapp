@@ -4,8 +4,8 @@ const { publicApi } = require('../../services/public-api')
 
 function createWriteReviewPage(api = publicApi) {
   return {
+    onShow() { theme.onPageShow() },
   data: {
-      themeClass: '',
     courseId: '', loading: true, submitting: false, course: null,
     error: '',
     teacher: '', scoreOptions: [1, 2, 3, 4, 5], rating: 0,

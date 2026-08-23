@@ -5,8 +5,8 @@ const { downloadResource, validDownloadUrl } = require('../../utils/resource-dow
 const { reportDeadLink } = require('../../utils/resource-report')
 
 Page({
+    onShow() { theme.onPageShow() },
   data: {
-      themeClass: '',
     courseId: '',
     resourceId: '',
     resource: null,

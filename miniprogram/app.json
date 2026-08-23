@@ -17,17 +17,16 @@
   ],
   "window": {
     "navigationBarTitleText": "NKUStudy",
-    "navigationBarBackgroundColor": "@navBgColor",
-    "navigationBarTextStyle": "@navTxtStyle",
-    "backgroundColor": "@bgColor",
-    "backgroundTextStyle": "@bgTxtStyle",
-    "darkmode": true
+    "navigationBarBackgroundColor": "#FFFDF8",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#F6F3F7",
+    "backgroundTextStyle": "dark"
   },
   "tabBar": {
-    "color": "@tabColor",
-    "selectedColor": "@tabSelectedColor",
-    "backgroundColor": "@tabBgColor",
-    "borderStyle": "@tabBorderStyle",
+    "color": "#817A84",
+    "selectedColor": "#4B1F6F",
+    "backgroundColor": "#FFFDF8",
+    "borderStyle": "white",
     "list": [
       {
         "pagePath": "pages/home/index",
@@ -59,8 +58,7 @@
         "iconPath": "assets/tab/profile.png",
         "selectedIconPath": "assets/tab/profile-active.png"
       }
-    ],
-    "darkmode": true
+    ]
   },
   "usingComponents": {
     "state-view": "components/state-view/index",
@@ -69,6 +67,5 @@
   },
   "style": "v2",
   "lazyCodeLoading": "requiredComponents",
-  "sitemapLocation": "sitemap.json",
-  "themeLocation": "theme.json"
+  "sitemapLocation": "sitemap.json"
 }

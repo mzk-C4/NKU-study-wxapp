@@ -1,4 +1,4 @@
-<view class="page {{themeClass}}">
+<view class="page">
   <state-view loading="{{loading}}" error="{{error}}" empty="{{!loading && !error && !feedbacks.length}}" empty-text="暂无反馈" bindretry="loadFeedback"></state-view>
 
   <view class="chips section" style="margin-top: 0;">

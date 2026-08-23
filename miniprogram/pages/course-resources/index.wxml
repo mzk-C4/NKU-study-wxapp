@@ -1,4 +1,4 @@
-<view class="resource-page {{themeClass}}">
+<view class="resource-page">
   <view class="detail-tabs"><view class="detail-tab" data-tab="overview" bindtap="openTab">概览</view><view class="detail-tab detail-tab--active">资料 {{course.resource_count || 0}}</view><view class="detail-tab" data-tab="reviews" bindtap="openTab">评价 {{course.review_count || 0}}</view></view>
   <view class="page resource-body">
     <view class="chips"><view wx:for="{{types}}" wx:key="*this" class="chip {{type === item ? 'chip--active' : ''}}" data-type="{{item}}" bindtap="chooseType">{{item}}</view></view>
