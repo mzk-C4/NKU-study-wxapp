@@ -16,3 +16,6 @@
   .arrow { color: #8B8090; }
   .stats { border-top-color: #2D2838; color: #8B8090; }
 }
+
+.course-head { align-items: center; }
+.course-main { flex: 1; min-width: 0; }

@@ -1,4 +1,5 @@
 const { reportVisit } = require('../../utils/visit-report')
+const theme = require('../../utils/theme')
 
 const STATUS_CONFIG = {
   pending: { label: '审核中', tone: 'gold' },

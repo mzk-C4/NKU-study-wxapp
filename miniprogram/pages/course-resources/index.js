@@ -1,4 +1,5 @@
 const { reportVisit } = require('../../utils/visit-report')
+const theme = require('../../utils/theme')
 const { publicApi } = require('../../services/public-api')
 const { downloadResource } = require('../../utils/resource-download')
 

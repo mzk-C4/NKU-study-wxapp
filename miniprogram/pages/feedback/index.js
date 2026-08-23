@@ -1,4 +1,5 @@
 const { reportVisit } = require('../../utils/visit-report')
+const theme = require('../../utils/theme')
 const { listFeedback, submitFeedback } = require('../../utils/feedback-api')
 
 

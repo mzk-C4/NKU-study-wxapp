@@ -29,3 +29,7 @@
   .filter { background: #211C28; border-color: #2D2838; color: #8B8090; }
   .course-fab { background: #4B1F6F; }
 }
+
+/* 标签缩小 */
+.filter-bar .chip { height: 48rpx; padding: 0 16rpx; font-size: 20rpx; border-radius: 24rpx; }
+.filter-bar { gap: 10rpx; }

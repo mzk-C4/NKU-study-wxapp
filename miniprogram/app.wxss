@@ -60,3 +60,76 @@ button::after { border: 0; }
   .sticky-footer { background: rgba(26,21,32,.98); border-top-color: #2D2838; }
   .divider { background: #2D2838; }
 }
+
+
+/* ===== 手动主题覆盖 ===== */
+/* 当用户手动切换时，wrapper 上的 class 覆盖 @media 查询 */
+
+/* 强制亮色（系统暗色 + 用户选亮色） */
+.theme-force-light,
+.theme-force-light .card { background: #FFFDF8 !important; border-color: #E8E2EC !important; }
+.theme-force-light { background: #F6F3F7 !important; color: #211C24 !important; }
+.theme-force-light .muted,
+.theme-force-light .micro { color: #6F6972 !important; }
+.theme-force-light .section-title { color: #211C24 !important; }
+.theme-force-light .search-box { background: #FFFFFF !important; border-color: #E8E2EC !important; color: #817A84 !important; }
+.theme-force-light .chip { background: #FFFFFF !important; border-color: #E8E2EC !important; color: #635D66 !important; }
+.theme-force-light .chip--active { background: #4B1F6F !important; border-color: #4B1F6F !important; color: #FFFFFF !important; }
+.theme-force-light .button--ghost { background: #FFFFFF !important; border-color: #E8E2EC !important; color: #4B1F6F !important; }
+.theme-force-light .button--secondary { background: #EFE8F4 !important; color: #4B1F6F !important; }
+.theme-force-light .notice { background: #F8EFD9 !important; color: #6F5014 !important; }
+.theme-force-light .field-label { color: #4C464F !important; }
+.theme-force-light .input,
+.theme-force-light .picker,
+.theme-force-light .textarea { background: #FFFFFF !important; border-color: #E8E2EC !important; color: #211C24 !important; }
+.theme-force-light .sticky-footer { background: rgba(255,253,248,.98) !important; border-top-color: #E8E2EC !important; }
+.theme-force-light .divider { background: #E8E2EC !important; }
+
+/* 强制暗色（系统亮色 + 用户选暗色） */
+.theme-force-dark,
+.theme-force-dark .card { background: #211C28 !important; border-color: #2D2838 !important; }
+.theme-force-dark { background: #1A1520 !important; color: #E0DCE4 !important; }
+.theme-force-dark .muted,
+.theme-force-dark .micro { color: #8B8090 !important; }
+.theme-force-dark .section-title { color: #E8CF96 !important; }
+.theme-force-dark .search-box { background: #211C28 !important; border-color: #2D2838 !important; color: #8B8090 !important; }
+.theme-force-dark .chip { background: #211C28 !important; border-color: #2D2838 !important; color: #8B8090 !important; }
+.theme-force-dark .chip--active { background: #4B1F6F !important; border-color: #4B1F6F !important; color: #FFFFFF !important; }
+.theme-force-dark .button--ghost { background: #211C28 !important; border-color: #2D2838 !important; color: #C9B8D8 !important; }
+.theme-force-dark .button--secondary { background: #2D2438 !important; color: #C9B8D8 !important; }
+.theme-force-dark .notice { background: #2D2818 !important; color: #D4BC8A !important; }
+.theme-force-dark .field-label { color: #A8A0B0 !important; }
+.theme-force-dark .input,
+.theme-force-dark .picker,
+.theme-force-dark .textarea { background: #211C28 !important; border-color: #2D2838 !important; color: #E0DCE4 !important; }
+.theme-force-dark .sticky-footer { background: rgba(26,21,32,.98) !important; border-top-color: #2D2838 !important; }
+.theme-force-dark .divider { background: #2D2838 !important; }
+
+/* 暗色模式下通用补充（media query 遗漏的） */
+@media (prefers-color-scheme: dark) {
+  .profile-stats { background: #211C28 !important; border-color: #2D2838 !important; }
+  .metric { background: #211C28 !important; border-color: #2D2838 !important; }
+  .quick-grid { color: #E0DCE4; }
+  .review-card { background: #211C28 !important; border-color: #2D2838 !important; }
+  .review-avatar { background: #2D2438 !important; }
+  .score-card { background: #211C28 !important; }
+  .detail-hero { background: #211C28 !important; }
+  .detail-tabs { background: #211C28 !important; }
+  .detail-tab { color: #8B8090 !important; }
+  .detail-tab--active { color: #E8CF96 !important; border-color: #E8CF96 !important; }
+  .about-sheet { background: #211C28 !important; }
+  .about-mask { background: rgba(0,0,0,.6) !important; }
+  .feedback-sheet { background: #211C28 !important; }
+  .login-button { background: #2D2438 !important; }
+  .hero-button { background: #2D2438 !important; border-color: #2D2838 !important; color: #C9B8D8 !important; }
+  .hero { background: #211C28 !important; }
+  .brand-row { color: #E0DCE4 !important; }
+  .season-card { background: #2D2438 !important; }
+  .record-row { background: #211C28 !important; border-color: #2D2838 !important; }
+  .status { color: #A8A0B0 !important; }
+  .reaction-button { background: #2D2438 !important; border-color: #2D2838 !important; }
+  .course-zone { background: #2D2438 !important; color: #C9B8D8 !important; }
+  .file-icon { background: #2D2438 !important; color: #C9B8D8 !important; }
+  .link-ok { color: #7BAA7B !important; }
+  .open-link { color: #C9B8D8 !important; }
+}

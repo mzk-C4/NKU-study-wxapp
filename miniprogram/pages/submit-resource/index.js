@@ -1,4 +1,5 @@
 const { reportVisit } = require('../../utils/visit-report')
+const theme = require('../../utils/theme')
 
 const RESOURCE_TYPES = ['试卷', '笔记', '课件', '作业', '教材']
 const PLATFORMS = ['百度网盘', '夸克网盘', '阿里云盘', '腾讯微云', '蓝奏云', '123云盘', '其他']

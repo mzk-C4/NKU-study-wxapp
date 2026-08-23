@@ -1,4 +1,5 @@
 const { reportVisit } = require('../../utils/visit-report')
+const theme = require('../../utils/theme')
 const navigation = require('../../utils/navigation')
 const { publicApi } = require('../../services/public-api')
 const authSession = require('../../utils/auth-session')
@@ -84,9 +85,9 @@ function createProfilePage(api = publicApi, sessionStore = authSession) {
 
     onLoad() {
       reportVisit('/mp/profile')
-      this.setData({ darkMode: wx.getStorageSync('nkustudy_dark_mode') === 'on' })
+      this.setData({ darkMode: theme.isDark() })
     },
-    onShow() { this.refresh() },
+    onShow() { this.refresh(); theme.onPageShow() },
 
     resetLoggedOut(history) {
       this.setData({
@@ -249,9 +250,9 @@ function createProfilePage(api = publicApi, sessionStore = authSession) {
     noop() {},
     openMyFeedback() { wx.navigateTo({ url: '/pages/feedback/index' }) },
     toggleDarkMode(event) {
-      const mode = event.detail.value
-      this.setData({ darkMode: mode })
-      wx.setStorageSync('nkustudy_dark_mode', mode ? 'on' : 'off')
+      const wantDark = event.detail.value
+      theme.setTheme(wantDark ? 'dark' : 'light')
+      this.setData({ darkMode: theme.isDark() })
     },
     async setWebPassword() {
       const that = this
