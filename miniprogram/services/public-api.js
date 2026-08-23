@@ -94,7 +94,7 @@ function mapRatings(rawRatings, reviewCount) {
   const count = toCount(raw.count == null ? reviewCount : raw.count)
   const showAggregate = raw.show_aggregate === true && average !== null
   return {
-    average,
+    average: average === null ? null : average.toFixed(1),
     count,
     show_aggregate: showAggregate,
     label: showAggregate ? `${average.toFixed(1)} 分` : '暂无评分'
@@ -350,6 +350,7 @@ function mapReviewItem(rawItem, groupKey) {
 function mapReviewGroup(rawGroup, includeItems = false) {
   const raw = rawGroup && typeof rawGroup === 'object' ? rawGroup : {}
   const groupKey = toText(raw.group_key)
+  const ratingAverage = toNullableNumber(raw.rating_average)
   const mapped = {
     group_key: groupKey,
     course_id: toText(raw.course_id),
@@ -357,7 +358,7 @@ function mapReviewGroup(rawGroup, includeItems = false) {
     teacher_name: toText(raw.teacher_name),
     matched: raw.matched === true,
     review_count: toCount(raw.review_count),
-    rating_average: toNullableNumber(raw.rating_average)
+    rating_average: ratingAverage === null ? null : ratingAverage.toFixed(1)
   }
   if (includeItems) mapped.items = Array.isArray(raw.items) ? raw.items.map(item => mapReviewItem(item, groupKey)) : []
   return mapped
