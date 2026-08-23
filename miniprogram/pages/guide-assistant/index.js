@@ -2,6 +2,7 @@ const navigation = require('../../utils/navigation')
 
 const STORAGE_KEY = 'nkustudy_guide_assistant_local_state'
 const MAX_QUESTION_LENGTH = 1000
+const MAX_HISTORY_TITLE_LENGTH = 50
 const LOCAL_RETENTION_MS = 30 * 24 * 60 * 60 * 1000
 const DAY_MS = 24 * 60 * 60 * 1000
 const ANSWER_PREVIEW_QUESTION = '我对一门课程的成绩有异议，应该怎么申请复核？'
@@ -15,6 +16,10 @@ function boundedQuestion(value) {
   return String(value == null ? '' : value).trim().slice(0, MAX_QUESTION_LENGTH)
 }
 
+function boundedHistoryTitle(value) {
+  return String(value == null ? '' : value).trim().slice(0, MAX_HISTORY_TITLE_LENGTH)
+}
+
 function decodeQuestion(value) {
   const source = String(value == null ? '' : value)
   try {
@@ -26,12 +31,16 @@ function decodeQuestion(value) {
 
 function normalizeHistory(value, now = Date.now()) {
   if (!Array.isArray(value)) return []
-  return value.map(item => ({
-    question: boundedQuestion(item && item.question),
-    state: item && item.state === 'answer' ? 'answer' : 'network-error',
-    updatedAt: Number(item && item.updatedAt) || now,
-    pinned: Boolean(item && item.pinned)
-  })).filter(item => (
+  return value.map(item => {
+    const question = boundedQuestion(item && item.question)
+    return {
+      question,
+      title: boundedHistoryTitle(item && item.title) || boundedHistoryTitle(question),
+      state: item && item.state === 'answer' ? 'answer' : 'network-error',
+      updatedAt: Number(item && item.updatedAt) || now,
+      pinned: Boolean(item && item.pinned)
+    }
+  }).filter(item => (
     item.question &&
     item.updatedAt <= now &&
     now - item.updatedAt <= LOCAL_RETENTION_MS
@@ -46,6 +55,7 @@ function addHistoryEntry(history, question, state) {
   return [
     {
       question: normalizedQuestion,
+      title: previous ? previous.title : boundedHistoryTitle(normalizedQuestion),
       state: state === 'answer' ? 'answer' : 'network-error',
       updatedAt: Date.now(),
       pinned: Boolean(previous && previous.pinned)
@@ -71,14 +81,16 @@ function buildHistoryGroups(history, search = '', now = Date.now()) {
     { key: 'thirty-days', label: '30天内', matches: item => !item.pinned && item.updatedAt < today - 7 * DAY_MS }
   ]
   const filtered = normalizeHistory(history, now).filter(item => (
-    !query || item.question.toLocaleLowerCase().includes(query)
+    !query ||
+    item.title.toLocaleLowerCase().includes(query) ||
+    item.question.toLocaleLowerCase().includes(query)
   ))
   return definitions.map(group => ({
     key: group.key,
     label: group.label,
     items: filtered.filter(group.matches).map(item => ({
       ...item,
-      pinAriaLabel: item.pinned ? `取消置顶：${item.question}` : `置顶：${item.question}`
+      pinAriaLabel: item.pinned ? `取消置顶：${item.title}` : `置顶：${item.title}`
     }))
   })).filter(group => group.items.length)
 }
@@ -170,6 +182,11 @@ Page({
     historyDrawerOpen: false,
     historySearch: '',
     historyGroups: [],
+    historyActionQuestion: '',
+    historyRenameMode: false,
+    historyRenameValue: '',
+    canSaveHistoryRename: false,
+    focusHistoryRename: false,
     answerFeedback: '',
     networkError: false,
     networkConnected: true,
@@ -372,13 +389,27 @@ Page({
       history,
       historyDrawerOpen: true,
       historySearch: '',
-      historyGroups: buildHistoryGroups(history)
+      historyGroups: buildHistoryGroups(history),
+      historyActionQuestion: '',
+      historyRenameMode: false,
+      historyRenameValue: '',
+      canSaveHistoryRename: false,
+      focusHistoryRename: false
     })
   },
 
   closeConversationHistory() {
     if (this._isUnloaded) return
-    this.setData({ historyDrawerOpen: false, historySearch: '', historyGroups: [] })
+    this.setData({
+      historyDrawerOpen: false,
+      historySearch: '',
+      historyGroups: [],
+      historyActionQuestion: '',
+      historyRenameMode: false,
+      historyRenameValue: '',
+      canSaveHistoryRename: false,
+      focusHistoryRename: false
+    })
   },
 
   inputHistorySearch(event) {
@@ -386,7 +417,12 @@ Page({
     const historySearch = boundedQuestion(event && event.detail ? event.detail.value : '')
     this.setData({
       historySearch,
-      historyGroups: buildHistoryGroups(this.data.history, historySearch)
+      historyGroups: buildHistoryGroups(this.data.history, historySearch),
+      historyActionQuestion: '',
+      historyRenameMode: false,
+      historyRenameValue: '',
+      canSaveHistoryRename: false,
+      focusHistoryRename: false
     })
   },
 
@@ -413,6 +449,11 @@ Page({
       historyDrawerOpen: false,
       historySearch: '',
       historyGroups: [],
+      historyActionQuestion: '',
+      historyRenameMode: false,
+      historyRenameValue: '',
+      canSaveHistoryRename: false,
+      focusHistoryRename: false,
       answerFeedback: '',
       networkConnected: answerMode,
       networkError: !answerMode,
@@ -443,23 +484,112 @@ Page({
 
   toggleHistoryPin(event) {
     const question = event && event.currentTarget && event.currentTarget.dataset.question
-    return this.toggleHistoryPinByQuestion(question)
+    const changed = this.toggleHistoryPinByQuestion(question)
+    if (changed) this.closeHistoryActions()
+    return changed
   },
 
   openHistoryActions(event) {
     if (this._isUnloaded) return
     const question = boundedQuestion(event && event.currentTarget && event.currentTarget.dataset.question)
     const item = normalizeHistory(this.data.history).find(entry => entry.question === question)
-    if (!item || typeof wx.showActionSheet !== 'function') return
-    wx.showActionSheet({
-      itemList: [item.pinned ? '取消置顶' : '置顶', '删除会话'],
-      success: result => {
-        if (this._isUnloaded) return
-        const tapIndex = Number(result && result.tapIndex)
-        if (tapIndex === 0) this.toggleHistoryPinByQuestion(question, true)
-        if (tapIndex === 1) this.confirmDeleteHistory(question)
-      }
+    if (!item) return
+    if (this.data.historyActionQuestion === question && !this.data.historyRenameMode) {
+      this.closeHistoryActions()
+      return
+    }
+    this.setData({
+      historyActionQuestion: question,
+      historyRenameMode: false,
+      historyRenameValue: '',
+      canSaveHistoryRename: false,
+      focusHistoryRename: false
     })
+  },
+
+  closeHistoryActions() {
+    if (this._isUnloaded) return
+    this.setData({
+      historyActionQuestion: '',
+      historyRenameMode: false,
+      historyRenameValue: '',
+      canSaveHistoryRename: false,
+      focusHistoryRename: false
+    })
+  },
+
+  chooseHistoryPin(event) {
+    const question = event && event.currentTarget && event.currentTarget.dataset.question
+    const changed = this.toggleHistoryPinByQuestion(question, true)
+    if (changed) this.closeHistoryActions()
+  },
+
+  chooseHistoryDelete(event) {
+    const question = boundedQuestion(event && event.currentTarget && event.currentTarget.dataset.question)
+    this.closeHistoryActions()
+    this.confirmDeleteHistory(question)
+  },
+
+  openHistoryRename(event) {
+    if (this._isUnloaded) return
+    const question = boundedQuestion(event && event.currentTarget && event.currentTarget.dataset.question)
+    const item = normalizeHistory(this.data.history).find(entry => entry.question === question)
+    if (!item) return
+    this.setData({
+      historyActionQuestion: question,
+      historyRenameMode: true,
+      historyRenameValue: item.title,
+      canSaveHistoryRename: Boolean(item.title),
+      focusHistoryRename: false
+    }, () => {
+      if (!this._isUnloaded && this.data.historyRenameMode) this.setData({ focusHistoryRename: true })
+    })
+  },
+
+  inputHistoryRename(event) {
+    if (this._isUnloaded) return
+    const historyRenameValue = String(event && event.detail ? event.detail.value : '').slice(0, MAX_HISTORY_TITLE_LENGTH)
+    this.setData({
+      historyRenameValue,
+      canSaveHistoryRename: Boolean(boundedHistoryTitle(historyRenameValue))
+    })
+  },
+
+  cancelHistoryRename() {
+    if (this._isUnloaded) return
+    this.setData({
+      historyRenameMode: false,
+      historyRenameValue: '',
+      canSaveHistoryRename: false,
+      focusHistoryRename: false
+    })
+  },
+
+  saveHistoryRename() {
+    if (this._isUnloaded) return false
+    const question = boundedQuestion(this.data.historyActionQuestion)
+    const title = boundedHistoryTitle(this.data.historyRenameValue)
+    if (!question || !title) {
+      wx.showToast({ title: '会话名称不能为空', icon: 'none' })
+      return false
+    }
+    const previousHistory = normalizeHistory(this.data.history)
+    if (!previousHistory.some(item => item.question === question)) return false
+    const history = previousHistory.map(item => (
+      item.question === question ? { ...item, title } : item
+    ))
+    this.setData({
+      history,
+      historyGroups: buildHistoryGroups(history, this.data.historySearch),
+      historyActionQuestion: '',
+      historyRenameMode: false,
+      historyRenameValue: '',
+      canSaveHistoryRename: false,
+      focusHistoryRename: false
+    })
+    saveLocalState(this.data.lastQuestion, this.data.draft, history)
+    wx.showToast({ title: '会话已重命名', icon: 'none' })
+    return true
   },
 
   confirmDeleteHistory(question) {
@@ -484,7 +614,12 @@ Page({
     if (boundedQuestion(this.data.lastQuestion) !== normalizedQuestion) {
       this.setData({
         history,
-        historyGroups: buildHistoryGroups(history, this.data.historySearch)
+        historyGroups: buildHistoryGroups(history, this.data.historySearch),
+        historyActionQuestion: '',
+        historyRenameMode: false,
+        historyRenameValue: '',
+        canSaveHistoryRename: false,
+        focusHistoryRename: false
       })
       saveLocalState(this.data.lastQuestion, this.data.draft, history)
       wx.showToast({ title: '会话已删除', icon: 'none' })
@@ -508,6 +643,11 @@ Page({
       historyDrawerOpen: false,
       historySearch: '',
       historyGroups: [],
+      historyActionQuestion: '',
+      historyRenameMode: false,
+      historyRenameValue: '',
+      canSaveHistoryRename: false,
+      focusHistoryRename: false,
       answerFeedback: '',
       networkConnected: !stayOffline,
       networkError: stayOffline,
@@ -545,6 +685,11 @@ Page({
       historyDrawerOpen: false,
       historySearch: '',
       historyGroups: [],
+      historyActionQuestion: '',
+      historyRenameMode: false,
+      historyRenameValue: '',
+      canSaveHistoryRename: false,
+      focusHistoryRename: false,
       answerFeedback: '',
       networkConnected: !stayOffline,
       networkError: stayOffline,

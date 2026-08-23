@@ -265,12 +265,21 @@ button::after { border: 0; }
   line-height: 1.4;
 }
 
+.history-conversation-item {
+  position: relative;
+  z-index: 1;
+}
+
+.history-conversation-item--active { z-index: 40; }
+
 .history-conversation-row {
   display: flex;
   align-items: center;
   min-height: 88rpx;
   border-radius: 18rpx;
 }
+
+.history-conversation-row--selected { background: #F3F3F4; }
 
 .history-conversation-button {
   overflow: hidden;
@@ -348,6 +357,180 @@ button::after { border: 0; }
 }
 
 .history-pin-button--active .history-pin-mark > view { background: currentColor; }
+
+.history-action-card,
+.history-rename-card {
+  position: absolute;
+  z-index: 45;
+  right: 10rpx;
+  top: 86rpx;
+  width: 450rpx;
+  max-width: calc(100% - 58rpx);
+  border: 1rpx solid #ECECEF;
+  border-radius: 26rpx;
+  background: #FFFFFF;
+  box-shadow: 0 18rpx 48rpx rgba(36, 31, 43, .17);
+  box-sizing: border-box;
+}
+
+.history-action-card { overflow: hidden; }
+
+.history-action-row {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  width: 100% !important;
+  height: 94rpx;
+  margin: 0 !important;
+  padding: 0 32rpx;
+  border-radius: 0;
+  color: #17191F;
+  background: #FFFFFF;
+  font-size: 28rpx;
+  font-weight: 500;
+  line-height: 1;
+  text-align: left;
+  box-sizing: border-box;
+}
+
+.history-action-row + .history-action-row { border-top: 1rpx solid #ECECEF; }
+.history-action-row--pressed { background: #F5F3F7; }
+.history-action-row--danger { color: #E64949; }
+
+.history-action-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 44rpx;
+  height: 44rpx;
+  color: currentColor;
+}
+
+.history-pencil-icon > view {
+  position: relative;
+  width: 28rpx;
+  height: 9rpx;
+  border: 4rpx solid currentColor;
+  border-radius: 4rpx;
+  transform: rotate(-45deg);
+  box-sizing: border-box;
+}
+
+.history-pencil-icon > view::after {
+  content: "";
+  position: absolute;
+  right: -10rpx;
+  top: -4rpx;
+  width: 0;
+  height: 0;
+  border-top: 5rpx solid transparent;
+  border-bottom: 5rpx solid transparent;
+  border-left: 8rpx solid currentColor;
+}
+
+.history-action-pin { transform: rotate(28deg) scale(.86); }
+
+.history-action-pin--unpin::after {
+  content: "";
+  position: absolute;
+  left: -2rpx;
+  top: 18rpx;
+  width: 36rpx;
+  height: 4rpx;
+  border: 2rpx solid #FFFFFF;
+  border-radius: 4rpx;
+  background: currentColor;
+  transform: rotate(62deg);
+  box-sizing: content-box;
+}
+
+.history-trash-icon > view {
+  position: relative;
+  width: 24rpx;
+  height: 27rpx;
+  margin-top: 7rpx;
+  border: 4rpx solid currentColor;
+  border-top: 0;
+  border-radius: 0 0 5rpx 5rpx;
+  box-sizing: border-box;
+}
+
+.history-trash-icon > view::before,
+.history-trash-icon > view::after {
+  content: "";
+  position: absolute;
+  background: currentColor;
+}
+
+.history-trash-icon > view::before {
+  left: -7rpx;
+  top: -9rpx;
+  width: 30rpx;
+  height: 4rpx;
+  border-radius: 3rpx;
+}
+
+.history-trash-icon > view::after {
+  left: 5rpx;
+  top: -15rpx;
+  width: 8rpx;
+  height: 5rpx;
+  border-radius: 4rpx 4rpx 0 0;
+}
+
+.history-rename-card { padding: 28rpx; }
+
+.history-rename-title {
+  color: #1D2028;
+  font-size: 27rpx;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.history-rename-input {
+  height: 76rpx;
+  margin-top: 20rpx;
+  padding: 0 22rpx;
+  border: 2rpx solid #DDD8E4;
+  border-radius: 18rpx;
+  color: #17191F;
+  background: #F8F7F9;
+  font-size: 25rpx;
+  line-height: 76rpx;
+  box-sizing: border-box;
+}
+
+.history-rename-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16rpx;
+  margin-top: 22rpx;
+}
+
+.history-rename-cancel,
+.history-rename-save {
+  min-width: 112rpx;
+  height: 70rpx;
+  margin: 0 !important;
+  padding: 0 24rpx;
+  border-radius: 18rpx;
+  font-size: 24rpx;
+  line-height: 70rpx;
+}
+
+.history-rename-cancel {
+  color: #646978;
+  background: #F1EFF3;
+}
+
+.history-rename-save {
+  color: #FFFFFF;
+  background: #6A35B1;
+}
+
+.history-rename-save[disabled] { opacity: .45; }
 
 .history-empty {
   padding: 110rpx 30rpx 50rpx;
