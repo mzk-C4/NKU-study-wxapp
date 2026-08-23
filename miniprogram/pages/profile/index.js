@@ -61,6 +61,27 @@ Page({
   about() { this.setData({ aboutVisible: true }) },
   closeAbout() { this.setData({ aboutVisible: false }) },
   openFeedback() { wx.navigateTo({ url: '/pages/feedback/index' }) },
+  async setWebPassword() {
+    const that = this
+    wx.showModal({
+      title: this.data.user?.has_web_password ? '修改网页登录密码' : '设置网页登录密码',
+      editable: true,
+      placeholderText: '密码（8位以上）',
+      success: async (res) => {
+        if (!res.confirm || !res.content || res.content.length < 8) {
+          if (res.confirm) wx.showToast({ title: '密码至少 8 位', icon: 'none' })
+          return
+        }
+        try {
+          await require('../../services/auth').authedPost('/me/web-password', { password: res.content })
+          wx.showToast({ title: '密码已设置', icon: 'success' })
+          that.loadUserData()
+        } catch (error) {
+          wx.showToast({ title: error.message || '设置失败', icon: 'none' })
+        }
+      }
+    })
+  },
   toggleDarkMode(event) {
     const mode = event.detail.value
     this.setData({ darkMode: mode })
