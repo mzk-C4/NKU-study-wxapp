@@ -3,8 +3,11 @@
 
   <view class="card" wx:for="{{feedbacks}}" wx:key="id" style="margin-bottom: 16rpx;">
     <view style="display:flex;justify-content:space-between;align-items:center;">
-      <text style="font-weight:700;font-size:28rpx;">{{item.title}}</text>
-      <text class="micro" style="color:{{item.status === 'completed' ? '#16a34a' : item.status === 'rejected' ? '#dc2626' : '#6F6972'}};">{{item.statusLabel}}</text>
+      <view style="display:flex;align-items:center;gap:10rpx;min-width:0;">
+        <text class="micro" style="flex-shrink:0;padding:2rpx 12rpx;border:1rpx solid #DED5E2;border-radius:999rpx;color:#6F6972;">{{item.typeLabel}}</text>
+        <text style="font-weight:700;font-size:28rpx;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{item.title}}</text>
+      </view>
+      <text class="micro" style="flex-shrink:0;color:{{item.status === 'completed' ? '#16a34a' : item.status === 'rejected' ? '#dc2626' : '#6F6972'}};">{{item.statusLabel}}</text>
     </view>
     <view class="micro" style="margin-top: 8rpx;">{{item.content}}</view>
     <view class="micro" style="margin-top: 8rpx;color: #9CA3AF;">{{item.createdAt}}</view>
@@ -12,6 +15,9 @@
 
   <view class="card section">
     <view class="section-title" style="font-size: 30rpx;margin-bottom: 16rpx;">提交新反馈</view>
+    <view style="display:flex;gap:14rpx;margin-bottom: 16rpx;flex-wrap:wrap;">
+      <view wx:for="{{typeOptions}}" wx:key="value" class="micro" style="padding:8rpx 24rpx;border:1rpx solid {{type === item.value ? '#4B1F6F' : '#DED5E2'}};border-radius:999rpx;color:{{type === item.value ? '#4B1F6F' : '#6F6972'}};background:{{type === item.value ? '#F4EEF7' : '#FFFFFF'}};font-weight:{{type === item.value ? '700' : '400'}};" data-value="{{item.value}}" bindtap="chooseType">{{item.label}}</view>
+    </view>
     <input class="input" style="margin-bottom: 16rpx;" placeholder="标题" value="{{title}}" bindinput="inputTitle" maxlength="120" />
     <textarea class="textarea" style="margin-bottom: 16rpx;min-height:160rpx;" placeholder="详细描述问题或建议" value="{{content}}" bindinput="inputContent" maxlength="2000" />
     <input class="input" style="margin-bottom: 16rpx;" placeholder="联系方式（选填）" value="{{contact}}" bindinput="inputContact" maxlength="120" />

@@ -12,6 +12,7 @@
     "pages/submit-resource/index",
     "pages/write-review/index",
     "pages/feedback-web/index",
+    "pages/participate-web/index",
     "pages/reviews-tab/index",
     "pages/feedback/index"
   ],
