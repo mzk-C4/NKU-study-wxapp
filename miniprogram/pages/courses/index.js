@@ -242,8 +242,7 @@ Page({
   },
 
   openSearch() { navigation.openSearch() },
-  openCourse(event) { navigation.openCourse(event.detail.course.id) },
-  submitCourse() { wx.navigateTo({ url: '/pages/submit-resource/index' }) }
+  openCourse(event) { navigation.openCourse(event.detail.course.id) }
 })
 
 module.exports = { CATALOG_PAGE_SIZE, VISIBLE_BATCH_SIZE, unique, createOptions, filterCourses, mergeFacets, selectionLabel, calculateScrollbar }
