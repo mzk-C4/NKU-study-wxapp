@@ -243,7 +243,7 @@ Page({
 
   openSearch() { navigation.openSearch() },
   openCourse(event) { navigation.openCourse(event.detail.course.id) },
-  submitCourse() { wx.showToast({ title: '课程收录请在网站反馈', icon: 'none' }) }
+  submitCourse() { wx.navigateTo({ url: '/pages/submit-resource/index' }) }
 })
 
 module.exports = { CATALOG_PAGE_SIZE, VISIBLE_BATCH_SIZE, unique, createOptions, filterCourses, mergeFacets, selectionLabel, calculateScrollbar }

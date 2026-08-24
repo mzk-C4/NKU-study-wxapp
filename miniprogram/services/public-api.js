@@ -522,17 +522,6 @@ function createPublicApi(client = request, options = {}) {
         mapReviewGroup(await client.get(`/review-groups/${encodePathSegment(group.group_key)}`, undefined, { auth: 'optional' }), true)
       )))
     },
-    async setReviewReaction(reviewId, reaction) {
-      if (isReference) return authenticatedFeatureUnavailable()
-      const normalized = reaction === 'up' || reaction === 'down' ? reaction : null
-      const data = await client.put(`/reviews/${encodePathSegment(reviewId)}/reaction`, { reaction: normalized }, { auth: 'required' })
-      return {
-        review_id: toText(data && data.review_id),
-        helpful_count: toCount(data && data.helpful_count),
-        unhelpful_count: toCount(data && data.unhelpful_count),
-        viewer_reaction: data && (data.viewer_reaction === 'up' || data.viewer_reaction === 'down') ? data.viewer_reaction : null
-      }
-    },
     async searchCourses(keyword, options = {}) {
       const result = mapCourseList(await client.get('/courses', courseQuery({ ...options, q: keyword })))
       return { ...result, items: result.items.map(mapCourseSearchItem) }
