@@ -33,8 +33,29 @@ Page({
     return { title: `${this.data.course?.name || '南开课程'}评价 · NKUStudy` }
   },
   data: {
- id: '', groupKey: '', loading: true, error: '', course: null, reviews: [], visibleReviews: [], teacherGroups: [], teacher: '', standaloneGroup: null, scoreStars: starStates(0), reactingReviewId: '' },
+ id: '', groupKey: '', loading: true, error: '', course: null, reviews: [], visibleReviews: [], teacherGroups: [], teacher: '', standaloneGroup: null, scoreStars: starStates(0), reactingReviewId: '', scoreNumber: '—', scoreLabel: '总体评分', scoreCount: 0 },
   onLoad(options) { reportVisit('/mp/course-reviews'); this.setData({ id: options.id || '', groupKey: options.group_key || '' }); this.loadReviews() },
+  applySelectionScore(teacher) {
+    const { course, reviews } = this.data
+    if (!teacher) {
+      const aggregate = course && course.ratings ? course.ratings : null
+      this.setData({
+        scoreNumber: aggregate && aggregate.show_aggregate ? aggregate.average : '—',
+        scoreLabel: aggregate && aggregate.show_aggregate ? '总体评分' : '评价样本不足',
+        scoreCount: course ? course.review_count : 0,
+        scoreStars: starStates(aggregate && aggregate.average)
+      })
+      return
+    }
+    const ratings = reviews.filter(item => item.teacher_name === teacher).map(item => item.rating).filter(value => value >= 1 && value <= 5)
+    const average = ratings.length ? (ratings.reduce((sum, value) => sum + value, 0) / ratings.length).toFixed(1) : null
+    this.setData({
+      scoreNumber: average === null ? '—' : average,
+      scoreLabel: `${teacher} · 评分`,
+      scoreCount: ratings.length,
+      scoreStars: starStates(average)
+    })
+  },
   async loadReviews() {
     this.setData({ loading: true, error: '' })
     try {
@@ -52,6 +73,7 @@ Page({
             scoreStars: starStates(course.ratings?.average),
             teacherGroups: course.teacher_groups, teacher, loading: false
           })
+          this.applySelectionScore(teacher)
           wx.setNavigationBarTitle({ title: `${course.name}评价` })
           return
         }
@@ -64,7 +86,8 @@ Page({
       const course = await publicApi.getCourse(this.data.id)
       const groups = await publicApi.getCourseReviewGroups(course)
       const reviews = groups.flatMap(group => group.items || []).map(presentReview)
-      this.setData({ course, reviews, visibleReviews: reviews, scoreStars: starStates(course.ratings?.average), teacherGroups: course.teacher_groups, loading: false })
+      this.setData({ course, reviews, visibleReviews: reviews, teacherGroups: course.teacher_groups, loading: false })
+      this.applySelectionScore('')
       wx.setNavigationBarTitle({ title: course.name })
     } catch (error) { this.setData({ loading: false, error: error.message }) }
   },
@@ -72,6 +95,7 @@ Page({
     const teacher = event.currentTarget.dataset.teacher || ''
     const visibleReviews = teacher ? this.data.reviews.filter(item => item.teacher_name === teacher) : this.data.reviews
     this.setData({ teacher, visibleReviews })
+    this.applySelectionScore(teacher)
   },
   async reactToReview(event) {
     const reviewId = event.currentTarget.dataset.id

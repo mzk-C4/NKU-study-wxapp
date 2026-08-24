@@ -1,7 +1,7 @@
 <view class="reviews-page">
   <view class="detail-tabs" wx:if="{{course}}"><view class="detail-tab" data-tab="overview" bindtap="openTab">概览</view><view class="detail-tab" data-tab="resources" bindtap="openTab">资料 {{course.resource_count || 0}}</view><view class="detail-tab detail-tab--active">评价 {{course.review_count || 0}}</view></view>
   <view class="page reviews-body">
-    <view class="card score-card" wx:if="{{course}}"><view class="score-number">{{course.ratings.show_aggregate ? course.ratings.average : '—'}}</view><view class="score-copy"><view class="score-label">{{course.ratings.show_aggregate ? '总体评分' : '评价样本不足'}}</view><view class="stars stars--summary"><text wx:for="{{scoreStars}}" wx:key="value" class="star {{item.active ? 'star--active' : ''}}">★</text></view><view class="micro">基于 {{course.review_count}} 条已发布评价</view></view></view>
+    <view class="card score-card" wx:if="{{course}}"><view class="score-number">{{scoreNumber}}</view><view class="score-copy"><view class="score-label">{{teacher ? teacher + ' · 评分' : scoreLabel}}</view><view class="stars stars--summary"><text wx:for="{{scoreStars}}" wx:key="value" class="star {{item.active ? 'star--active' : ''}}">★</text></view><view class="micro">基于 {{scoreCount}} 条评价{{teacher ? '（当前老师）' : ''}}</view></view></view>
     <view class="card score-card" wx:if="{{standaloneGroup && !course}}"><view class="score-number">{{standaloneGroup.rating_average || '—'}}</view><view class="score-copy"><view class="score-label">{{standaloneGroup.course_name}} · {{standaloneGroup.teacher_name}}</view><view class="stars stars--summary"><text wx:for="{{scoreStars}}" wx:key="value" class="star {{item.active ? 'star--active' : ''}}">★</text></view></view></view>
     <view class="chips section"><view class="chip {{!teacher ? 'chip--active' : ''}}" data-teacher="" bindtap="chooseTeacher">全部教师</view><view wx:for="{{teacherGroups}}" wx:key="id" class="chip {{teacher === item.teacher_name ? 'chip--active' : ''}}" data-teacher="{{item.teacher_name}}" bindtap="chooseTeacher">{{item.teacher_name}}</view></view>
     <state-view loading="{{loading}}" error="{{error}}" empty="{{!loading && !error && !visibleReviews.length}}" empty-text="还没有同学评价" bindretry="loadReviews"></state-view>
@@ -12,7 +12,6 @@
           <view class="micro">{{review.teacher_name}}</view>
         </view>
       </view>
-      <view class="review-tags" wx:if="{{review.tags.length}}"><tag-chip wx:for="{{review.tags}}" wx:for-item="tag" wx:key="*this" text="{{tag}}"></tag-chip></view>
       <view class="review-body"><text user-select>{{review.body}}</text></view>
       <view class="review-foot">
         <view class="helpful-button {{review.viewer_reaction === 'up' ? 'helpful-button--active' : ''}} {{reactingReviewId === review.id ? 'helpful-button--busy' : ''}}" data-id="{{review.id}}" catchtap="reactToReview"><text class="helpful-icon">👍</text><text class="helpful-count">{{review.helpful_count || 0}} 人觉得有帮助</text></view>
