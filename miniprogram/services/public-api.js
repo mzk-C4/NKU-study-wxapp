@@ -289,6 +289,7 @@ function mapCourseList(rawData) {
 
 function mapHome(rawData) {
   const raw = rawData && typeof rawData === 'object' ? rawData : {}
+  const submission = raw.review_submission && typeof raw.review_submission === 'object' ? raw.review_submission : {}
   return {
     announcement: toText(raw.announcement),
     hot_courses: Array.isArray(raw.hot_courses) ? raw.hot_courses.map(mapCourse) : [],
@@ -297,7 +298,12 @@ function mapHome(rawData) {
       title: toText(item && item.title),
       summary: toText(item && item.summary),
       updated: toText(item && (item.updated || item.updated_at))
-    })) : []
+    })) : [],
+    review_submission: {
+      min_length: Math.max(1, Number(submission.min_length) || 12),
+      moderation_required: submission.moderation_required === true,
+      submission_open: submission.submission_open !== false
+    }
   }
 }
 
@@ -521,6 +527,16 @@ function createPublicApi(client = request, options = {}) {
       return Promise.all(groups.filter(group => group && group.group_key).map(async group => (
         mapReviewGroup(await client.get(`/review-groups/${encodePathSegment(group.group_key)}`, undefined, { auth: 'optional' }), true)
       )))
+    },
+    async setReviewReaction(reviewId, reaction) {
+      if (isReference) return authenticatedFeatureUnavailable()
+      const normalized = reaction === 'up' ? 'up' : null
+      const data = await client.put(`/reviews/${encodePathSegment(reviewId)}/reaction`, { reaction: normalized }, { auth: 'required' })
+      return {
+        review_id: toText(data && data.review_id),
+        helpful_count: toCount(data && data.helpful_count),
+        viewer_reaction: data && data.viewer_reaction === 'up' ? 'up' : null
+      }
     },
     async searchCourses(keyword, options = {}) {
       const result = mapCourseList(await client.get('/courses', courseQuery({ ...options, q: keyword })))
