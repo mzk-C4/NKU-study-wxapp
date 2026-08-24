@@ -11,7 +11,8 @@
     "pages/guide-detail/index",
     "pages/submit-resource/index",
     "pages/write-review/index",
-    "pages/feedback-web/index"
+    "pages/feedback-web/index",
+    "pages/participate-web/index"
   ],
   "window": {
     "navigationBarTitleText": "NKUStudy",

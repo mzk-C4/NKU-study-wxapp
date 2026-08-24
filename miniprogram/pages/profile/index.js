@@ -223,7 +223,7 @@ function createProfilePage(api = publicApi, sessionStore = authSession) {
 
     openHistory(event) { navigation.openCourse(event.currentTarget.dataset.id) },
     openFavorite(event) { navigation.openCourse(event.currentTarget.dataset.id) },
-    openSubmit() { wx.navigateTo({ url: '/pages/submit-resource/index' }) },
+    openSubmit() { wx.navigateTo({ url: '/pages/participate-web/index' }) },
     feedback() { this.setData({ feedbackVisible: true }) },
     closeFeedback() { this.setData({ feedbackVisible: false }) },
     openFeedbackWebsite() {

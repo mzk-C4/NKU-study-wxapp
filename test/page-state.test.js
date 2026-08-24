@@ -114,3 +114,16 @@ test('profile clears a rejected session without leaving stale personal data', as
   assert.deepEqual(page.data.reviews, [])
   global.wx = originalWx
 })
+
+test('profile resource submission opens the registered NKUStudy participate web-view', () => {
+  const fs = require('node:fs')
+  const path = require('node:path')
+  const root = path.join(__dirname, '..')
+  const app = JSON.parse(fs.readFileSync(path.join(root, 'miniprogram/app.json'), 'utf8'))
+  const profile = fs.readFileSync(path.join(root, 'miniprogram/pages/profile/index.js'), 'utf8')
+  const participate = fs.readFileSync(path.join(root, 'miniprogram/pages/participate-web/index.js'), 'utf8')
+
+  assert.equal(app.pages.includes('pages/participate-web/index'), true)
+  assert.match(profile, /wx\.navigateTo\(\{ url: '\/pages\/participate-web\/index' \}\)/)
+  assert.match(participate, /https:\/\/nkustudy\.top\/participate\//)
+})
