@@ -165,6 +165,6 @@ test('resource and review cards retain their actions after copy cleanup', () => 
   const reviews = fs.readFileSync(path.join(projectRoot, 'miniprogram/pages/course-reviews/index.wxml'), 'utf8')
   assert.match(resources, /下载并打开/)
   assert.doesNotMatch(resources, /服务器直链/)
-  assert.match(reviews, /基于 \{\{course\.review_count\}\} 条已发布评价/)
+  assert.match(reviews, /基于 \{\{scoreCount\}\} 条评价/)
   assert.doesNotMatch(reviews, /沿用服务器单一评分/)
 })
