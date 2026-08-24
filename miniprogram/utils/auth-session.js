@@ -15,6 +15,7 @@ function normalizeUser(value) {
     id: Number.isSafeInteger(id) && id > 0 ? id : 0,
     nickname: typeof raw.nickname === 'string' ? raw.nickname.trim().slice(0, 32) : '',
     avatar_url: typeof raw.avatar_url === 'string' && raw.avatar_url.startsWith('https://') ? raw.avatar_url : '',
+    has_web_password: raw.has_web_password === true,
     created_at: raw.created_at || null,
     last_login_at: raw.last_login_at || null
   }

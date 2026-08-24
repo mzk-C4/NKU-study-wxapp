@@ -63,7 +63,7 @@ test('profile restores a valid session and renders server favorites and review s
     clearSession() {}
   }
   const api = {
-    async getMe() { return { id: 7, nickname: '小紫' } },
+    async getMe() { return { id: 7, nickname: '小紫', has_web_password: true } },
     async getFavorites() { return { items: [{ course_id: 'course-1', name: '概率论' }], total: 1 } },
     async getMyReviews() { return { items: [{ id: 'review-1', course_title: '概率论', teacher_name: '张老师', rating: 5, body: '讲解清晰', status: 'pending' }], total: 1 } }
   }
@@ -72,10 +72,11 @@ test('profile restores a valid session and renders server favorites and review s
   page.setData = patch => Object.assign(page.data, patch)
 
   await page.refresh()
-  assert.deepEqual(updatedUser, { id: 7, nickname: '小紫' })
+  assert.deepEqual(updatedUser, { id: 7, nickname: '小紫', has_web_password: true })
   assert.equal(page.data.isLoggedIn, true)
   assert.equal(page.data.userInitial, '小')
   assert.equal(page.data.favoriteTotal, 1)
+  assert.equal(page.data.hasWebPassword, true)
   assert.equal(page.data.reviews[0].status_label, '审核中')
   assert.deepEqual(page.data.history, [{ id: 'history-1' }])
   global.wx = originalWx

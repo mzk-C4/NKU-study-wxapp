@@ -1,4 +1,5 @@
 const { reportVisit } = require('../../utils/visit-report')
+const theme = require('../../utils/theme')
 
 const STATUS_CONFIG = {
   pending: { label: '审核中', tone: 'gold' },
@@ -18,6 +19,7 @@ Page({
     reportVisit('/mp/submission-status')
     this.loadSubmissions()
   },
+    onShow() { theme.onPageShow() },
 
   data: {
     filter: 'all',
@@ -30,7 +32,6 @@ Page({
 
   loadSubmissions() {
     this.setData({ loading: true, error: '' })
-    // 投稿接口尚未开放（issue #11），从本地存储读取
     const submissions = (wx.getStorageSync('nkustudy_submissions') || []).map(item => ({
       ...item,
       statusLabel: (STATUS_CONFIG[item.status] || STATUS_CONFIG.pending).label,

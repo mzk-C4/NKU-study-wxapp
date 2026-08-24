@@ -43,8 +43,16 @@
       <view class="card record-row record-row--detail" wx:for="{{reviews}}" wx:key="id"><view class="record-main"><view class="history-name">{{item.course_title}} · {{item.teacher_name}}</view><view class="micro">{{item.rating}} 分{{item.created_date ? ' · ' + item.created_date : ''}}</view><view class="record-body">{{item.body}}</view></view><view class="status {{item.status_class}}">{{item.status_label}}</view></view>
     </view>
 
-    <view class="section" wx:if="{{history.length}}"><view class="section-head"><view class="section-title">最近浏览</view></view><view class="card history-row" wx:for="{{history}}" wx:key="id" data-id="{{item.id}}" bindtap="openHistory"><view><view class="history-name">{{item.name}}</view><view class="micro">{{item.group || '分类待补充'}} · {{item.term || '学期待补充'}}</view></view><text>›</text></view></view>
-    <view class="card menu section"><view class="menu-row" bindtap="feedback"><text>意见反馈</text><text>›</text></view><view class="menu-row" bindtap="about"><text>关于 NKUStudy</text><text>›</text></view></view>
+    <view class="section" wx:if="{{history.length}}"><view class="section-head"><view class="section-title">最近浏览</view></view><view class="card history-row" wx:for="{{history}}" wx:key="id" data-id="{{item.id}}" bindtap="openHistory"><view><view class="history-name">{{item.name}}</view><view class="micro">{{item.group || '分类待补充'}} · {{item.term || '学期待补充'}}</view></view></view></view>
+    <view class="card menu section">
+      <view class="menu-row" wx:if="{{isLoggedIn}}" bindtap="openMyFeedback"><text>我的反馈</text><text>›</text></view>
+      <view class="menu-row" wx:if="{{isLoggedIn}}" bindtap="setWebPassword"><text>设置网页密码</text><text class="muted">{{hasWebPassword ? '已设置' : '未设置'}} ›</text></view>
+      <view class="menu-row" bindtap="openFeedback"><text>意见反馈</text><text>›</text></view>
+      <view class="menu-row" bindtap="about"><text>关于 NKUStudy</text><text>›</text></view>
+    </view>
+    <view class="section" wx:if="{{isLoggedIn}}" style="margin-top:16rpx;">
+      <button class="hero-button hero-button--quiet" style="width:100%;color:#dc2626;border-color:#fecaca;" bindtap="confirmDeleteAccount">注销账号</button>
+    </view>
     <view class="profile-note"><view>登录仅用于同步收藏、昵称与本人评价，课程资料仍可免登录浏览</view><view>学生共建 · 非南开大学官方平台</view></view>
   </view>
 
@@ -52,23 +60,27 @@
     <view class="about-sheet" catchtap="noop"><view class="about-head"><view class="about-title">编辑昵称</view><view class="about-close" bindtap="closeEditProfile">×</view></view><view class="about-lead">昵称只用于本小程序个人页面，不会公开 openid。</view><view class="field profile-field"><label class="field-label">昵称</label><input class="input" type="nickname" maxlength="32" value="{{nicknameDraft}}" bindinput="inputNickname" placeholder="请输入昵称" /></view><button class="button button--primary" loading="{{profileSaving}}" disabled="{{profileSaving}}" bindtap="saveProfile">保存昵称</button></view>
   </view>
 
-  <view class="about-mask" wx:if="{{feedbackVisible}}" bindtap="closeFeedback">
-    <view class="about-sheet feedback-sheet" catchtap="noop">
-      <view class="about-head"><view class="about-title">意见反馈</view><view class="about-close" bindtap="closeFeedback">×</view></view>
-      <view class="about-lead">选择更适合你的反馈方式</view>
-      <view class="feedback-option">
-        <view class="feedback-option-head"><view class="feedback-icon feedback-icon--site">N</view><view><view class="feedback-title">NKUStudy.top 反馈</view><view class="feedback-desc">适合课程内容、资料失效与使用建议</view></view></view>
-        <view class="feedback-actions"><button class="button button--primary feedback-button" bindtap="openFeedbackWebsite">小程序内打开</button><button class="feedback-copy" data-kind="website" bindtap="copyFeedbackLink">复制链接</button></view>
-      </view>
-      <view class="feedback-option">
-        <view class="feedback-option-head"><view class="feedback-icon feedback-icon--github">GH</view><view><view class="feedback-title">GitHub Issues</view><view class="feedback-desc">适合小程序 Bug、功能建议与开发讨论</view></view></view>
-        <view class="feedback-actions"><button class="button button--primary feedback-button" data-kind="github" bindtap="copyFeedbackLink">复制 Issues 链接</button></view>
-      </view>
-      <view class="feedback-tip">微信小程序不能直接跳转到未配置的外部网站。GitHub 链接会复制到剪贴板，可粘贴到浏览器打开。</view>
-    </view>
-  </view>
-
   <view class="about-mask" wx:if="{{aboutVisible}}" bindtap="closeAbout">
     <view class="about-sheet" catchtap="noop"><view class="about-head"><view class="about-title">关于 NKUStudy</view><view class="about-close" bindtap="closeAbout">×</view></view><view class="about-lead">南开学生共建的课程资料与选课参考平台</view><view class="about-block"><view class="about-label">数据来源</view><view class="about-text">课程、资料与评价来自 NKUStudy.top 及其授权数据源（如 NKUCS.ICU），随网站持续更新。</view></view><view class="about-block"><view class="about-label">使用说明</view><view class="about-text">浏览课程与资料无需登录；登录后可同步收藏，评价提交后进入网站现有审核流程。</view></view><view class="about-block"><view class="about-label">免责声明</view><view class="about-text">本小程序为非官方学生项目，内容仅供参考，选课与考核信息请以教务系统为准。</view></view><view class="about-foot">学生共建 · 欢迎通过 NKUStudy.top 贡献课程资料与评价</view></view>
+  </view>
+
+  <view class="about-mask" wx:if="{{passwordModalVisible}}" bindtap="closePasswordModal">
+    <view class="about-sheet" catchtap="noop">
+      <view class="about-head">
+        <view class="about-title">{{hasWebPassword ? '修改网页密码' : '设置网页密码'}}</view>
+        <view class="about-close" bindtap="closePasswordModal">×</view>
+      </view>
+      <view class="about-lead">设置后可在网页端用昵称+密码登录</view>
+      <view class="field" style="margin-top: 20rpx;">
+        <label class="field-label">密码（至少 8 位）</label>
+        <input class="input" type="password" password="{{true}}" value="{{passwordInput1}}" bindinput="inputPassword1" placeholder="输入密码" />
+      </view>
+      <view class="field">
+        <label class="field-label">确认密码</label>
+        <input class="input" type="password" password="{{true}}" value="{{passwordInput2}}" bindinput="inputPassword2" placeholder="再次输入密码" />
+      </view>
+      <view class="micro muted" style="margin: 8rpx 0 16rpx;">忘记密码？请通过问题反馈联系管理员重置</view>
+      <button class="button button--primary" loading="{{passwordSaving}}" disabled="{{passwordSaving}}" bindtap="saveWebPassword">保存密码</button>
+    </view>
   </view>
 </view>

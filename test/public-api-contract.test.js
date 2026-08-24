@@ -16,22 +16,26 @@ function transportFixture() {
       if (path === `/courses/${fixtures.course.id}`) return fixtures.course
       if (path === '/review-groups') return { items: [fixtures.reviewGroup], total: 1 }
       if (path === '/review-groups/group-key') return fixtures.reviewGroup
-      if (path === '/me') return { user: { id: 7, nickname: '小紫', avatar_url: '' } }
+      if (path === '/me') return { user: { id: 7, nickname: '小紫', avatar_url: '', has_web_password: true } }
       if (path === '/me/favorites') return { items: [{ course_id: fixtures.course.id, name: fixtures.course.name, term: '大一上', group: '通识选修课' }], total: 1, page: 1, page_size: 100 }
       if (path === '/me/reviews') return { items: [{ id: 'review-me', course_title: fixtures.course.name, teacher_name: '张老师', rating: 5, body: '正文', status: 'pending' }], total: 1, page: 1, page_size: 100 }
+      if (path === '/me/feedback') return { items: [{ id: 'feedback-me', title: '问题', content: '正文', status: 'open' }], total: 1, page: 1, page_size: 100 }
       throw new Error(`unexpected GET ${path}`)
     },
     async post(path, data, options) {
       calls.push({ method: 'POST', path, data, ...(options ? { options } : {}) })
       if (path === '/auth/wechat') return { token: 'abcdefghijklmnopqrstuvwxyzABCDEFGH1234567890', expires_in: 2592000, user: { id: 7, nickname: '' } }
       if (path === '/me/profile') return { user: { id: 7, nickname: data.nickname, avatar_url: '' } }
+      if (path === '/me/web-password') return { ok: true }
+      if (path === '/me/delete-account') return { deleted: true, note: '账号绑定关系已删除，已发布内容保留。' }
       if (path === '/auth/logout') return { revoked: true }
       if (path === '/favorites') return { favorited: true, created: true, total: 1 }
       return { submitted: true, pending: true }
     },
     async put(path, data, options) {
       calls.push({ method: 'PUT', path, data, ...(options ? { options } : {}) })
-      return { review_id: 'review-id', helpful_count: data.reaction === 'up' ? 3 : 2, unhelpful_count: data.reaction === 'down' ? 1 : 0, viewer_reaction: data.reaction }
+      if (path.startsWith('/reviews/')) return { review_id: 'review/with space', helpful_count: data.reaction ? 3 : 2, viewer_reaction: data.reaction }
+      return {}
     },
     async delete(path, data, options) {
       calls.push({ method: 'DELETE', path, data, ...(options ? { options } : {}) })
@@ -68,16 +72,17 @@ test('reviews use group endpoints and the one-rating submission body', async () 
   assert.deepEqual(transport.calls.at(-1), { method: 'POST', path: '/reviews', data: { course_id: course.id, teacher: '张老师', rating: 5, tags: ['讲解清晰'], body: '正文', anonymous: true }, options: { auth: 'optional' } })
 })
 
-test('review reactions use one protected mutually-exclusive endpoint and allow cancellation', async () => {
+test('helpful reactions use the protected PUT contract and support cancellation', async () => {
   const transport = transportFixture()
   const api = createPublicApi(transport)
-  const liked = await api.setReviewReaction('review/id', 'up')
-  const cancelled = await api.setReviewReaction('review/id', null)
-  assert.equal(liked.viewer_reaction, 'up')
-  assert.equal(cancelled.viewer_reaction, null)
+  const marked = await api.setReviewReaction('review/with space', 'up')
+  const cancelled = await api.setReviewReaction('review/with space', null)
+
+  assert.deepEqual(marked, { review_id: 'review/with space', helpful_count: 3, viewer_reaction: 'up' })
+  assert.deepEqual(cancelled, { review_id: 'review/with space', helpful_count: 2, viewer_reaction: null })
   assert.deepEqual(transport.calls, [
-    { method: 'PUT', path: '/reviews/review%2Fid/reaction', data: { reaction: 'up' }, options: { auth: 'required' } },
-    { method: 'PUT', path: '/reviews/review%2Fid/reaction', data: { reaction: null }, options: { auth: 'required' } }
+    { method: 'PUT', path: '/reviews/review%2Fwith%20space/reaction', data: { reaction: 'up' }, options: { auth: 'required' } },
+    { method: 'PUT', path: '/reviews/review%2Fwith%20space/reaction', data: { reaction: null }, options: { auth: 'required' } }
   ])
 })
 
@@ -88,22 +93,32 @@ test('authentication, favorites and personal reviews follow the protected server
   const user = await api.getMe()
   const favorites = await api.getFavorites({ page_size: 500 })
   const reviews = await api.getMyReviews({ page_size: 500 })
+  const feedback = await api.getMyFeedback({ page_size: 500 })
   await api.updateProfile({ nickname: '新昵称' })
+  const password = await api.setWebPassword(' pass word ')
   await api.addFavorite(fixtures.course.id)
   await api.removeFavorite('course/with space')
+  const deletion = await api.deleteMyAccount()
   await api.logout()
 
   assert.equal(login.expires_in, 2592000)
   assert.equal(user.nickname, '小紫')
+  assert.equal(user.has_web_password, true)
   assert.equal(favorites.total, 1)
   assert.equal(reviews.items[0].status, 'pending')
+  assert.equal(feedback.items[0].status, 'open')
+  assert.equal(password.ok, true)
+  assert.equal(deletion.deleted, true)
   assert.deepEqual(transport.calls.filter(call => call.options).map(call => ({ method: call.method, path: call.path, auth: call.options.auth, data: call.data })), [
     { method: 'GET', path: '/me', auth: 'required', data: undefined },
     { method: 'GET', path: '/me/favorites', auth: 'required', data: { page: 1, page_size: 100 } },
     { method: 'GET', path: '/me/reviews', auth: 'required', data: { page: 1, page_size: 100 } },
+    { method: 'GET', path: '/me/feedback', auth: 'required', data: { page: 1, page_size: 100 } },
     { method: 'POST', path: '/me/profile', auth: 'required', data: { nickname: '新昵称' } },
+    { method: 'POST', path: '/me/web-password', auth: 'required', data: { password: ' pass word ' } },
     { method: 'POST', path: '/favorites', auth: 'required', data: { course_id: fixtures.course.id } },
     { method: 'DELETE', path: '/favorites/course%2Fwith%20space', auth: 'required', data: undefined },
+    { method: 'POST', path: '/me/delete-account', auth: 'required', data: undefined },
     { method: 'POST', path: '/auth/logout', auth: 'required', data: undefined }
   ])
 })

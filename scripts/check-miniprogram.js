@@ -75,7 +75,8 @@ const adapterOnlyEndpoints = [
   ['指南读取', /['"`]\/guides(?:\/|\?|['"`])/],
   ['微信登录', /['"`]\/auth\/(?:wechat|logout)(?:['"`?#])/],
   ['个人数据', /['"`]\/me(?:\/|\?|['"`])/],
-  ['收藏', /['"`]\/favorites(?:\/|\?|['"`])/]
+  ['收藏', /['"`]\/favorites(?:\/|\?|['"`])/],
+  ['评价', /['"`]\/reviews(?:\/|\?|['"`])/]
 ]
 for (const file of runtimeJavaScript) {
   if (file === publicApiOwner) continue
@@ -86,7 +87,7 @@ for (const file of runtimeJavaScript) {
 }
 
 const pageJavaScript = [path.join(miniRoot, 'pages'), path.join(miniRoot, 'components')].flatMap(walk).filter(file => file.endsWith('.js'))
-const directPublicPath = /['"`]\/(?:health|home|search-index(?:\/|['"`])|guides(?:\/|['"`])|courses(?:\/|['"`])|review-groups(?:\/|['"`])|auth(?:\/|['"`])|me(?:\/|['"`])|favorites(?:\/|['"`]))/
+const directPublicPath = /['"`]\/(?:health|home|search-index(?:\/|['"`])|guides(?:\/|['"`])|courses(?:\/|['"`])|review-groups(?:\/|['"`])|reviews(?:\/|['"`])|auth(?:\/|['"`])|me(?:\/|['"`])|favorites(?:\/|['"`]))/
 for (const file of pageJavaScript) {
   const source = fs.readFileSync(file, 'utf8')
   if (directPublicPath.test(source)) fail(`页面或组件不得直接拼接生产公开路径：${path.relative(root, file)}`)

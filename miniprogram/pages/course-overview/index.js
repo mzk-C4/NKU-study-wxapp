@@ -1,4 +1,5 @@
 const { reportVisit } = require('../../utils/visit-report')
+const theme = require('../../utils/theme')
 const { publicApi } = require('../../services/public-api')
 const { parseMarkdown } = require('../../utils/markdown')
 const authSession = require('../../utils/auth-session')
@@ -13,9 +14,10 @@ Page({
   onShareTimeline() {
     return { title: `${this.data.course?.name || '南开课程'} · NKUStudy` }
   },
-  data: { id: '', loading: true, error: '', course: null, favorite: false, favoriteLoading: false, favoriteSaving: false, descriptionBlocks: [] },
+  data: {
+ id: '', loading: true, error: '', course: null, favorite: false, favoriteLoading: false, favoriteSaving: false, descriptionBlocks: [] },
   onLoad(options) { reportVisit('/mp/course-overview'); this.setData({ id: options.id || '' }); this.loadCourse() },
-  onShow() { if (this.data.course) this.loadFavoriteState() },
+  onShow() { if (this.data.course) this.loadFavoriteState() ; theme.onPageShow() },
 
   async loadCourse() {
     if (!this.data.id) return this.setData({ loading: false, error: '缺少课程编号' })

@@ -1,0 +1,7 @@
+.reviews-search { margin-bottom: 16rpx; }
+.reviews-search-input { flex: 1; font-size: 28rpx; color: #241F26; }
+.reviews-search-clear { padding: 8rpx 4rpx 8rpx 16rpx; color: #817A84; font-size: 34rpx; line-height: 1; }
+.review-group-card { display: flex; align-items: center; justify-content: space-between; padding: 22rpx 26rpx; margin-bottom: 16rpx; }
+.group-course { font-size: 28rpx; font-weight: 700; line-height: 1.4; }
+.group-right { text-align: right; flex-shrink: 0; margin-left: 20rpx; }
+.group-score { font-size: 36rpx; font-weight: 700; color: #4B1F6F; }

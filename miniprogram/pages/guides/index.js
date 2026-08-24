@@ -1,4 +1,5 @@
 const { reportVisit } = require('../../utils/visit-report')
+const theme = require('../../utils/theme')
 const publicApi = require('../../services/public-api')
 
 const PAGE_SIZE = 20
@@ -71,6 +72,7 @@ Page({
     return this.loadGuides()
   },
   onShow() {
+    theme.onPageShow()
     // Tab 页会被缓存：切回时只恢复已有状态，不能覆盖 error/empty/ready，
     // 也不能为同一个初始请求再发一次读取。
     this._isVisible = true

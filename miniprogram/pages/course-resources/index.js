@@ -1,8 +1,10 @@
 const { reportVisit } = require('../../utils/visit-report')
+const theme = require('../../utils/theme')
 const { publicApi } = require('../../services/public-api')
 const { downloadResource } = require('../../utils/resource-download')
 
 Page({
+    onShow() { theme.onPageShow() },
   onShareAppMessage() {
     return {
       title: `「${this.data.course?.name || 'NKUStudy 课程'}」资料 - NKUStudy`,
@@ -12,7 +14,8 @@ Page({
   onShareTimeline() {
     return { title: `${this.data.course?.name || '南开课程'}资料 · NKUStudy` }
   },
-  data: { id: '', loading: true, error: '', course: null, resources: [], visibleResources: [], types: ['全部'], type: '全部' },
+  data: {
+ id: '', loading: true, error: '', course: null, resources: [], visibleResources: [], types: ['全部'], type: '全部' },
   onLoad(options) { reportVisit('/mp/course-resources'); this.setData({ id: options.id || '' }); this.loadResources() },
 
   async loadResources() {
@@ -39,8 +42,5 @@ Page({
     if (resource) {
       wx.navigateTo({ url: `/pages/resource-detail/index?courseId=${this.data.id}&resourceId=${resource.id}` })
     }
-  },
-  submitResource() {
-    wx.navigateTo({ url: '/pages/submit-resource/index' })
   }
 })

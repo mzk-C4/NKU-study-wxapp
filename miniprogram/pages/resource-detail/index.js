@@ -1,9 +1,11 @@
 const { reportVisit } = require('../../utils/visit-report')
+const theme = require('../../utils/theme')
 const { publicApi } = require('../../services/public-api')
 const { downloadResource, validDownloadUrl } = require('../../utils/resource-download')
 const { reportDeadLink } = require('../../utils/resource-report')
 
 Page({
+    onShow() { theme.onPageShow() },
   data: {
     courseId: '',
     resourceId: '',

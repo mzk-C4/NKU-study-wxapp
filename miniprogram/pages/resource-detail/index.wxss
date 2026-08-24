@@ -15,18 +15,3 @@
 .related-info { flex: 1; min-width: 0; }
 .related-title { display: block; font-size: 26rpx; font-weight: 600; margin-bottom: 6rpx; }
 .related-arrow { font-size: 32rpx; color: #6F6972; }
-
-/* FB-18: 暗色模式 */
-@media (prefers-color-scheme: dark) {
-  .detail-icon { background: #3D2A4E; color: #C9B8D8; }
-  .detail-title { color: #E0DCE4; }
-  .info-list { background: #211C28; border-color: #2D2838; }
-  .info-row { border-bottom-color: #2D2838; }
-  .info-key { color: #8B8090; }
-  .info-val { color: #E0DCE4; }
-  .related-list { background: #211C28; border-color: #2D2838; }
-  .related-row { border-bottom-color: #2D2838; }
-  .related-title { color: #E0DCE4; }
-  .related-icon { background: #3D2A4E; color: #C9B8D8; }
-  .related-arrow { color: #8B8090; }
-}

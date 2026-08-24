@@ -1,4 +1,5 @@
 const { reportVisit } = require('../../utils/visit-report')
+const theme = require('../../utils/theme')
 const { publicApi } = require('../../services/public-api')
 const navigation = require('../../utils/navigation')
 const { createRequestGeneration } = require('../../utils/request-generation')
@@ -90,6 +91,7 @@ Page({
     reportVisit('/mp/courses')
     this.loadCourses()
   },
+    onShow() { theme.onPageShow() },
 
   onReady() { this.measureFilterScroll() },
 
@@ -241,7 +243,7 @@ Page({
 
   openSearch() { navigation.openSearch() },
   openCourse(event) { navigation.openCourse(event.detail.course.id) },
-  submitCourse() { wx.showToast({ title: '课程收录请在网站反馈', icon: 'none' }) }
+  submitCourse() { wx.navigateTo({ url: '/pages/submit-resource/index' }) }
 })
 
 module.exports = { CATALOG_PAGE_SIZE, VISIBLE_BATCH_SIZE, unique, createOptions, filterCourses, mergeFacets, selectionLabel, calculateScrollbar }

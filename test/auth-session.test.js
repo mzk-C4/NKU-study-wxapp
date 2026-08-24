@@ -30,9 +30,10 @@ test('auth session saves a bounded user and expires locally', () => {
 
 test('auth session updates only the public user fields', () => {
   authSession.saveSession({ token, expires_in: 60, user: { id: 7 } }, { now: Date.now() })
-  const updated = authSession.updateUser({ id: 7, nickname: '小紫', avatar_url: 'https://example.com/a.png', openid: 'must-not-persist' })
+  const updated = authSession.updateUser({ id: 7, nickname: '小紫', avatar_url: 'https://example.com/a.png', has_web_password: true, openid: 'must-not-persist' })
   assert.equal(updated.user.nickname, '小紫')
   assert.equal(updated.user.avatar_url, 'https://example.com/a.png')
+  assert.equal(updated.user.has_web_password, true)
   assert.equal('openid' in updated.user, false)
 })
 

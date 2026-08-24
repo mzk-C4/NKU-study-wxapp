@@ -94,7 +94,7 @@ function mapRatings(rawRatings, reviewCount) {
   const count = toCount(raw.count == null ? reviewCount : raw.count)
   const showAggregate = raw.show_aggregate === true && average !== null
   return {
-    average,
+    average: average === null ? null : average.toFixed(1),
     count,
     show_aggregate: showAggregate,
     label: showAggregate ? `${average.toFixed(1)} 分` : '暂无评分'
@@ -289,6 +289,7 @@ function mapCourseList(rawData) {
 
 function mapHome(rawData) {
   const raw = rawData && typeof rawData === 'object' ? rawData : {}
+  const submission = raw.review_submission && typeof raw.review_submission === 'object' ? raw.review_submission : {}
   return {
     announcement: toText(raw.announcement),
     hot_courses: Array.isArray(raw.hot_courses) ? raw.hot_courses.map(mapCourse) : [],
@@ -297,7 +298,12 @@ function mapHome(rawData) {
       title: toText(item && item.title),
       summary: toText(item && item.summary),
       updated: toText(item && (item.updated || item.updated_at))
-    })) : []
+    })) : [],
+    review_submission: {
+      min_length: Math.max(1, Number(submission.min_length) || 12),
+      moderation_required: submission.moderation_required === true,
+      submission_open: submission.submission_open !== false
+    }
   }
 }
 
@@ -350,6 +356,7 @@ function mapReviewItem(rawItem, groupKey) {
 function mapReviewGroup(rawGroup, includeItems = false) {
   const raw = rawGroup && typeof rawGroup === 'object' ? rawGroup : {}
   const groupKey = toText(raw.group_key)
+  const ratingAverage = toNullableNumber(raw.rating_average)
   const mapped = {
     group_key: groupKey,
     course_id: toText(raw.course_id),
@@ -357,7 +364,7 @@ function mapReviewGroup(rawGroup, includeItems = false) {
     teacher_name: toText(raw.teacher_name),
     matched: raw.matched === true,
     review_count: toCount(raw.review_count),
-    rating_average: toNullableNumber(raw.rating_average)
+    rating_average: ratingAverage === null ? null : ratingAverage.toFixed(1)
   }
   if (includeItems) mapped.items = Array.isArray(raw.items) ? raw.items.map(item => mapReviewItem(item, groupKey)) : []
   return mapped
@@ -376,6 +383,7 @@ function mapUser(rawUser) {
     id: Number.isSafeInteger(id) && id > 0 ? id : 0,
     nickname: toText(raw.nickname).slice(0, 32),
     avatar_url: validatePublicHttpsUrl(raw.avatar_url),
+    has_web_password: raw.has_web_password === true,
     created_at: raw.created_at || null,
     last_login_at: raw.last_login_at || null
   }
@@ -433,6 +441,32 @@ function mapMyReview(rawItem) {
 function mapMyReviewList(rawData) {
   const raw = rawData && typeof rawData === 'object' ? rawData : {}
   const items = Array.isArray(raw.items) ? raw.items.map(mapMyReview).filter(item => item.id) : []
+  return {
+    items,
+    total: toCount(raw.total == null ? items.length : raw.total),
+    page: toPositiveInteger(raw.page, 1, 1000000),
+    page_size: toPositiveInteger(raw.page_size, items.length || 20, 100)
+  }
+}
+
+function mapMyFeedback(rawItem) {
+  const raw = rawItem && typeof rawItem === 'object' ? rawItem : {}
+  return {
+    id: toText(raw.id),
+    title: toText(raw.title),
+    content: toText(raw.content),
+    type: toText(raw.type),
+    status: toText(raw.status) || 'open',
+    hidden: raw.hidden === true,
+    resourceRef: toText(raw.resourceRef),
+    createdAt: raw.createdAt || '',
+    updatedAt: raw.updatedAt || ''
+  }
+}
+
+function mapMyFeedbackList(rawData) {
+  const raw = rawData && typeof rawData === 'object' ? rawData : {}
+  const items = Array.isArray(raw.items) ? raw.items.map(mapMyFeedback).filter(item => item.id) : []
   return {
     items,
     total: toCount(raw.total == null ? items.length : raw.total),
@@ -523,13 +557,12 @@ function createPublicApi(client = request, options = {}) {
     },
     async setReviewReaction(reviewId, reaction) {
       if (isReference) return authenticatedFeatureUnavailable()
-      const normalized = reaction === 'up' || reaction === 'down' ? reaction : null
+      const normalized = reaction === 'up' ? 'up' : null
       const data = await client.put(`/reviews/${encodePathSegment(reviewId)}/reaction`, { reaction: normalized }, { auth: 'required' })
       return {
         review_id: toText(data && data.review_id),
         helpful_count: toCount(data && data.helpful_count),
-        unhelpful_count: toCount(data && data.unhelpful_count),
-        viewer_reaction: data && (data.viewer_reaction === 'up' || data.viewer_reaction === 'down') ? data.viewer_reaction : null
+        viewer_reaction: data && data.viewer_reaction === 'up' ? 'up' : null
       }
     },
     async searchCourses(keyword, options = {}) {
@@ -552,6 +585,17 @@ function createPublicApi(client = request, options = {}) {
         ...(input.avatar_url === undefined ? {} : { avatar_url: validatePublicHttpsUrl(input.avatar_url) })
       }, { auth: 'required' })
       return mapUser(data && data.user)
+    },
+    async setWebPassword(password) {
+      if (isReference) return authenticatedFeatureUnavailable()
+      const value = password == null ? '' : String(password)
+      const data = await client.post('/me/web-password', { password: value }, { auth: 'required' })
+      return { ok: data && data.ok === true }
+    },
+    async deleteMyAccount() {
+      if (isReference) return authenticatedFeatureUnavailable()
+      const data = await client.post('/me/delete-account', undefined, { auth: 'required' })
+      return { deleted: data && data.deleted === true, note: toText(data && data.note) }
     },
     async logout() {
       if (isReference) return authenticatedFeatureUnavailable()
@@ -578,6 +622,13 @@ function createPublicApi(client = request, options = {}) {
     async getMyReviews(query = {}) {
       if (isReference) return authenticatedFeatureUnavailable()
       return mapMyReviewList(await client.get('/me/reviews', {
+        page: toPositiveInteger(query.page, 1, 1000000),
+        page_size: toPositiveInteger(query.page_size, 20, 100)
+      }, { auth: 'required' }))
+    },
+    async getMyFeedback(query = {}) {
+      if (isReference) return authenticatedFeatureUnavailable()
+      return mapMyFeedbackList(await client.get('/me/feedback', {
         page: toPositiveInteger(query.page, 1, 1000000),
         page_size: toPositiveInteger(query.page_size, 20, 100)
       }, { auth: 'required' }))
@@ -636,6 +687,8 @@ module.exports = Object.assign(publicApi, {
   mapFavoriteList,
   mapMyReview,
   mapMyReviewList,
+  mapMyFeedback,
+  mapMyFeedbackList,
   mapCourseSearchItem,
   createPublicApi,
   adaptCourse: mapCourse,

@@ -32,24 +32,4 @@
 .update-point-text { flex: 1; color: #4F4951; font-size: 22rpx; line-height: 1.6; }
 .update-more { margin-top: 14rpx; color: #6B3A8E; font-size: 20rpx; font-weight: 600; }
 .build-note { margin-top: 36rpx; text-align: center; color: #817A84; font-size: 20rpx; }
-/* FB-18: 暗色模式 */
-@media (prefers-color-scheme: dark) {
-  .home { background: #1A1520; }
-  .brand-name { color: #E8CF96; }
-  .brand-sub { color: #8B8090; }
-  .hero { background-color: #2B123E; }
-  .quick-label { color: #B0A8B8; }
-  .quick-icon--purple { background: #3D2A4E; color: #C9B8D8; }
-  .quick-icon--gold { background: #3D3520; color: #D4BC8A; }
-  .quick-icon--green { background: #1E3028; color: #8BC4A8; }
-  .quick-icon--red { background: #3A2228; color: #C89098; }
-  .season-card { background: #1A1520; border: 1rpx solid #3D3548; }
-  .season-text { color: rgba(255,255,255,.6); }
-  .update-row { background: #211C28; border-color: #2D2838; }
-  .update-title { color: #E0DCE4; }
-  .update-lead { color: #A8A0B0; }
-  .update-point-text { color: #A8A0B0; }
-  .update-date { color: #C9B8D8; background: #2D2438; }
-  .update-more { color: #C9B8D8; }
-  .build-note { color: #6B6070; }
-}
+.search-box { width: 280rpx; height: 68rpx; border-radius: 34rpx; font-size: 24rpx; margin: 0 auto; }

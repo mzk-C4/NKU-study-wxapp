@@ -1,28 +1,9 @@
 <view class="home">
-  <view class="brand-row"><image class="brand-logo" src="/assets/brand.png" mode="aspectFill"></image><view><view class="brand-name">NKUStudy</view><view class="brand-sub">课程资料与选课参考</view></view></view>
+  <view class="brand-row"><view><view class="brand-name">NKUStudy</view><view class="brand-sub">课程资料与选课参考</view></view></view>
   <view class="hero">
     <view class="hero-kicker">南开学生共建</view>
     <view class="hero-title">选课前，先来查一查</view>
-    <view class="search-box" bindtap="openSearch"><view class="search-icon"></view><text>搜索课程、教师或关键词</text></view>
-  </view>
-
-  <view class="quick-grid">
-    <view class="quick-item" data-url="/pages/courses/index" bindtap="openPage">
-      <view class="quick-icon quick-icon--purple"><text class="quick-icon-text">课</text></view>
-      <text class="quick-label">找课程</text>
-    </view>
-    <view class="quick-item" data-url="/pages/courses/index" bindtap="openPage">
-      <view class="quick-icon quick-icon--gold"><text class="quick-icon-text">资</text></view>
-      <text class="quick-label">找资料</text>
-    </view>
-    <view class="quick-item" data-url="/pages/courses/index" bindtap="openPage">
-      <view class="quick-icon quick-icon--green"><text class="quick-icon-text">评</text></view>
-      <text class="quick-label">看评价</text>
-    </view>
-    <view class="quick-item" data-url="/pages/guides/index" bindtap="openPage">
-      <view class="quick-icon quick-icon--red"><text class="quick-icon-text">指</text></view>
-      <text class="quick-label">选课指南</text>
-    </view>
+    <view class="search-box" bindtap="openSearch"><view class="search-icon"></view><text>搜索</text></view>
   </view>
 
   <state-view loading="{{loading}}" error="{{error}}" bindretry="loadHome"></state-view>
