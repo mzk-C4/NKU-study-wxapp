@@ -13,8 +13,9 @@
         </view>
       </view>
       <view class="review-tags" wx:if="{{review.tags.length}}"><tag-chip wx:for="{{review.tags}}" wx:for-item="tag" wx:key="*this" text="{{tag}}"></tag-chip></view>
-      <view class="review-body">{{review.body}}</view>
+      <view class="review-body"><text user-select>{{review.body}}</text></view>
       <view class="review-foot">
+        <view class="helpful-button {{review.viewer_reaction === 'up' ? 'helpful-button--active' : ''}} {{reactingReviewId === review.id ? 'helpful-button--busy' : ''}}" data-id="{{review.id}}" catchtap="reactToReview"><text class="helpful-icon">👍</text><text class="helpful-count">{{review.helpful_count || 0}} 人觉得有帮助</text></view>
         <text class="review-date">{{review.created_date || review.created_at}}</text>
       </view>
     </view>

@@ -7,10 +7,19 @@ function starStates(value) {
   return [1, 2, 3, 4, 5].map(star => ({ value: star, active: rating >= star }))
 }
 
+function displayDate(value) {
+  if (!value) return ''
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${date.getFullYear()}-${month}-${day}`
+}
+
 function presentReview(review) {
   const rating = Math.max(0, Math.min(5, Number(review.rating) || 0))
   return {
-    onShow() { theme.onPageShow() }, ...review, rating, stars: starStates(rating) }
+    onShow() { theme.onPageShow() }, ...review, rating, stars: starStates(rating), created_date: displayDate(review.created_at) }
 }
 
 Page({
@@ -24,7 +33,7 @@ Page({
     return { title: `${this.data.course?.name || '南开课程'}评价 · NKUStudy` }
   },
   data: {
- id: '', groupKey: '', loading: true, error: '', course: null, reviews: [], visibleReviews: [], teacherGroups: [], teacher: '', standaloneGroup: null, scoreStars: starStates(0) },
+ id: '', groupKey: '', loading: true, error: '', course: null, reviews: [], visibleReviews: [], teacherGroups: [], teacher: '', standaloneGroup: null, scoreStars: starStates(0), reactingReviewId: '' },
   onLoad(options) { reportVisit('/mp/course-reviews'); this.setData({ id: options.id || '', groupKey: options.group_key || '' }); this.loadReviews() },
   async loadReviews() {
     this.setData({ loading: true, error: '' })
@@ -32,8 +41,22 @@ Page({
       if (this.data.groupKey) {
         const group = await publicApi.getReviewGroup(this.data.groupKey)
         const course = group.matched ? await publicApi.getCourse(group.course_id) : null
+        // 已匹配课程：加载该课程全部教师与评价，默认聚焦进入时的那位老师
+        if (course) {
+          const groups = await publicApi.getCourseReviewGroups(course)
+          const reviews = groups.flatMap(entry => entry.items || []).map(presentReview)
+          const teacher = group.teacher_name
+          this.setData({
+            id: course.id, course, standaloneGroup: null, reviews,
+            visibleReviews: reviews.filter(item => item.teacher_name === teacher),
+            scoreStars: starStates(course.ratings?.average),
+            teacherGroups: course.teacher_groups, teacher, loading: false
+          })
+          wx.setNavigationBarTitle({ title: `${course.name}评价` })
+          return
+        }
         const reviews = (group.items || []).map(presentReview)
-        this.setData({ id: course?.id || '', course, standaloneGroup: group, reviews, visibleReviews: reviews, scoreStars: starStates(course?.ratings?.average ?? group.rating_average), teacherGroups: [{ id: group.group_key, teacher_name: group.teacher_name }], teacher: group.teacher_name, loading: false })
+        this.setData({ id: '', course: null, standaloneGroup: group, reviews, visibleReviews: reviews, scoreStars: starStates(group.rating_average), teacherGroups: [{ id: group.group_key, teacher_name: group.teacher_name }], teacher: group.teacher_name, loading: false })
         wx.setNavigationBarTitle({ title: `${group.course_name}评价` })
         return
       }
@@ -49,6 +72,33 @@ Page({
     const teacher = event.currentTarget.dataset.teacher || ''
     const visibleReviews = teacher ? this.data.reviews.filter(item => item.teacher_name === teacher) : this.data.reviews
     this.setData({ teacher, visibleReviews })
+  },
+  async reactToReview(event) {
+    const reviewId = event.currentTarget.dataset.id
+    if (!reviewId || this.data.reactingReviewId) return
+    const current = this.data.reviews.find(item => item.id === reviewId)?.viewer_reaction || null
+    const next = current === 'up' ? null : 'up'
+    this.setData({ reactingReviewId: reviewId })
+    try {
+      const result = await publicApi.setReviewReaction(reviewId, next)
+      const update = items => items.map(item => item.id === reviewId ? {
+        ...item,
+        helpful_count: result.helpful_count,
+        viewer_reaction: result.viewer_reaction
+      } : item)
+      this.setData({ reviews: update(this.data.reviews), visibleReviews: update(this.data.visibleReviews) })
+    } catch (error) {
+      if (error.statusCode === 401 || error.code === 'AUTH_REQUIRED') {
+        wx.showModal({
+          title: '登录后标记有帮助',
+          content: '登录后即可为评价标记有帮助，标记会同步到你的账号。',
+          confirmText: '去登录',
+          success: result => { if (result.confirm) wx.switchTab({ url: '/pages/profile/index' }) }
+        })
+      } else wx.showToast({ title: error.message || '操作失败，请稍后重试', icon: 'none' })
+    } finally {
+      this.setData({ reactingReviewId: '' })
+    }
   },
   openTab(event) {
     const page = event.currentTarget.dataset.tab === 'overview' ? 'course-overview' : 'course-resources'
