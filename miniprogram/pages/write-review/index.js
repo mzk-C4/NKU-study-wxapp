@@ -17,7 +17,8 @@ function createWriteReviewPage(api = publicApi) {
   async prepare() {
     this.setData({ loading: true, error: '' })
     try {
-      const [course, home] = await Promise.all([api.getCourse(this.data.courseId), api.getHome().catch(() => null)])
+      const home = await (typeof api.getHome === 'function' ? api.getHome().catch(() => null) : Promise.resolve(null))
+      const course = await api.getCourse(this.data.courseId)
       const groups = await api.getCourseReviewGroups(course)
       const submission = home && home.review_submission ? home.review_submission : null
       const tagOptions = [...new Set(groups.flatMap(group => (group.items || []).flatMap(review => review.tags)))].map(text => ({ text, selected: false }))
