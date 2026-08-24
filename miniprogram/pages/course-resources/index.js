@@ -42,8 +42,5 @@ Page({
     if (resource) {
       wx.navigateTo({ url: `/pages/resource-detail/index?courseId=${this.data.id}&resourceId=${resource.id}` })
     }
-  },
-  submitResource() {
-    wx.navigateTo({ url: '/pages/submit-resource/index' })
   }
 })

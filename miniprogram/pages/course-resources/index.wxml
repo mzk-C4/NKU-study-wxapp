@@ -6,5 +6,5 @@
     <view class="resource-card" wx:for="{{visibleResources}}" wx:key="id" data-id="{{item.id}}" bindtap="openResource"><view class="file-icon">{{item.extension}}</view><view class="resource-main"><view class="resource-title">{{item.title}}</view><view class="micro">{{item.section}} · {{item.extension}} · {{item.size_label}} · {{item.term_label}}</view><view class="micro" wx:if="{{item.description}}">{{item.description}}</view><view class="resource-foot"><text class="open-link">下载并打开</text></view></view></view>
     <view class="empty-space"></view>
   </view>
-  <view class="sticky-footer"><button class="button button--primary" bindtap="submitResource">分享这门课的资料</button></view>
+  <view class="sticky-footer"><button class="button button--primary" open-type="share">分享这门课</button></view>
 </view>
