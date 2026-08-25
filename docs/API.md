@@ -39,7 +39,13 @@
 | DELETE | `/favorites/{courseUid}` | 取消收藏课程 |
 | POST | `/reviews` | 匿名评价投稿，进入网站现有审核队列 |
 
-所有动态路径参数必须 URL 编码。页面只能通过 `miniprogram/services/public-api.js` 调用公开接口。
+所有动态路径参数必须 URL 编码。通用业务页面通过 `miniprogram/services/public-api.js` 调用公开接口；学习指南针通过 feature-local 的 `miniprogram/features/learning-compass/api.js` 调用指南接口，两者都复用统一请求层与认证会话。
+
+### 学习指南针本地扩展（尚未成为生产契约）
+
+本地 reference 另行提供 `GET /guides/{guideId}/variants/{variantId}` 和 `POST /guide-assistant/answers`，用于验证学院差异材料与 AI 最小闭环。production profile 当前会在发出网络请求前拒绝 AI 调用；后端负责人完成正式契约、认证、限流、真实 provider、30 秒预算与 HTTPS 来源文件后，才能启用生产 AI。
+
+生产指南原件只接受约定的公开 HTTPS 资源地址；reference profile 的回环原件地址不得进入生产响应。
 
 ## 课程与评价
 

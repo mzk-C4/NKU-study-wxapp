@@ -1,31 +1,65 @@
 <view class="guides-page">
-  <view class="guide-hero">
-    <view class="guide-title">选课指南</view>
-    <view class="guide-sub">选课、培养方案、退补选与考试成绩学习事务</view>
-    <view class="guide-updated" wx:if="{{dataUpdatedAt}}">数据更新：{{dataUpdatedAt}}</view>
+  <view class="guide-intro">
+    <view class="tower-mark" aria-hidden="true">
+      <view class="tower-spire"></view>
+      <view class="tower-roof"></view>
+      <view class="tower-body"></view>
+      <view class="tower-base"></view>
+    </view>
+    <image class="guide-logo" src="/assets/brand.png" mode="aspectFit"></image>
+    <view class="guide-intro-main">
+      <view class="guide-title">学习指南针</view>
+      <view class="guide-sub">查找南开本科学习规则与办事流程</view>
+      <view class="guide-trust"><view class="shield-mark">✓</view><text>学生共建 · 重要事项以最新官方文件为准</text></view>
+    </view>
   </view>
 
-  <view class="page guide-body">
-    <scroll-view class="category-scroll" scroll-x enable-flex>
-      <view class="category-list">
-        <button
-          wx:for="{{categories}}"
-          wx:key="label"
-          class="category-button {{category === item.value ? 'category-button--active' : ''}} {{item.unavailable ? 'category-button--unavailable' : ''}}"
-          data-category="{{item.value}}"
-          bindtap="chooseCategory"
-        >{{item.label}}</button>
+  <view class="guide-body">
+    <button class="guide-search" hover-class="control--pressed" aria-label="搜索学习指南" bindtap="openSearch">
+      <view class="guide-search-icon"></view>
+      <text>搜索选课、成绩、学籍、AI规范等问题</text>
+    </button>
+
+    <view class="assistant-card">
+      <view class="assistant-mark" aria-hidden="true">
+        <view class="assistant-face"><view class="assistant-eye assistant-eye--left"></view><view class="assistant-eye assistant-eye--right"></view><view class="assistant-smile"></view></view>
       </view>
-    </scroll-view>
+      <view class="assistant-main">
+        <view class="assistant-title">问问学习指南针</view>
+        <view class="assistant-desc">基于已审核的学校文件回答，并附原文来源</view>
+        <view class="assistant-context"><text class="context-person">●</text><text>{{guideContextLabel}}</text></view>
+      </view>
+      <button class="assistant-action" hover-class="assistant-action--pressed" aria-label="开始AI提问" bindtap="openAssistant">开始提问 <text>›</text></button>
+    </view>
+
+    <view class="category-panel" aria-label="指南一级分类">
+      <button
+        wx:for="{{homeCategories}}"
+        wx:key="value"
+        class="home-category {{activeHomeCategory === item.value ? 'home-category--active' : ''}}"
+        hover-class="home-category--pressed"
+        data-value="{{item.value}}"
+        bindtap="openHomeCategory"
+      >
+        <view class="category-symbol category-symbol--{{item.tone}}">{{item.symbol}}</view>
+        <text class="home-category-label">{{item.label}}</text>
+        <view class="category-active-mark" wx:if="{{activeHomeCategory === item.value}}"></view>
+      </button>
+    </view>
+
+    <view class="guide-section-head">
+      <view class="guide-section-title">近期更新 <text class="new-mark" wx:if="{{guides.length}}">NEW</text></view>
+      <button class="view-all" hover-class="control--pressed" bindtap="openAllGuides">查看全部 <text>›</text></button>
+    </view>
 
     <state-view
       loading="{{loading}}"
       error="{{error}}"
       empty="{{isEmpty}}"
-      empty-text="当前分类暂无已发布指南"
+      empty-text="暂时没有已发布指南"
       bindretry="retry"
     >
-      <view class="empty-help">请稍后再来查看，重要时间安排仍以教务系统通知为准。</view>
+      <view class="empty-help">普通搜索仍可使用，重要事项请以最新官方文件为准。</view>
     </state-view>
 
     <view class="guide-list" wx:if="{{!loading && !error && guides.length}}">
@@ -37,14 +71,18 @@
         bindtap="openGuide"
         hover-class="guide-row--pressed"
       >
+        <view class="guide-fresh-dot" wx:if="{{index === 0}}"></view>
+        <view class="guide-symbol guide-symbol--{{item.tone}}">{{item.symbol}}</view>
         <view class="guide-main">
-          <view class="guide-name">{{item.title}}</view>
-          <view class="guide-summary" wx:if="{{item.summary}}">{{item.summary}}</view>
-          <view class="guide-meta">
-            <text class="guide-category-label">{{item.category_label}}</text>
-            <text>{{item.updated_label}}</text>
+          <view class="guide-name-line">
+            <view class="guide-name">{{item.title}}</view>
+            <text class="latest-mark" wx:if="{{index === 0}}">最新</text>
           </view>
-          <view class="guide-scope" wx:if="{{item.applicable_scope}}">适用范围：{{item.applicable_scope}}</view>
+          <view class="guide-summary" wx:if="{{item.summary}}">{{item.summary}}</view>
+          <view class="guide-bottom">
+            <text class="guide-scope">适用：{{item.scope_label}}</text>
+            <text class="guide-updated" wx:if="{{index === 0 && item.updated_label}}">{{item.updated_label}}</text>
+          </view>
         </view>
         <view class="guide-arrow">›</view>
       </button>
@@ -56,5 +94,7 @@
       <button class="load-more-button" bindtap="retryLoadMore">重试</button>
     </view>
     <view class="load-more-state" wx:elif="{{guides.length && !hasMore}}">已显示全部指南</view>
+
+    <view class="guide-footnote">学生共建 · 重要事项以最新官方文件为准</view>
   </view>
 </view>

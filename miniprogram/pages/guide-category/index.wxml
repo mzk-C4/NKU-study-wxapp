@@ -1,0 +1,70 @@
+<view class="category-page">
+  <view class="category-nav" style="padding-top: {{statusBarHeight}}px;">
+    <button class="category-back" aria-label="返回学习指南针" hover-class="icon-pressed" bindtap="goBack"><view class="back-arrow"></view></button>
+    <view class="category-nav-title">学习指南针</view>
+    <view class="category-nav-space" aria-hidden="true"></view>
+  </view>
+
+  <view class="category-content">
+    <view class="category-hero category-hero--{{header.tone}}">
+      <view class="category-hero-icon" aria-hidden="true">
+        <view class="category-document-icon"><view></view><view></view><view></view></view>
+        <view class="category-trophy-icon">★</view>
+      </view>
+      <view class="category-hero-main">
+        <view class="category-title">{{header.title}}</view>
+        <view class="category-description">{{header.description}}</view>
+        <view class="category-count"><view class="count-file-icon"></view><text>{{header.countLabel}}</text></view>
+      </view>
+    </view>
+
+    <view class="category-tabs" aria-label="学习指南针一级分类">
+      <button
+        wx:for="{{tabs}}"
+        wx:key="value"
+        class="category-tab {{item.active ? 'category-tab--active' : ''}}"
+        data-category="{{item.value}}"
+        hover-class="category-tab--pressed"
+        bindtap="chooseCategory"
+      >{{item.label}}</button>
+    </view>
+
+    <state-view
+      loading="{{loading}}"
+      error="{{error}}"
+      empty="{{isEmpty}}"
+      empty-text="本分类暂时没有已发布指南"
+      bindretry="retry"
+    ></state-view>
+
+    <view class="category-guide-list" wx:if="{{!loading && !error && guides.length}}">
+      <button
+        wx:for="{{guides}}"
+        wx:key="id"
+        class="category-guide-card"
+        data-id="{{item.id}}"
+        hover-class="category-guide-card--pressed"
+        bindtap="openGuide"
+      >
+        <view class="category-guide-number">{{item.number}}</view>
+        <view class="category-guide-main">
+          <view class="category-guide-title">{{item.title}}</view>
+          <view class="category-guide-preview">{{item.preview}}</view>
+          <view class="category-guide-meta">
+            <view class="category-guide-source"><view class="source-book-icon"></view><text>{{item.sourceLabel}}</text></view>
+            <view class="category-guide-scope"><view class="scope-building-icon"></view><text>{{item.scopeLabel}}</text></view>
+          </view>
+        </view>
+        <view class="category-guide-arrow">›</view>
+      </button>
+
+      <view class="category-more-note">
+        <view class="more-file-icon"><view></view><text>＋</text></view>
+        <text>后续将持续整理并发布更多高频问题指南，敬请期待。</text>
+      </view>
+    </view>
+
+    <view class="category-trust-bar"><view class="trust-shield">✓</view><text>普通指南浏览</text><view class="trust-divider"></view><text>内容来自已整理的学校文件 · 重要事项以最新官方文件为准</text></view>
+    <view class="category-student-note">⌑&nbsp; NKUStudy 为学生自主维护的学习互助平台，非学校官方行政平台。</view>
+  </view>
+</view>

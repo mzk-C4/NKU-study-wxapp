@@ -9,6 +9,8 @@
     "pages/course-resources/index",
     "pages/course-reviews/index",
     "pages/guide-detail/index",
+    "pages/guide-category/index",
+    "pages/guide-assistant/index",
     "pages/submit-resource/index",
     "pages/write-review/index",
     "pages/feedback-web/index",

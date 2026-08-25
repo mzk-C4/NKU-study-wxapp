@@ -1,4 +1,10 @@
-<view class="page guide-detail">
+<view class="detail-page">
+  <view class="detail-nav" style="padding-top: {{statusBarHeight}}px;">
+    <button class="detail-back" aria-label="返回上一页" hover-class="icon-pressed" bindtap="goBack"><view class="back-arrow"></view></button>
+    <view class="detail-nav-title">{{guide && guide.transfer ? '学习指南针' : '指南详情'}}</view>
+    <view class="detail-nav-space" aria-hidden="true"></view>
+  </view>
+
   <state-view
     loading="{{loading}}"
     error="{{error}}"
@@ -8,60 +14,123 @@
   ></state-view>
 
   <view wx:if="{{!loading && !error && guide}}">
-    <view class="article-title">{{guide.title}}</view>
-    <view class="article-meta">
-      <text class="meta-category">{{guide.category_label}}</text>
-      <text>更新时间：{{guide.updated_label}}</text>
-    </view>
-    <view class="article-lead" wx:if="{{guide.summary}}">{{guide.summary}}</view>
+    <block wx:if="{{guide.transfer}}">
+      <view class="transfer-hero">
+        <view class="transfer-watermark" aria-hidden="true"><view class="tower-spire"></view><view class="tower-roof"></view><view class="tower-body"></view><view class="tower-base"></view></view>
+        <view class="transfer-title">{{guide.title}}</view>
+        <view class="transfer-lead">本指南配合学校层面统一规定及各个学院/单位的具体要求，请先选择目标学院，查看该学院的完整要求。</view>
+      </view>
 
-    <view class="scope-card">
-      <view class="scope-label">适用范围</view>
-      <view class="scope-value">{{guide.applicable_scope_label}}</view>
-    </view>
+      <picker class="transfer-college-picker" mode="selector" range="{{guide.transfer.collegeNames}}" value="{{guide.transfer.selectedIndex}}" bindchange="chooseTransferCollege">
+        <view class="transfer-picker-content">
+          <view class="transfer-picker-label"><text class="transfer-picker-icon">▣</text><text>选择目标学院</text></view>
+          <view class="transfer-picker-selection"><text>{{guide.transfer.selectedName}}</text><text>›</text></view>
+          <view class="transfer-picker-change">⇄&nbsp; 更换学院</view>
+        </view>
+      </picker>
 
-    <view class="section">
-      <view class="rule-title">办理步骤</view>
-      <view wx:if="{{guide.steps.length}}">
-        <view class="step" wx:for="{{guide.steps}}" wx:key="index">
-          <view class="step-number">{{index + 1}}</view>
-          <view>
-            <view class="step-title" wx:if="{{item.title}}">{{item.title}}</view>
-            <view class="step-text" wx:if="{{item.body}}">{{item.body}}</view>
+      <view class="transfer-reading">
+        <view class="transfer-rule-card">
+          <view class="transfer-card-heading"><view class="transfer-card-icon">⬡</view><view class="transfer-card-title">{{guide.transfer.schoolRule.title}}</view><view class="transfer-university-tag">全校适用</view></view>
+          <view class="transfer-card-copy">{{guide.transfer.schoolRule.body}}</view>
+          <view class="transfer-rule-topics">
+            <button class="transfer-topic" hover-class="transfer-topic--pressed" bindtap="showTransferTopic">♟&nbsp; 基本条件</button>
+            <button class="transfer-topic" hover-class="transfer-topic--pressed" bindtap="showTransferTopic">▥&nbsp; 申请流程</button>
+            <button class="transfer-topic" hover-class="transfer-topic--pressed" bindtap="showTransferTopic">▣&nbsp; 时间安排</button>
+            <button class="transfer-topic" hover-class="transfer-topic--pressed" bindtap="showTransferTopic">…&nbsp; 其他说明</button>
           </view>
+          <button class="transfer-source-row" data-kind="school" hover-class="transfer-source-row--pressed" bindtap="copyTransferSource"><text class="transfer-source-icon">▤</text><text>来源文件</text><text class="transfer-source-name">{{guide.transfer.schoolRule.sourceTitle}}</text><text class="transfer-source-number">{{guide.transfer.schoolRule.sourceNumber}}</text><text class="transfer-source-arrow">›</text></button>
+        </view>
+
+        <view class="transfer-college-card">
+          <view class="transfer-card-heading"><view class="transfer-card-icon transfer-card-icon--college">▥</view><view class="transfer-card-title">{{guide.transfer.selectedName}}具体要求</view><view class="transfer-selected-tag">已选择</view></view>
+          <view class="transfer-card-copy">以下内容为本学院官方文件原文条款摘录，请以原文件为准。</view>
+          <view class="transfer-panel-list">
+            <view class="transfer-panel" wx:for="{{guide.transfer.panels}}" wx:key="key">
+              <button class="transfer-panel-head" data-key="{{item.key}}" hover-class="transfer-panel-head--pressed" bindtap="toggleTransferPanel"><text class="transfer-panel-icon">▧</text><text>{{item.title}}</text><text class="transfer-panel-action">{{item.expanded ? '收起' : '点击查看'}}&nbsp; {{item.expanded ? '⌃' : '⌄'}}</text></button>
+              <view class="transfer-panel-body" wx:if="{{item.expanded}}">{{item.body}}</view>
+            </view>
+          </view>
+          <button class="transfer-source-row transfer-source-row--college" data-kind="college" hover-class="transfer-source-row--pressed" bindtap="copyTransferSource"><text class="transfer-source-icon">▤</text><text>来源文件（学院官方发布）</text><text class="transfer-source-name transfer-source-name--file">{{guide.transfer.selectedSourceName}}</text><text class="transfer-source-filetype">{{guide.transfer.collegeSource.fileType}}</text><text class="transfer-source-arrow">›</text></button>
+        </view>
+
+        <view class="transfer-tip"><text class="transfer-tip-icon">♧</text><view><view>重要提示</view><text>本指南由学生整理，仅供学习参考，不具有官方效力。请以学校及学院最终发布文件为准。</text></view></view>
+
+        <view class="transfer-tabbar">
+          <button class="transfer-tabbar-item" hover-class="transfer-tabbar-item--pressed" bindtap="showUnavailable"><text>⌂</text><text>首页</text></button>
+          <button class="transfer-tabbar-item" hover-class="transfer-tabbar-item--pressed" bindtap="showUnavailable"><text>▤</text><text>课程</text></button>
+          <button class="transfer-tabbar-item transfer-tabbar-item--active" hover-class="transfer-tabbar-item--pressed" bindtap="showUnavailable"><text>◈</text><text>指南</text></button>
+          <button class="transfer-tabbar-item" hover-class="transfer-tabbar-item--pressed" bindtap="showUnavailable"><text>♙</text><text>我的</text></button>
         </view>
       </view>
-      <view class="section-empty" wx:else>暂无可展示的步骤。</view>
+    </block>
+
+    <block wx:else>
+    <view class="detail-hero">
+      <view class="detail-watermark" aria-hidden="true"><view class="tower-spire"></view><view class="tower-roof"></view><view class="tower-body"></view><view class="tower-base"></view></view>
+      <view class="detail-category detail-category--{{guide.categoryTone}}"><text>{{guide.categorySymbol}}</text><text>{{guide.category}}</text></view>
+      <view class="detail-title">{{guide.title}}</view>
+      <view class="detail-source-line"><view class="detail-source-mark">▣</view><text>来源：{{guide.source.title}}</text></view>
+      <view class="detail-source-meta"><view class="detail-document-number">{{guide.source.number}}</view><view class="detail-publisher">▣&nbsp; {{guide.source.publisher}}</view></view>
+      <view class="detail-date-line"><text>▣&nbsp; {{guide.updatedLabel}}</text><text>◉&nbsp; 原文阅读</text></view>
     </view>
 
-    <view class="section" wx:if="{{guide.related_courses.length}}">
-      <view class="rule-title">相关课程</view>
-      <view class="related-courses">
+    <scroll-view class="detail-section-tabs" scroll-x enable-flex show-scrollbar="false">
+      <view class="detail-section-tab-row">
         <button
-          class="related-course"
-          wx:for="{{guide.related_courses}}"
+          wx:for="{{guide.sections}}"
           wx:key="id"
+          class="detail-section-tab {{activeSectionId === item.id ? 'detail-section-tab--active' : ''}}"
           data-id="{{item.id}}"
-          bindtap="openRelatedCourse"
-          hover-class="related-course--pressed"
-        >
-          <text>{{item.name}}</text><text class="related-arrow">›</text>
-        </button>
+          hover-class="detail-section-tab--pressed"
+          bindtap="selectSection"
+        ><text>{{item.ordinal}}</text><text>{{item.title}}</text></button>
+      </view>
+    </scroll-view>
+
+    <view class="detail-reading">
+      <view class="detail-scope-card">
+        <view class="detail-scope-icon">▣</view>
+        <view><view class="detail-scope-label">规范适用范围</view><view class="detail-scope-value">{{guide.scope}}</view></view>
+      </view>
+
+      <view class="detail-section" wx:for="{{guide.sections}}" wx:key="id">
+        <view class="detail-section-heading">{{item.ordinal}}、{{item.title}}</view>
+        <view class="detail-section-body">{{item.expanded ? item.body : item.preview}}</view>
+        <view class="detail-highlight" wx:if="{{item.highlights.length}}">
+          <view class="detail-highlight-title">▣&nbsp; 本节要点</view>
+          <view wx:for="{{item.highlights}}" wx:key="*this" class="detail-highlight-row">•&nbsp; {{item}}</view>
+        </view>
+        <button
+          wx:if="{{item.hasMore}}"
+          class="detail-expand"
+          data-id="{{item.id}}"
+          hover-class="detail-expand--pressed"
+          bindtap="toggleSection"
+        >{{item.expanded ? '收起本节内容' : '展开查看本节全部内容'}} <text>{{item.expanded ? '⌃' : '⌄'}}</text></button>
+      </view>
+
+      <view class="detail-source-card">
+        <view class="detail-source-card-head"><view class="detail-source-badge">▤</view><view><view class="detail-source-card-title">来源与验证</view><view class="detail-source-card-copy">本指南内容摘录自学校官方文件，便于阅读和核对。</view></view></view>
+        <view class="detail-source-grid">
+          <view class="detail-source-field detail-source-field--wide"><text>文件名称</text><view>{{guide.source.title}}</view></view>
+          <view class="detail-source-field"><text>文号</text><view>{{guide.source.number}}</view></view>
+          <view class="detail-source-field"><text>发布单位</text><view>{{guide.source.publisher}}</view></view>
+          <view class="detail-source-field" wx:if="{{guide.source.issuedDate}}"><text>发布日期</text><view>{{guide.source.issuedDate}}</view></view>
+          <view class="detail-source-field"><text>文件状态</text><view>{{guide.source.fileStatus}}</view></view>
+        </view>
+        <button class="detail-source-open" hover-class="detail-source-open--pressed" bindtap="copySourceUrl">查看完整原文件 <text>↗</text></button>
+      </view>
+
+      <view class="detail-feedback"><text>本指南对你有帮助吗？</text><button class="feedback-button {{feedback === 'helpful' ? 'feedback-button--active' : ''}}" data-value="helpful" bindtap="rateGuide">♧&nbsp; 有帮助</button><button class="feedback-button {{feedback === 'unhelpful' ? 'feedback-button--active' : ''}}" data-value="unhelpful" bindtap="rateGuide">♧&nbsp; 没帮助</button></view>
+
+      <view class="detail-action-dock">
+        <button class="detail-dock-action detail-dock-action--active" hover-class="detail-dock-action--pressed" bindtap="showUnavailable"><text>☷</text><text>目录</text></button>
+        <button class="detail-dock-action" hover-class="detail-dock-action--pressed" bindtap="showUnavailable"><text>☆</text><text>收藏</text></button>
+        <button class="detail-dock-action" hover-class="detail-dock-action--pressed" bindtap="showUnavailable"><text>⇧</text><text>分享</text></button>
+        <button class="detail-dock-action" hover-class="detail-dock-action--pressed" bindtap="copyCorrectionUrl"><text>▢</text><text>反馈</text></button>
       </view>
     </view>
-
-    <view class="section source-card" wx:if="{{guide.source_title || guide.source_url}}">
-      <view class="source-label">内容来源</view>
-      <view class="source-title" wx:if="{{guide.source_title}}">{{guide.source_title}}</view>
-      <button class="link-button" wx:if="{{guide.source_url}}" bindtap="copySourceUrl">复制来源链接</button>
-    </view>
-
-    <view class="section correction-card" wx:if="{{guide.correction_url}}">
-      <view>
-        <view class="source-label">发现内容需要更新？</view>
-        <view class="correction-help">复制公开纠错链接后提交说明。</view>
-      </view>
-      <button class="link-button link-button--compact" bindtap="copyCorrectionUrl">复制纠错链接</button>
-    </view>
+    </block>
   </view>
 </view>

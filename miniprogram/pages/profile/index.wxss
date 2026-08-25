@@ -15,3 +15,73 @@
 .about-foot { margin-top: 26rpx; color: #817A84; text-align: center; font-size: 20rpx; line-height: 1.6; }
 .profile-field { margin-top: 28rpx; }
 .feedback-sheet { max-height: 86vh; }.feedback-option { margin-top: 24rpx; padding: 24rpx; border: 1rpx solid #E8E2EC; border-radius: 26rpx; background: #FAF7FB; }.feedback-option-head { display: flex; align-items: center; gap: 18rpx; }.feedback-icon { width: 66rpx; height: 66rpx; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; border-radius: 20rpx; color: #2B123E; background: #D7A63C; font-size: 25rpx; font-weight: 800; }.feedback-icon--github { color: #FFFFFF; background: #4B1F6F; font-size: 19rpx; }.feedback-title { color: #2B123E; font-size: 26rpx; font-weight: 700; }.feedback-desc { margin-top: 5rpx; color: #817A84; font-size: 20rpx; line-height: 1.5; }.feedback-actions { display: flex; align-items: center; gap: 16rpx; margin-top: 22rpx; }.feedback-button { min-width: 0; flex: 1; margin: 0; }.feedback-copy { min-width: 150rpx; height: 78rpx; margin: 0; padding: 0 20rpx; border: 1rpx solid #CFC3D5; border-radius: 20rpx; color: #4B1F6F; background: #FFFFFF; font-size: 22rpx; line-height: 78rpx; }.feedback-tip { margin-top: 22rpx; padding: 20rpx; border-radius: 20rpx; color: #6F6972; background: #F3EEF5; font-size: 20rpx; line-height: 1.6; }
+
+.learning-card { padding: 28rpx 26rpx; box-sizing: border-box; }
+.learning-header { display: flex; flex-direction: column; align-items: flex-start; gap: 14rpx; }
+.learning-title { color: #2B123E; font-size: 29rpx; font-weight: 700; line-height: 1.4; }
+.learning-copy,
+.learning-help { color: #746E79; font-size: 21rpx; line-height: 1.55; }
+.learning-copy { margin-top: 8rpx; }
+.learning-status {
+  max-width: 100%;
+  padding: 10rpx 16rpx;
+  border-radius: 24rpx;
+  color: #5B2A7A;
+  background: #F2ECF7;
+  font-size: 20rpx;
+  line-height: 1.45;
+  text-align: left;
+  word-break: break-all;
+  box-sizing: border-box;
+}
+.learning-summary-row {
+  display: grid;
+  grid-template-columns: 150rpx minmax(0, 1fr);
+  gap: 18rpx;
+  align-items: start;
+  min-height: 74rpx;
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #EEE8F1;
+  box-sizing: border-box;
+}
+.learning-header + .learning-summary-row { margin-top: 20rpx; }
+.learning-summary-label { color: #6F6972; font-size: 24rpx; }
+.learning-summary-value { color: #2B123E; font-size: 24rpx; font-weight: 600; line-height: 1.5; word-break: break-all; }
+.learning-form { margin-top: 24rpx; }
+.learning-field + .learning-field { margin-top: 28rpx; }
+.learning-label { color: #2B123E; font-size: 25rpx; font-weight: 700; line-height: 1.45; }
+.learning-help { margin-top: 8rpx; }
+.learning-input {
+  width: 100%;
+  min-height: 84rpx;
+  margin-top: 14rpx;
+  padding: 0 22rpx;
+  border: 2rpx solid #D9D1DE;
+  border-radius: 18rpx;
+  color: #2B123E;
+  background: #FFFDFC;
+  font-size: 25rpx;
+  line-height: 84rpx;
+  box-sizing: border-box;
+}
+.learning-input--error { border-color: #B42318; }
+.learning-error { margin-top: 10rpx; color: #B42318; font-size: 22rpx; line-height: 1.5; }
+.learning-actions { display: flex; flex-wrap: wrap; gap: 16rpx; margin-top: 26rpx; }
+.learning-primary-button,
+.learning-secondary-button,
+.learning-clear-button {
+  min-width: 220rpx;
+  min-height: 82rpx;
+  flex: 1 1 220rpx;
+  margin: 0 !important;
+  padding: 16rpx 22rpx;
+  border-radius: 18rpx;
+  font-size: 24rpx;
+  font-weight: 700;
+  line-height: 1.45;
+  box-sizing: border-box;
+}
+.learning-primary-button { color: #FFFFFF; background: #5B2A7A; }
+.learning-secondary-button { color: #4B4550; background: #F1EDF3; }
+.learning-clear-button { color: #B42318; background: #FFF2F0; border: 1rpx solid #E7B7B1; }
+.learning-button--pressed { opacity: .74; }

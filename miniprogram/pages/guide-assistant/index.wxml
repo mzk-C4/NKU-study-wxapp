@@ -1,0 +1,397 @@
+<view class="assistant-page">
+  <view class="custom-nav" style="padding-top: {{statusBarHeight}}px;">
+    <button class="back-button" aria-label="返回学习指南针" hover-class="icon-pressed" bindtap="goBack"><view class="back-arrow"></view></button>
+    <view class="nav-title">学习指南针 AI 问答</view>
+    <view class="nav-capsule-space" aria-hidden="true"></view>
+  </view>
+
+  <view class="assistant-actions">
+    <button class="assistant-action" aria-label="打开对话记录" hover-class="assistant-action--pressed" bindtap="openConversationHistory">
+      <view class="history-icon" aria-hidden="true"><view></view><view></view><view></view></view>
+      <text>对话记录</text>
+    </button>
+    <button class="assistant-action" aria-label="新开话题" hover-class="assistant-action--pressed" bindtap="startNewTopic">
+      <view class="new-topic-icon" aria-hidden="true"><view></view></view>
+      <text>新开话题</text>
+    </button>
+  </view>
+
+  <view class="history-layer" wx:if="{{historyDrawerOpen}}">
+    <button class="history-backdrop" aria-label="关闭对话记录" hover-class="none" bindtap="closeConversationHistory"></button>
+    <view class="history-drawer" catchtap="stopPropagation">
+      <view class="history-drawer-head" style="padding-top: calc({{statusBarHeight}}px + 24rpx);">
+        <view class="history-search-box">
+          <view class="history-search-mark" aria-hidden="true"></view>
+          <input
+            class="history-search-input"
+            value="{{historySearch}}"
+            maxlength="1000"
+            confirm-type="search"
+            placeholder="搜索对话内容..."
+            placeholder-class="history-search-placeholder"
+            aria-label="搜索对话内容"
+            bindinput="inputHistorySearch"
+          />
+        </view>
+        <button class="history-close-button" aria-label="关闭对话记录" hover-class="history-close-button--pressed" bindtap="closeConversationHistory">
+          <view aria-hidden="true"></view><view aria-hidden="true"></view>
+        </button>
+      </view>
+
+      <scroll-view class="history-scroll" scroll-y enable-flex bindtap="closeHistoryActions">
+        <block wx:for="{{historyGroups}}" wx:key="key" wx:for-item="group">
+          <view class="history-group-title">{{group.label}}</view>
+          <view
+            class="history-conversation-item {{historyActionQuestion === conversation.question ? 'history-conversation-item--active' : ''}}"
+            wx:for="{{group.items}}"
+            wx:key="question"
+            wx:for-item="conversation"
+          >
+            <view class="history-conversation-row {{historyActionQuestion === conversation.question ? 'history-conversation-row--selected' : ''}}">
+              <button
+                class="history-conversation-button"
+                aria-label="打开对话：{{conversation.title}}，长按管理"
+                data-question="{{conversation.question}}"
+                hover-class="history-conversation-button--pressed"
+                bindtap="selectHistory"
+                bindlongpress="openHistoryActions"
+              >{{conversation.title}}</button>
+              <button
+                class="history-pin-button {{conversation.pinned ? 'history-pin-button--active' : ''}}"
+                aria-label="{{conversation.pinAriaLabel}}"
+                data-question="{{conversation.question}}"
+                hover-class="history-pin-button--pressed"
+                bindtap="toggleHistoryPin"
+              ><view class="history-pin-mark" aria-hidden="true"><view></view></view></button>
+            </view>
+
+            <view
+              class="history-action-card"
+              wx:if="{{historyActionQuestion === conversation.question && !historyRenameMode}}"
+              catchtap="stopPropagation"
+            >
+              <button class="history-action-row" data-question="{{conversation.question}}" hover-class="history-action-row--pressed" bindtap="openHistoryRename">
+                <view class="history-action-icon history-pencil-icon" aria-hidden="true"><view></view></view>
+                <text>重命名</text>
+              </button>
+              <button class="history-action-row" data-question="{{conversation.question}}" hover-class="history-action-row--pressed" bindtap="chooseHistoryPin">
+                <view class="history-action-icon" aria-hidden="true">
+                  <view class="history-pin-mark history-action-pin {{conversation.pinned ? 'history-action-pin--unpin' : ''}}"><view></view></view>
+                </view>
+                <text>{{conversation.pinned ? '取消置顶' : '置顶'}}</text>
+              </button>
+              <button class="history-action-row history-action-row--danger" data-question="{{conversation.question}}" hover-class="history-action-row--pressed" bindtap="chooseHistoryDelete">
+                <view class="history-action-icon history-trash-icon" aria-hidden="true"><view></view></view>
+                <text>删除</text>
+              </button>
+            </view>
+
+            <view
+              class="history-rename-card"
+              wx:if="{{historyActionQuestion === conversation.question && historyRenameMode}}"
+              catchtap="stopPropagation"
+            >
+              <view class="history-rename-title">重命名会话</view>
+              <input
+                class="history-rename-input"
+                value="{{historyRenameValue}}"
+                maxlength="50"
+                focus="{{focusHistoryRename}}"
+                confirm-type="done"
+                aria-label="输入新的会话名称"
+                bindinput="inputHistoryRename"
+                bindconfirm="saveHistoryRename"
+              />
+              <view class="history-rename-actions">
+                <button class="history-rename-cancel" hover-class="history-action-row--pressed" bindtap="cancelHistoryRename">取消</button>
+                <button class="history-rename-save" disabled="{{!canSaveHistoryRename}}" hover-class="history-action-row--pressed" bindtap="saveHistoryRename">保存</button>
+              </view>
+            </view>
+          </view>
+        </block>
+        <view class="history-empty" wx:if="{{!historyGroups.length}}">
+          <view class="history-empty-title">{{historySearch ? '没有找到相关对话' : '暂无对话记录'}}</view>
+          <view class="history-empty-copy">{{historySearch ? '换个关键词再试试' : '新开话题后，对话会保存在这里'}}</view>
+        </view>
+      </scroll-view>
+    </view>
+  </view>
+
+  <view class="assistant-content {{answerMode ? 'assistant-content--answer' : ''}}">
+    <view class="previous-turns" wx:if="{{previousTurns.length}}">
+      <view class="previous-turn" wx:for="{{previousTurns}}" wx:key="key" wx:for-item="turn">
+        <view class="answer-question-bubble previous-turn-question">{{turn.question}}</view>
+        <view class="answer-card previous-turn-answer">
+          <view class="previous-turn-label">{{turn.refused ? '学习指南针拒答' : '学习指南针回答'}}</view>
+          <view class="answer-paragraph">{{turn.answer}}</view>
+          <view class="answer-reminder" wx:if="{{turn.scope}}"><view class="answer-info-icon">i</view><text>适用范围：{{turn.scope}}</text></view>
+        </view>
+      </view>
+    </view>
+
+    <block wx:if="{{answerMode && lastQuestion}}">
+      <view class="answer-question-bubble">{{lastQuestion}}</view>
+
+      <view class="answer-card">
+        <view class="answer-heading">
+          <view class="answer-avatar" aria-hidden="true">
+            <view class="answer-eye answer-eye--left"></view>
+            <view class="answer-eye answer-eye--right"></view>
+            <view class="answer-smile"></view>
+          </view>
+          <view class="answer-heading-title">学习指南针回答</view>
+        </view>
+
+        <view class="answer-paragraph" wx:if="{{responseAnswer}}">
+          {{responseAnswer}}
+        </view>
+        <block wx:else>
+        <view class="answer-paragraph">
+          你可以在下一学期开学3周内，向开课单位提出书面申请。开课单位受理后会组织人员复议，并给出复议意见；超过时限，开课单位可以不予受理。<text class="answer-citation">[来源1]</text>
+        </view>
+        <view class="answer-paragraph">
+          如果复议后确需更改成绩，任课教师不能直接修改。应由任课教师填写成绩更改申请，经开课单位审批、系统提交并由教务部批准后完成更改。<text class="answer-citation">[来源1]</text>
+        </view>
+        </block>
+
+        <view class="answer-reminder"><view class="answer-info-icon">i</view><text>{{responseFreshness || '如后续发布新规定，以最新官方文件为准。'}}</text></view>
+        <view class="answer-reminder" wx:if="{{responseScope}}"><view class="answer-info-icon">i</view><text>适用范围：{{responseScope}}</text></view>
+
+        <view class="answer-source" wx:for="{{responseCitations}}" wx:key="id" wx:for-item="source">
+          <view class="source-heading"><view class="source-bookmark"></view><text>{{source.sourceLabel}}</text></view>
+          <view class="source-body">
+            <view class="source-document-icon" aria-hidden="true"><view class="source-document-fold"></view><view class="source-document-line"></view></view>
+            <view class="source-main">
+              <view class="source-title">《{{source.title}}》</view>
+              <view class="source-detail-row">
+                <view class="source-meta-group">
+                  <view class="source-meta" wx:if="{{source.document_no}}">{{source.document_no}}</view>
+                  <view class="source-meta" wx:if="{{source.publisher}}">{{source.publisher}}</view>
+                </view>
+                <button class="source-open-button" data-id="{{source.id}}" disabled="{{source.opening}}" hover-class="source-open-button--pressed" bindtap="openAnswerSource">
+                  <text>{{source.opening ? '正在打开…' : '查看原文'}}</text><view class="external-link-icon" aria-hidden="true"><view></view></view>
+                </button>
+              </view>
+              <button wx:if="{{source.openFailed && source.canCopy}}" class="source-copy-fallback" data-id="{{source.id}}" bindtap="copyAnswerSource">复制链接</button>
+            </view>
+          </view>
+        </view>
+
+        <view class="answer-source" wx:if="{{!responseCitations.length}}">
+          <view class="source-heading"><view class="source-bookmark"></view><text>来源1</text></view>
+          <view class="source-body">
+            <view class="source-document-icon" aria-hidden="true"><view class="source-document-fold"></view><view class="source-document-line"></view></view>
+            <view class="source-main">
+              <view class="source-title">《南开大学本科课程考试与成绩管理规定》</view>
+              <view class="source-detail-row">
+                <view class="source-meta-group">
+                  <view class="source-meta">教字〔2024〕2号</view>
+                  <view class="source-meta">第十四条、第十五条</view>
+                </view>
+                <button class="source-open-button" hover-class="source-open-button--pressed" bindtap="openAnswerSource">
+                  <text>查看原文</text><view class="external-link-icon" aria-hidden="true"><view></view></view>
+                </button>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <view class="answer-tools">
+          <button class="answer-tool" aria-label="复制回答" hover-class="icon-pressed" bindtap="copyAnswer"><view class="copy-shape answer-copy-shape"><view></view></view></button>
+          <button class="answer-tool answer-regenerate" aria-label="重新生成回答" hover-class="icon-pressed" bindtap="regenerateAnswer">↻</button>
+          <button class="answer-tool {{answerFeedback === 'helpful' ? 'answer-tool--active' : ''}}" aria-label="回答有帮助" data-value="helpful" hover-class="icon-pressed" bindtap="rateAnswer"><view class="thumb-icon"><view class="thumb-palm"></view><view class="thumb-finger"></view></view></button>
+          <button class="answer-tool {{answerFeedback === 'unhelpful' ? 'answer-tool--active' : ''}}" aria-label="回答没有帮助" data-value="unhelpful" hover-class="icon-pressed" bindtap="rateAnswer"><view class="thumb-icon thumb-icon--down"><view class="thumb-palm"></view><view class="thumb-finger"></view></view></button>
+        </view>
+      </view>
+    </block>
+
+    <view class="generating-state" wx:elif="{{previewState === 'generating' && lastQuestion}}">
+      <view class="generating-question">
+        <view class="generating-question-text">{{lastQuestion}}</view>
+        <view class="profile-pill"><view class="profile-icon" aria-hidden="true"></view><text>{{learningProfileLabel}}</text></view>
+      </view>
+      <view class="generating-card">
+        <view class="generating-card-icon" aria-hidden="true"><view></view></view>
+        <view class="generating-card-main">
+          <view class="generating-title">正在查找资料并整理回答中……</view>
+          <view class="generating-dots" aria-hidden="true">
+            <view wx:for="{{generatingDots}}" wx:key="*this" class="generating-dot"></view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="refusal-state" wx:elif="{{previewState === 'refusal' && lastQuestion}}">
+      <view class="refusal-question-wrap">
+        <view class="question-bubble refusal-question-bubble" wx:if="{{!editingQuestion}}">{{lastQuestion}}</view>
+        <textarea
+          wx:else
+          class="question-bubble question-editor"
+          value="{{editingQuestionValue}}"
+          maxlength="1000"
+          auto-height
+          focus="{{focusQuestionEditor}}"
+          confirm-type="send"
+          cursor-spacing="28"
+          show-confirm-bar="{{false}}"
+          aria-label="编辑已发送的问题"
+          bindinput="inputEditedQuestion"
+          bindconfirm="submitEditedQuestion"
+        ></textarea>
+        <view class="question-tools" wx:if="{{!editingQuestion}}">
+          <button class="tool-button copy-button" aria-label="复制问题" hover-class="icon-pressed" bindtap="copyQuestion"><view class="copy-shape"><view></view></view></button>
+          <button class="tool-button edit-button" aria-label="编辑问题" hover-class="icon-pressed" bindtap="editQuestion"><text>✎</text></button>
+        </view>
+        <view class="question-edit-actions" wx:else>
+          <button class="question-edit-cancel" hover-class="question-action--pressed" bindtap="cancelQuestionEdit">取消</button>
+          <button class="question-edit-send" disabled="{{!canSendEditedQuestion}}" hover-class="question-action--pressed" bindtap="submitEditedQuestion">发送</button>
+        </view>
+      </view>
+      <view class="refusal-card">
+        <view class="refusal-heading">
+          <view class="answer-avatar" aria-hidden="true">
+            <view class="answer-eye answer-eye--left"></view>
+            <view class="answer-eye answer-eye--right"></view>
+            <view class="answer-smile"></view>
+          </view>
+          <view class="refusal-heading-title">现有资料暂时无法回答</view>
+        </view>
+        <view class="refusal-copy" wx:if="{{responseAnswer}}">{{responseAnswer}}</view>
+        <block wx:else>
+          <view class="refusal-copy">当前已发布指南没有足够依据回答这个问题。</view>
+          <view class="refusal-copy">我不会根据模型记忆补充校内规则。</view>
+        </block>
+        <view class="refusal-info"><view class="refusal-info-icon">i</view><text>{{responseFreshness || '学习指南针仅基于已有文件内容提供信息，暂时未找到能回答你问题的相关资料'}}</text></view>
+        <view class="refusal-divider"></view>
+        <view class="refusal-suggestion"><view class="refusal-bulb" aria-hidden="true"></view><text>你可以换一种问法，或通过普通指南和搜索继续查找。</text></view>
+      </view>
+      <view class="official-reminder"><view class="official-reminder-icon" aria-hidden="true"></view><text>重要事项请以最新官方文件为准。</text></view>
+    </view>
+
+    <view class="question-state" wx:elif="{{networkError && lastQuestion}}">
+      <button class="retry-button {{retrying ? 'retry-button--loading' : ''}}" aria-label="重新检查网络" disabled="{{retrying}}" hover-class="retry-button--pressed" bindtap="retryNetwork"><text>↻</text></button>
+      <view class="question-bubble" wx:if="{{!editingQuestion}}">{{lastQuestion}}</view>
+      <textarea
+        wx:else
+        class="question-bubble question-editor"
+        value="{{editingQuestionValue}}"
+        maxlength="1000"
+        auto-height
+        focus="{{focusQuestionEditor}}"
+        confirm-type="send"
+        cursor-spacing="28"
+        show-confirm-bar="{{false}}"
+        aria-label="编辑已发送的问题"
+        bindinput="inputEditedQuestion"
+        bindconfirm="submitEditedQuestion"
+      ></textarea>
+      <view class="question-tools" wx:if="{{!editingQuestion}}">
+        <button class="tool-button copy-button" aria-label="复制问题" hover-class="icon-pressed" bindtap="copyQuestion"><view class="copy-shape"><view></view></view></button>
+        <button class="tool-button edit-button" aria-label="编辑问题" hover-class="icon-pressed" bindtap="editQuestion"><text>✎</text></button>
+      </view>
+      <view class="question-edit-actions" wx:else>
+        <button class="question-edit-cancel" hover-class="question-action--pressed" bindtap="cancelQuestionEdit">取消</button>
+        <button class="question-edit-send" disabled="{{!canSendEditedQuestion}}" hover-class="question-action--pressed" bindtap="submitEditedQuestion">发送</button>
+      </view>
+      <view class="network-hint">{{networkHint}}</view>
+    </view>
+
+    <view class="offline-empty" wx:elif="{{networkError}}">
+      <view class="offline-title">网络已断开</view>
+      <view class="offline-copy">输入问题后仍可保留内容，恢复网络后再尝试。</view>
+    </view>
+
+    <view class="new-topic-state" wx:elif="{{newTopicMode}}">
+      <view class="new-topic-avatar" aria-hidden="true">
+        <view class="new-topic-spark new-topic-spark--left"></view>
+        <view class="new-topic-spark new-topic-spark--right"></view>
+        <view class="answer-avatar">
+          <view class="answer-eye answer-eye--left"></view>
+          <view class="answer-eye answer-eye--right"></view>
+          <view class="answer-smile"></view>
+        </view>
+      </view>
+      <view class="new-topic-title">今天想了解什么？</view>
+      <view class="new-topic-copy">我会根据已有文件查找答案，并附上来源。</view>
+      <view class="new-topic-safety"><view class="new-topic-shield" aria-hidden="true"></view><text>学生共建 · 重要事项以最新官方文件为准</text></view>
+      <button class="new-topic-profile" aria-label="编辑本机学习信息，当前为{{learningProfileLabel}}" hover-class="new-topic-profile--pressed" bindtap="openLearningProfile"><view class="profile-icon profile-icon--large" aria-hidden="true"></view><text>{{learningProfileLabel}}</text><text class="new-topic-profile-action">编辑</text><text class="new-topic-profile-arrow">›</text></button>
+      <view class="new-topic-examples-title"><view class="new-topic-star" aria-hidden="true">✦</view><text>试试这些常见问题</text></view>
+      <view class="new-topic-examples">
+        <button
+          wx:for="{{exampleQuestions}}"
+          wx:key="*this"
+          class="new-topic-example"
+          data-question="{{item}}"
+          hover-class="new-topic-example--pressed"
+          bindtap="chooseExampleQuestion"
+        >
+          <view class="example-icon" aria-hidden="true">▰</view>
+          <text>{{item}}</text>
+          <text class="new-topic-example-arrow">›</text>
+        </button>
+      </view>
+    </view>
+
+    <view class="service-recovery-state" wx:elif="{{showRecoveryActions && !networkError}}">
+      <view class="building-mark">AI</view>
+      <view class="building-title">{{recoveryTitle}}</view>
+      <view class="building-copy">{{recoveryCopy}}</view>
+      <button wx:if="{{assistantState === 'auth-required'}}" class="recovery-action-button" disabled="{{authRecovering}}" bindtap="recoverAuthentication">{{authRecovering ? '正在登录…' : '微信登录'}}</button>
+      <button wx:elif="{{assistantState === 'service-error'}}" class="recovery-action-button" bindtap="prepareManualRetry">稍后手动重试</button>
+    </view>
+
+    <view class="building-state" wx:else>
+      <view class="building-mark">AI</view>
+      <view class="building-title">AI 问答正在建设中</view>
+      <view class="building-copy">普通指南和搜索已经可以使用。</view>
+    </view>
+
+    <view class="continue-section" wx:if="{{networkError || showRecoveryActions}}">
+      <view class="continue-title">你可以继续</view>
+      <button class="continue-card" hover-class="continue-card--pressed" bindtap="openLibrary">
+        <view class="continue-icon book-icon"><view class="book-left"></view><view class="book-right"></view></view>
+        <view class="continue-main"><view class="continue-name">浏览知识库</view><view class="continue-copy">查看学习指南、通知与规定等</view></view>
+        <view class="continue-arrow">›</view>
+      </button>
+      <button class="continue-card" hover-class="continue-card--pressed" bindtap="openSearch">
+        <view class="continue-icon search-card-icon"><view class="search-ring"></view></view>
+        <view class="continue-main"><view class="continue-name">去普通搜索</view><view class="continue-copy">使用关键词查找相关指南或文件</view></view>
+        <view class="continue-arrow">›</view>
+      </button>
+    </view>
+  </view>
+
+  <view class="composer-area">
+    <view class="composer">
+      <input
+        class="composer-input"
+        value="{{draft}}"
+        maxlength="1000"
+        focus="{{focusInput}}"
+        disabled="{{requestPending || roundLimitReached || buildingMode || assistantState === 'rate-limited' || (previewMode && previewState === 'generating')}}"
+        confirm-type="send"
+        placeholder="{{answerMode ? '继续追问这个问题' : '给学习指南针发送消息'}}"
+        placeholder-class="composer-placeholder"
+        aria-label="给学习指南针发送消息"
+        bindinput="inputQuestion"
+        bindfocus="focusComposer"
+        bindblur="blurComposer"
+        bindconfirm="sendQuestion"
+      />
+      <button class="attachment-button" disabled="{{requestPending || previewState === 'generating'}}" aria-label="附件功能暂未开放" hover-class="icon-pressed" bindtap="showAttachmentUnavailable"><view class="paperclip-icon"></view></button>
+      <button class="send-button" aria-label="发送问题" disabled="{{!canSend || requestPending || roundLimitReached || buildingMode || assistantState === 'rate-limited' || previewState === 'generating'}}" hover-class="send-button--pressed" bindtap="sendQuestion"><text>↑</text></button>
+    </view>
+    <view class="composer-error" wx:if="{{inputError}}" aria-live="assertive">{{inputError}}</view>
+    <view class="composer-error" wx:if="{{roundLimitReached}}">已达到10轮上限，请新开话题继续。</view>
+    <view class="conversation-meta" wx:if="{{answerMode}}">
+      <view>当前已完成 {{roundLabel}} 轮</view>
+      <view>会话记录保存30天 · 单个话题最多10轮</view>
+    </view>
+    <view class="preview-meta" wx:elif="{{previewState === 'generating' || previewState === 'refusal' || newTopicMode}}">
+      <view wx:if="{{newTopicMode}}">内容由 AI 生成，请仔细甄别</view>
+      <view wx:if="{{previewState === 'generating' || previewState === 'refusal'}}">当前已完成 {{roundLabel}} 轮</view>
+      <view>本地记录保存30天 · 最多10轮对话</view>
+    </view>
+    <view class="ai-note" wx:else>内容由 AI 生成，请仔细甄别</view>
+  </view>
+</view>
