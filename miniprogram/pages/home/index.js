@@ -5,7 +5,19 @@ const navigation = require('../../utils/navigation')
 
 Page({
   data: {
- loading: true, error: '', home: null, hotCourses: [], latestUpdates: [] },
+    loading: true,
+    error: '',
+    home: null,
+    hotCourses: [],
+    latestUpdates: [],
+    collaborators: [
+      { id: 'mzk', name: '马兆坤', identity: '2512538', account: 'M_zepher_king' },
+      { id: 'nkulife', name: '南开指南针', identity: 'nkulife_', account: 'guideNO1' },
+      { id: 'shview', name: 'Shview', identity: '', account: 'sh465431276adas@outlook.com' },
+      { id: 'hxr', name: '洪修睿', identity: '2513326', account: 'Code-your-Adm' },
+      { id: 'dyx', name: '丁宇鑫', identity: '2512100', account: 'wenjiandehuayecai' }
+    ]
+  },
 
   onLoad() { reportVisit('/mp/home'); this.loadHome() },
     onShow() { theme.onPageShow() },
