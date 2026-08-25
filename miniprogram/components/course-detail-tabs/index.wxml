@@ -1,0 +1,5 @@
+<view class="detail-tabs">
+  <button class="detail-tab {{active === 'overview' ? 'detail-tab--active' : ''}}" data-tab="overview" bindtap="selectTab" hover-class="detail-tab--pressed" hover-stay-time="80">概览</button>
+  <button class="detail-tab {{active === 'resources' ? 'detail-tab--active' : ''}}" data-tab="resources" bindtap="selectTab" hover-class="detail-tab--pressed" hover-stay-time="80">资料 {{resourceCount}}</button>
+  <button class="detail-tab {{active === 'reviews' ? 'detail-tab--active' : ''}}" data-tab="reviews" bindtap="selectTab" hover-class="detail-tab--pressed" hover-stay-time="80">评价 {{reviewCount}}</button>
+</view>

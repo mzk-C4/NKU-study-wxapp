@@ -246,6 +246,58 @@ test('guide list owns a full-width native button layout', () => {
   assert.match(styles, /\.guide-row\s*\{[^}]*margin:\s*0\s*!important/s)
 })
 
+test('guide home implements the approved Learning Compass visual contract', () => {
+  const template = fs.readFileSync(path.join(projectRoot, 'miniprogram/pages/guides/index.wxml'), 'utf8')
+  const styles = fs.readFileSync(path.join(projectRoot, 'miniprogram/pages/guides/index.wxss'), 'utf8')
+  const config = JSON.parse(fs.readFileSync(path.join(projectRoot, 'miniprogram/pages/guides/index.json'), 'utf8'))
+
+  assert.equal(config.navigationBarTitleText, '学习指南针')
+  assert.match(template, /src="\/assets\/brand\.png"/)
+  assert.match(template, />学习指南针</)
+  assert.match(template, /搜索选课、成绩、学籍、AI规范等问题/)
+  assert.match(template, /问问学习指南针/)
+  assert.match(template, /基于已审核的学校文件回答，并附原文来源/)
+  assert.match(template, /近期更新/)
+  assert.doesNotMatch(template, />培养方案</)
+  assert.deepEqual(guidesDefinition.data.homeCategories.map(item => item.label), [
+    '选课与修读', '考试与成绩', '学籍与毕业', '学业拓展', '规范与权益'
+  ])
+  assert.match(styles, /\.guide-search\s*\{[^}]*width:\s*100%\s*!important/s)
+  assert.match(styles, /\.assistant-action\s*\{[^}]*width:\s*150rpx\s*!important/s)
+  assert.match(styles, /\.category-panel\s*\{[^}]*display:\s*flex/s)
+  assert.match(styles, /\.home-category\s*\{[^}]*width:\s*20%\s*!important/s)
+  assert.match(styles, /\.home-category\s*\{[^}]*max-width:\s*20%/s)
+  assert.match(styles, /\.view-all\s*\{[^}]*margin:\s*0\s+0\s+0\s+auto\s*!important/s)
+  assert.match(styles, /\.guide-intro\s*\{[^}]*linear-gradient/s)
+  assert.match(styles, /\.assistant-card\s*\{[^}]*border-radius/s)
+})
+
+test('guide home search, category and AI controls have honest recoverable behavior', t => {
+  const routes = []
+  const toasts = []
+  installWx(t, {
+    navigateTo(options) { routes.push(options.url) },
+    showToast(options) { toasts.push(options) },
+    getNetworkType(options) { options.success({ networkType: 'wifi' }) }
+  })
+  const page = createPage(guidesDefinition)
+
+  page.openSearch()
+  page.openHomeCategory({ currentTarget: { dataset: { value: 'exam-grade' } } })
+  page.openAllGuides()
+  page.openAssistant()
+
+  assert.equal(page.data.activeHomeCategory, 'exam-grade')
+  assert.deepEqual(routes, [
+    '/pages/search/index?q=',
+    '/pages/search/index?q=%E6%88%90%E7%BB%A9',
+    '/pages/search/index?q='
+  ])
+  assert.equal(page.data.guideContextLabel, '年级未设置 · 专业未设置')
+  assert.deepEqual(toasts.map(item => item.title), ['AI问答正在建设中'])
+  assert.equal(toasts[0].icon, 'none')
+})
+
 test('rapid guide category changes are latest-request-wins and stale errors stay silent', async t => {
   const pending = [deferred(), deferred()]
   const calls = []

@@ -8,7 +8,9 @@
     "pages/course-overview/index",
     "pages/course-resources/index",
     "pages/course-reviews/index",
+    "pages/resource-detail/index",
     "pages/guide-detail/index",
+    "pages/guide-assistant/index",
     "pages/submit-resource/index",
     "pages/write-review/index",
     "pages/feedback-web/index",
@@ -64,6 +66,7 @@
   "usingComponents": {
     "state-view": "components/state-view/index",
     "course-card": "components/course-card/index",
+    "course-detail-tabs": "components/course-detail-tabs/index",
     "tag-chip": "components/tag-chip/index"
   },
   "style": "v2",

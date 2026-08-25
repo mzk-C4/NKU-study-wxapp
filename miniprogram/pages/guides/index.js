@@ -1,6 +1,7 @@
 const { reportVisit } = require('../../utils/visit-report')
 const theme = require('../../utils/theme')
 const publicApi = require('../../services/public-api')
+const navigation = require('../../utils/navigation')
 
 const PAGE_SIZE = 20
 const CATEGORY_CONFIG = Object.freeze([
@@ -15,6 +16,28 @@ const CATEGORY_LABELS = Object.freeze({
   'add-drop': '退补选',
   'exam-grade': '考试成绩'
 })
+const HOME_CATEGORIES = Object.freeze([
+  { value: 'selection-study', label: '选课与修读', symbol: '▥', tone: 'purple', query: '选课' },
+  { value: 'exam-grade', label: '考试与成绩', symbol: '★', tone: 'gold', query: '成绩' },
+  { value: 'academic-status', label: '学籍与毕业', symbol: '学', tone: 'green', query: '学籍' },
+  { value: 'academic-growth', label: '学业拓展', symbol: '◆', tone: 'blue', query: '微专业' },
+  { value: 'rights-rules', label: '规范与权益', symbol: '⚖', tone: 'red', query: '规范' }
+])
+const GUIDE_PRESENTATION = Object.freeze({
+  'course-selection': { symbol: '▦', tone: 'purple' },
+  'add-drop': { symbol: '↺', tone: 'purple' },
+  'exam-grade': { symbol: '≡', tone: 'gold' },
+  'training-program': { symbol: '●', tone: 'green' }
+})
+const ASSISTANT_PREVIEW_QUESTION = '我对一门课程的成绩有异议，应该怎么申请复核？'
+
+function isDevelopRuntime() {
+  try {
+    return typeof wx.getAccountInfoSync === 'function' && wx.getAccountInfoSync()?.miniProgram?.envVersion === 'develop'
+  } catch (_) {
+    return false
+  }
+}
 
 function categoryOptions(facets = [], resolved = false) {
   const available = new Set(Array.isArray(facets) ? facets : [])
@@ -25,10 +48,15 @@ function categoryOptions(facets = [], resolved = false) {
 }
 
 function presentGuide(guide) {
+  const presentation = GUIDE_PRESENTATION[guide.category] || { symbol: '◇', tone: 'blue' }
+  const dateMatch = String(guide.updated_at || '').match(/^\d{4}-\d{2}-\d{2}/)
   return {
     ...guide,
     category_label: CATEGORY_LABELS[guide.category] || '学习事务',
-    updated_label: guide.updated_at || '更新时间未提供'
+    updated_label: dateMatch ? `更新于 ${dateMatch[0]}` : '',
+    scope_label: guide.applicable_scope || '适用范围待补充',
+    symbol: presentation.symbol,
+    tone: presentation.tone
   }
 }
 
@@ -63,10 +91,14 @@ Page({
     hasMore: false,
     category: '',
     categories: categoryOptions(),
+    homeCategories: HOME_CATEGORIES,
+    activeHomeCategory: HOME_CATEGORIES[0].value,
+    guideContextLabel: '年级未设置 · 专业未设置',
     dataUpdatedAt: ''
   },
 
-  onLoad() { reportVisit('/mp/guides');
+  onLoad() {
+    reportVisit('/mp/guides')
     this._isUnloaded = false
     this._requestId = 0
     return this.loadGuides()
@@ -105,6 +137,40 @@ Page({
   },
   retryLoadMore() {
     if (this.data.hasMore && !this.data.loadingMore) return this.loadGuides({ append: true })
+  },
+  openSearch() {
+    navigation.openSearch('')
+  },
+  openAllGuides() {
+    navigation.openSearch('')
+  },
+  openHomeCategory(event) {
+    const value = String(event && event.currentTarget && event.currentTarget.dataset.value || '')
+    const category = HOME_CATEGORIES.find(item => item.value === value)
+    if (!category || this._isUnloaded) return
+    this.setData({ activeHomeCategory: category.value }, () => navigation.openSearch(category.query))
+  },
+  openAssistant() {
+    if (isDevelopRuntime()) {
+      navigation.openGuideAssistant(ASSISTANT_PREVIEW_QUESTION, { previewAnswer: true })
+      return
+    }
+    if (typeof wx.getNetworkType !== 'function') {
+      wx.showToast({ title: 'AI问答正在建设中', icon: 'none' })
+      return
+    }
+    wx.getNetworkType({
+      success(result) {
+        if (result && result.networkType === 'none') {
+          navigation.openGuideAssistant()
+          return
+        }
+        wx.showToast({ title: 'AI问答正在建设中', icon: 'none' })
+      },
+      fail() {
+        wx.showToast({ title: '暂时无法检查网络', icon: 'none' })
+      }
+    })
   },
 
   async loadGuides(options = {}) {

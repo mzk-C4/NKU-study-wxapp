@@ -18,7 +18,6 @@ function normalizeGuideId(value) {
 
 function presentGuide(guide) {
   return {
-    onShow() { theme.onPageShow() },
     ...guide,
     category_label: CATEGORY_LABELS[guide.category] || '学习事务',
     updated_label: guide.updated_at || '未提供',
@@ -59,7 +58,8 @@ Page({
     guide: null
   },
 
-  onLoad(options = {}) { reportVisit('/mp/guide-detail');
+  onLoad(options = {}) {
+    reportVisit('/mp/guide-detail')
     this._isUnloaded = false
     this._requestId = 0
     const id = normalizeGuideId(options.id || options.guideId)
@@ -70,6 +70,7 @@ Page({
     this.setData({ id })
     return this.loadGuide()
   },
+  onShow() { theme.onPageShow() },
   onUnload() {
     this._isUnloaded = true
     this._requestId = (this._requestId || 0) + 1

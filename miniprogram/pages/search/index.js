@@ -41,7 +41,6 @@ function facetPatch(facets, snapshot) {
   const tagOptions = uniqueTextValues(source.tags, snapshot.tag)
   const assessmentOptions = uniqueTextValues(source.assessments, snapshot.assessment)
   return {
-    onShow() { theme.onPageShow() },
     groupOptions,
     groupChoices: ['不限', ...groupOptions],
     groupChoiceIndex: snapshot.group ? groupOptions.indexOf(snapshot.group) + 1 : 0,
@@ -131,7 +130,8 @@ Page({
   },
   searchTimer: null,
 
-  onLoad(options = {}) { reportVisit('/mp/search');
+  onLoad(options = {}) {
+    reportVisit('/mp/search')
     this._isUnloaded = false
     this._requestId = 0
     this._indexRequestId = 0
@@ -142,6 +142,7 @@ Page({
     const facetsPromise = this.loadFacetOptions()
     return Promise.all([indexPromise, facetsPromise])
   },
+  onShow() { theme.onPageShow() },
   onUnload() {
     this._isUnloaded = true
     this._requestId = (this._requestId || 0) + 1
