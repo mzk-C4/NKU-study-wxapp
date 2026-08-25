@@ -1,5 +1,11 @@
 <view class="home">
-  <view class="brand-row"><view><view class="brand-name">NKUStudy</view><view class="brand-sub">课程资料与选课参考</view></view></view>
+  <view class="brand-row">
+    <view class="brand-copy"><view class="brand-name">NKUStudy</view><view class="brand-sub">课程资料与选课参考</view></view>
+    <view class="site-status" wx:if="{{siteStatus}}" aria-label="NKUStudy.top 已安全运行 {{siteStatus.runtimeValue}}，累计访问 {{siteStatus.visitValue}} 次">
+      <view class="site-status-line"><view class="site-status-dot"></view><text class="site-status-label">安全运行</text><text class="site-status-value">{{siteStatus.runtimeValue}}</text></view>
+      <view class="site-status-line"><text class="site-status-label">累计访问</text><text class="site-status-value">{{siteStatus.visitValue}}次</text></view>
+    </view>
+  </view>
   <view class="hero">
     <view class="hero-kicker">南开学生共建</view>
     <view class="hero-title">选课前，先来查一查</view>

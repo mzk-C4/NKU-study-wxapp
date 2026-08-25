@@ -1,4 +1,5 @@
-const { reportVisit } = require('../../utils/visit-report')
+const { reportVisit, getVisitStats } = require('../../utils/visit-report')
+const { buildSiteStatus } = require('../../utils/site-status')
 const theme = require('../../utils/theme')
 const { publicApi } = require('../../services/public-api')
 const navigation = require('../../utils/navigation')
@@ -8,6 +9,7 @@ Page({
     loading: true,
     error: '',
     home: null,
+    siteStatus: null,
     hotCourses: [],
     latestUpdates: [],
     collaborators: [
@@ -19,9 +21,36 @@ Page({
     ]
   },
 
-  onLoad() { reportVisit('/mp/home'); this.loadHome() },
-    onShow() { theme.onPageShow() },
-  onPullDownRefresh() { this.loadHome().finally(() => wx.stopPullDownRefresh()) },
+  onLoad() {
+    this.loadSiteStatus(reportVisit('/mp/home'), true)
+    this.loadHome()
+  },
+  onShow() {
+    theme.onPageShow()
+    this.refreshSiteStatus()
+  },
+  onPullDownRefresh() {
+    this.loadSiteStatus(getVisitStats())
+    this.loadHome().finally(() => wx.stopPullDownRefresh())
+  },
+
+  async loadSiteStatus(statsPromise, fallbackToRead = false) {
+    try {
+      let stats = await statsPromise
+      if (!stats && fallbackToRead) stats = await getVisitStats()
+      const siteStatus = buildSiteStatus(stats)
+      if (!siteStatus) return
+      this.siteStats = stats
+      this.setData({ siteStatus })
+    } catch (_) {
+      // 状态栏失败不影响主页内容和访问。
+    }
+  },
+
+  refreshSiteStatus() {
+    const siteStatus = buildSiteStatus(this.siteStats)
+    if (siteStatus) this.setData({ siteStatus })
+  },
 
   async loadHome() {
     this.setData({ loading: true, error: '' })
