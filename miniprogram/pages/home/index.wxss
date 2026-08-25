@@ -31,5 +31,14 @@
 .update-point-dot { flex: none; width: 10rpx; height: 10rpx; margin-top: 12rpx; border-radius: 50%; background: #D7A63C; }
 .update-point-text { flex: 1; color: #4F4951; font-size: 22rpx; line-height: 1.6; }
 .update-more { margin-top: 14rpx; color: #6B3A8E; font-size: 20rpx; font-weight: 600; }
-.build-note { margin-top: 36rpx; text-align: center; color: #817A84; font-size: 20rpx; }
+.collaborators { overflow: hidden; padding: 26rpx 28rpx 10rpx; border: 1rpx solid #E8E2EC; border-radius: 26rpx; background: #FFFDF8; }
+.collaborators-head { display: flex; align-items: baseline; justify-content: space-between; gap: 20rpx; padding-bottom: 12rpx; }
+.collaborators-title { color: #2B123E; font-size: 27rpx; font-weight: 700; }
+.collaborators-subtitle { color: #817A84; font-size: 19rpx; }
+.collaborator-row { padding: 18rpx 0; border-top: 1rpx solid #EEE9F0; }
+.collaborator-name { color: #2B123E; font-size: 24rpx; font-weight: 700; line-height: 1.4; }
+.collaborator-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 10rpx 14rpx; min-width: 0; margin-top: 7rpx; }
+.collaborator-identity { flex: none; padding: 3rpx 12rpx; border-radius: 999rpx; color: #72510C; background: #F8EFD9; font-size: 19rpx; line-height: 1.5; }
+.collaborator-account { min-width: 0; color: #6F6972; font-size: 20rpx; line-height: 1.5; word-break: break-all; }
+.build-note { margin-top: 28rpx; text-align: center; color: #817A84; font-size: 20rpx; }
 .search-box { width: 280rpx; height: 68rpx; border-radius: 34rpx; font-size: 24rpx; margin: 0 auto; }

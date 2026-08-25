@@ -32,6 +32,19 @@
       </view>
     </view>
     <view class="notice section" wx:if="{{home.announcement}}"><view class="notice-mark">i</view><text>{{home.announcement}}</text></view>
+    <view class="collaborators section" aria-label="协作者名单">
+      <view class="collaborators-head">
+        <view class="collaborators-title">协作者</view>
+        <view class="collaborators-subtitle">感谢共同参与建设</view>
+      </view>
+      <view class="collaborator-row" wx:for="{{collaborators}}" wx:key="id">
+        <view class="collaborator-name">{{item.name}}</view>
+        <view class="collaborator-meta">
+          <text class="collaborator-identity" wx:if="{{item.identity}}">{{item.identity}}</text>
+          <text class="collaborator-account">{{item.account}}</text>
+        </view>
+      </view>
+    </view>
     <view class="build-note">学生共建 · 非南开大学官方平台</view>
   </block>
 </view>
