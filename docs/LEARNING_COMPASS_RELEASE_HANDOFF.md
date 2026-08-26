@@ -1,4 +1,4 @@
-# 学习指南针客户端集成交接
+# 学习指南针客户端生产交接
 
 更新时间：2026-08-25
 
@@ -8,34 +8,41 @@
 - 更新学习指南针首页、五分类列表、指南详情和 AI 助手页面。
 - 增加本机学习信息：入学年份和专业。该信息使用独立版本化存储，不随微信账号同步。
 - 增加学习指南针独立客户端适配器、学院 variant 按需加载、原文件打开器和 AI 客户端状态机。
-- production profile 在真实生产契约启用前拦截 AI 请求；reference profile 可联调本地服务。
+- 生产后端已于2026-08-25正式回交 variant 与 AI 契约；客户端 production profile 使用统一 Bearer 会话调用正式 AI 接口，reference profile 继续用于本地回归。
 
-## 不进入本次 GitHub 变更的内容
+## 不进入 GitHub 的内容
 
 - 学生手册、选课通知、转专业材料等 Markdown 与 PDF/DOC/DOCX 原件。
 - 本地生成知识数据、reference server、Qwen provider 配置和任何密钥。
-- 生产部署、生产数据写入、正式 AI 接口启用和 R2 文件上传。
+- DashScope Key、微信 AppSecret、R2 密钥、管理后台凭据和任何生产秘密。
 
-这些材料已独立打包为 `learning-compass-backend-handoff-20260825.zip`，交由后端负责人实施，不与小程序客户端提交混在一起。
+这些材料已独立交给生产后端负责人实施，不与小程序客户端提交混在一起。
 
-## 后端接入完成条件
-
-后端负责人应以压缩包中的契约、来源清单和本地参考实现为依据，至少提供：
+## 正式生产契约
 
 1. 五分类指南列表与详情：`GET /api/v1/guides`、`GET /api/v1/guides/{guideId}`。
 2. 转专业学院差异：`GET /api/v1/guides/{guideId}/variants/{variantId}`。
-3. AI 回答：`POST /api/v1/guide-assistant/answers`，模型密钥只保存在服务端，客户端不得接触。
-4. 原件 HTTPS 地址：生产客户端只接受约定的公开资源域名，不接受本机路径或回环地址。
-5. 认证、限流、30 秒预算、错误码、日志脱敏和 provider 运维由生产后端负责。
+3. AI 回答：`POST /api/v1/guide-assistant/answers`，必须使用小程序 Bearer Token。
+4. 原件 HTTPS 地址：只接受 `https://resources.nkustudy.top/guide-sources/`。
+5. 认证、持久限流、30秒预算、错误码、日志脱敏和 provider 运维由生产后端负责。
 
-正式契约完成前，客户端的 production AI 门禁不得移除。
+上述正式契约和生产部署已由后端负责人回交；客户端已移除 production AI 门禁。后端仍须在管理页安全配置 DashScope Key，将模型明确设为 `qwen3.7-plus`，完成测试连接和30题真实评测后再允许正式发布。
 
-## 最短本地验收
+## 2026-08-25 客户端只读生产证据
 
-1. 启动后端交接包中的 reference 服务。
-2. 在微信开发者工具的 develop 环境设置本地存储 `nkustudy_api_profile=reference` 并重新编译。
-3. 检查指南首页五分类，分别打开分类列表与指南详情。
-4. 打开转专业指南，切换学院并查看学院原文件。
-5. 在“我的”填写入学年份和专业，再进入 AI 助手提问；回答应显示来源，生产 profile 则应在网络请求前明确拦截。
+- `GET /guides`：18篇，五分类数量3/3/4/5/3。
+- 转专业指南：29个variant，抽查两个学院正文哈希不同。
+- `GET /search-index`：18个顶层指南项，转专业恰好一次。
+- R2 PDF与DOCX来源HEAD均为200，Content-Type分别正确。
+- AI无Token请求：401 `AUTH_REQUIRED`，未触发模型。
 
-微信开发者工具、真机、体验版与生产环境仍需要人工验收，本地 Node 测试不能替代这些结果。
+## 最短生产验收
+
+1. 清除 develop 环境本地存储中的 `nkustudy_api_profile` 并重新编译，确认使用 `https://nkustudy.top/api/v1`。
+2. 检查18篇指南、五分类3/3/4/5/3、转专业29个学院variant及原件打开。
+3. 在“我的”填写入学年份和专业，进入AI助手；未登录时应显示微信登录恢复。
+4. 登录后手动再次发送，正常回答应含适用范围、时效提醒和R2来源。
+5. 验证两类业务拒答、429限流、503降级和断网恢复均不影响普通指南。
+6. 在微信后台确认request域名`https://nkustudy.top`与downloadFile域名`https://resources.nkustudy.top`。
+
+微信开发者工具、真机、体验版与生产环境仍需要人工验收，本地Node测试不能替代这些结果。

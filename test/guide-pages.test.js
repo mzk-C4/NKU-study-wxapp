@@ -351,11 +351,9 @@ test('guide home implements the approved Learning Compass visual contract', () =
 test('guide home search, category and AI controls have honest recoverable behavior', t => {
   const routes = []
   const categories = []
-  const toasts = []
   installWx(t, {
     navigateTo(options) { routes.push(options.url) },
-    showToast(options) { toasts.push(options) },
-    getNetworkType(options) { options.success({ networkType: 'wifi' }) }
+    getNetworkType() { assert.fail('guide AI entry must not probe network') }
   })
   replaceMethod(t, navigation, 'openGuideCategory', category => categories.push(category))
   const page = createPage(guidesDefinition)
@@ -366,11 +364,9 @@ test('guide home search, category and AI controls have honest recoverable behavi
   page.openAssistant()
 
   assert.equal(page.data.activeHomeCategory, '考试与成绩')
-  assert.deepEqual(routes, ['/pages/search/index?q='])
+  assert.deepEqual(routes, ['/pages/search/index?q=', '/pages/guide-assistant/index'])
   assert.deepEqual(categories, ['考试与成绩', ''])
   assert.equal(page.data.guideContextLabel, '年级未设置 · 专业未设置')
-  assert.deepEqual(toasts.map(item => item.title), ['AI问答正在建设中'])
-  assert.equal(toasts[0].icon, 'none')
 })
 
 test('rapid guide category changes are latest-request-wins and stale errors stay silent', async t => {

@@ -84,7 +84,15 @@ test('AI assistant offline page is registered and matches the approved recovery 
   assert.match(template, /今天想了解什么/)
   assert.match(template, /bindtap="chooseExampleQuestion"/)
   assert.match(template, /disabled="{{requestPending \|\| roundLimitReached/)
+  assert.match(template, /class="new-topic-logo"/)
+  assert.match(template, /class="new-topic-logo-face"/)
+  assert.match(template, /class="composer-notice" wx:if="{{statusMessage}}" aria-live="polite"/)
   assert.match(styles, /generating-card/)
+  assert.match(styles, /@keyframes generating-dot-wave/)
+  assert.match(styles, /\.generating-dot:nth-child\(10\)[^}]*animation-delay:\s*1\.08s/s)
+  assert.match(styles, /@media \(prefers-reduced-motion:\s*reduce\)/)
+  assert.match(styles, /\.new-topic-profile\s*\{[^}]*width:\s*100%\s*!important[^}]*min-width:\s*100%[^}]*max-width:\s*100%/s)
+  assert.match(styles, /\.new-topic-profile > text:nth-child\(2\)\s*\{[^}]*white-space:\s*nowrap[^}]*text-overflow:\s*ellipsis/s)
   assert.match(styles, /refusal-card/)
   assert.match(styles, /new-topic-example/)
   assert.match(template, /bindtap="openConversationHistory"/)
@@ -499,7 +507,7 @@ test('answer actions copy the approved response while source stays a future navi
   assert.match(copied[0], /下一学期开学3周内/)
   assert.equal(copied.length, 1)
   assert.equal(page.data.answerFeedback, 'helpful')
-  assert.deepEqual(toasts, ['回答已复制', '原文跳转正在建设中', '感谢反馈'])
+  assert.deepEqual(toasts, ['回答已复制', '回答中没有可打开的来源', '感谢反馈'])
 })
 
 test('inline question editing can cancel or send in the approved offline preview', async t => {
@@ -579,44 +587,20 @@ test('manual retry only leaves the offline state after a confirmed connection', 
   assert.deepEqual(toasts.map(item => item.title), ['网络已恢复，请再次发送'])
 })
 
-test('guide AI entry stays honest online and opens the approved fallback offline', t => {
-  const routes = []
-  const toasts = []
-  const originalOpenAssistant = navigation.openGuideAssistant
-  navigation.openGuideAssistant = (question = '') => routes.push(question)
-  t.after(() => { navigation.openGuideAssistant = originalOpenAssistant })
-  let networkType = 'wifi'
-  installWx(t, {
-    getNetworkType(options) { options.success({ networkType }) },
-    showToast(options) { toasts.push(options) }
-  })
-  const page = createPage(guidesDefinition)
-
-  page.openAssistant()
-  networkType = 'none'
-  page.openAssistant()
-
-  assert.deepEqual(toasts.map(item => item.title), ['AI问答正在建设中'])
-  assert.deepEqual(routes, [''])
-})
-
-test('develop opens the approved answer preview without changing trial or release behavior', t => {
+test('guide AI entry opens the real assistant without probing network or runtime profile', t => {
   const calls = []
   const originalOpenAssistant = navigation.openGuideAssistant
   navigation.openGuideAssistant = (question, options) => calls.push({ question, options })
   t.after(() => { navigation.openGuideAssistant = originalOpenAssistant })
   installWx(t, {
-    getAccountInfoSync() { return { miniProgram: { envVersion: 'develop' } } },
-    getNetworkType() { assert.fail('develop visual preview must not depend on live network state') }
+    getAccountInfoSync() { return { miniProgram: { envVersion: 'release' } } },
+    getNetworkType() { assert.fail('guide entry must not probe network before opening the assistant') }
   })
   const page = createPage(guidesDefinition)
 
   page.openAssistant()
 
-  assert.deepEqual(calls, [{
-    question: '我对一门课程的成绩有异议，应该怎么申请复核？',
-    options: { previewAnswer: true }
-  }])
+  assert.deepEqual(calls, [{ question: undefined, options: undefined }])
 })
 
 test('network-error preview renders the approved state even while the developer machine is online', async t => {
@@ -689,7 +673,6 @@ test('reference page waits for the controller, renders real data, and restores o
   ]
   const page = createPage(assistantDefinition, {
     newTopicMode: true,
-    buildingMode: false,
     draft: '第一轮问题',
     canSend: true
   })
@@ -731,8 +714,8 @@ test('reference page waits for the controller, renders real data, and restores o
 })
 
 test('401 recovery logs in once and leaves the original question for manual retry', async t => {
-  const toasts = []
-  installWx(t, { showToast(options) { toasts.push(options.title) } })
+  let toastCalls = 0
+  installWx(t, { showToast() { toastCalls += 1 } })
   let submitCalls = 0
   let loginCalls = 0
   const page = createPage(assistantDefinition, {
@@ -750,7 +733,8 @@ test('401 recovery logs in once and leaves the original question for manual retr
   assert.equal(submitCalls, 0)
   assert.equal(page.data.draft, '原问题')
   assert.equal(page.data.canSend, true)
-  assert.deepEqual(toasts, ['登录成功，请再次发送'])
+  assert.equal(page.data.statusMessage, '登录成功，请再次点击发送按钮继续提问。')
+  assert.equal(toastCalls, 0)
 })
 
 test('a failed follow-up keeps every previously completed message visible', t => {

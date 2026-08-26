@@ -1,6 +1,5 @@
 const navigation = require('../../utils/navigation')
 const learningProfile = require('../../utils/learning-profile')
-const config = require('../../config')
 const assistantRuntime = require('../../features/guide-assistant/runtime')
 const {
   MAX_ROUNDS,
@@ -210,7 +209,6 @@ Page({
     previewMode: false,
     previewState: '',
     answerMode: false,
-    buildingMode: false,
     requestPending: false,
     assistantState: 'idle',
     messages: [],
@@ -219,6 +217,7 @@ Page({
     roundLabel: '0/10',
     roundLimitReached: false,
     inputError: '',
+    statusMessage: '',
     responseAnswer: '',
     responseScope: '',
     responseFreshness: '',
@@ -261,15 +260,14 @@ Page({
       ? requestedPreview
       : ''
     const previewMode = Boolean(previewState)
-    const productionBuildMode = !previewMode && config.apiProfile !== 'reference'
     const storedConversation = normalizeHistory(stored.history).find(item => (
       item.question === boundedQuestion(stored.lastQuestion) ||
       item.latestQuestion === boundedQuestion(stored.lastQuestion)
     ))
     const storedMessages = storedConversation ? storedConversation.messages : []
     const storedExchange = lastCompletedExchange(storedMessages)
-    const answerMode = previewState === 'answer' || (!previewMode && !productionBuildMode && storedConversation && storedConversation.state === 'answer')
-    const restoredState = !previewMode && !productionBuildMode && storedConversation ? storedConversation.state : ''
+    const answerMode = previewState === 'answer' || (!previewMode && storedConversation && storedConversation.state === 'answer')
+    const restoredState = !previewMode && storedConversation ? storedConversation.state : ''
     const visualQuestion = previewState === 'generating'
       ? optionQuestion || ANSWER_PREVIEW_QUESTION
       : previewState === 'refusal'
@@ -292,8 +290,7 @@ Page({
       previewMode,
       previewState: previewState || restoredState,
       answerMode,
-      buildingMode: productionBuildMode,
-      assistantState: previewState || (productionBuildMode ? 'building' : storedConversation ? storedConversation.state : 'idle'),
+      assistantState: previewState || (storedConversation ? storedConversation.state : 'idle'),
       messages: storedMessages,
       previousTurns: this.presentPreviousTurns(storedMessages),
       completedRoundCount,
@@ -305,7 +302,7 @@ Page({
       responseReason: restoredResponse ? restoredResponse.reason : '',
       responseCitations: restoredResponse ? this.presentCitations(restoredResponse.citations) : [],
       learningProfileLabel: learningProfile.formatLabel(currentLearningProfile),
-      newTopicMode: !productionBuildMode && (previewState === 'new-topic' || (!previewState && !lastQuestion)),
+      newTopicMode: previewState === 'new-topic' || (!previewState && !lastQuestion),
       history,
       canSend: Boolean(boundedQuestion(draft))
     })
@@ -390,7 +387,7 @@ Page({
   },
 
   inputQuestion(event) {
-    if (this._isUnloaded || this.data.requestPending || this.data.roundLimitReached || this.data.buildingMode || this.data.previewState === 'generating' || (this.data.previewMode && this.data.previewState === 'refusal')) return
+    if (this._isUnloaded || this.data.requestPending || this.data.roundLimitReached || this.data.previewState === 'generating' || (this.data.previewMode && this.data.previewState === 'refusal')) return
     const draft = String(event && event.detail ? event.detail.value : '').slice(0, MAX_QUESTION_LENGTH)
     this.setData({ draft, canSend: Boolean(boundedQuestion(draft)), inputError: '' })
     saveLocalState(this.data.lastQuestion, draft, this.data.history)
@@ -416,10 +413,6 @@ Page({
 
   async sendQuestion() {
     if (this._isUnloaded || this.data.requestPending || this.data.roundLimitReached) return false
-    if (this.data.buildingMode) {
-      wx.showToast({ title: 'AI问答正在建设中', icon: 'none' })
-      return false
-    }
     if (['generating', 'refusal'].includes(this.data.previewState) && !this.data.previewMode) return false
     const question = boundedQuestion(this.data.draft)
     if (!question) {
@@ -444,9 +437,10 @@ Page({
       return true
     }
     if (this.data.previewMode) {
-      wx.showToast({ title: 'AI问答正在建设中', icon: 'none' })
+      wx.showToast({ title: '当前为视觉预览，不能发送', icon: 'none' })
       return false
     }
+    if (this.data.statusMessage) this.setData({ statusMessage: '' })
     const networkType = await getNetworkType()
     if (this._isUnloaded) return false
     const connected = hasConnection(networkType)
@@ -491,6 +485,7 @@ Page({
       showRecoveryActions: false,
       recoveryTitle: '',
       recoveryCopy: '',
+      statusMessage: '',
       inputError: '',
       canSend: false,
       previousTurns: this.presentPreviousTurns(this.data.messages, true)
@@ -669,9 +664,9 @@ Page({
       recoveryCopy: '',
       showRecoveryActions: false,
       draft: this.data.lastQuestion,
-      canSend: Boolean(this.data.lastQuestion)
+      canSend: Boolean(this.data.lastQuestion),
+      statusMessage: '登录成功，请再次点击发送按钮继续提问。'
     })
-    wx.showToast({ title: '登录成功，请再次发送', icon: 'success' })
     return true
   },
 
@@ -1024,10 +1019,6 @@ Page({
 
   startNewTopic() {
     if (this._isUnloaded) return
-    if (this.data.buildingMode) {
-      wx.showToast({ title: 'AI问答正在建设中', icon: 'none' })
-      return
-    }
     const previousState = this.data.previewState === 'refusal'
       ? 'refusal'
       : this.data.answerMode ? 'answer' : 'network-error'
@@ -1102,8 +1093,32 @@ Page({
     })
   },
 
-  regenerateAnswer() {
-    wx.showToast({ title: 'AI问答正在建设中', icon: 'none' })
+  async regenerateAnswer() {
+    if (this._isUnloaded || this.data.requestPending || this.data.previewMode) return false
+    const question = boundedQuestion(this.data.lastQuestion)
+    if (!question) return false
+    const messages = normalizeCompletedMessages(this.data.messages)
+    const previousMessages = messages.length >= 2 ? messages.slice(0, -2) : []
+    const rounds = completedRounds(previousMessages)
+    this.setData({
+      messages: previousMessages,
+      completedRoundCount: rounds,
+      roundLabel: `${rounds}/${MAX_ROUNDS}`,
+      roundLimitReached: false,
+      draft: question,
+      canSend: true,
+      previewState: '',
+      assistantState: 'idle',
+      answerMode: false,
+      showRecoveryActions: false,
+      responseAnswer: '',
+      responseScope: '',
+      responseFreshness: '',
+      responseReason: '',
+      responseCitations: [],
+      previousTurns: this.presentPreviousTurns(previousMessages, true)
+    })
+    return this.sendQuestion()
   },
 
   rateAnswer(event) {
@@ -1117,7 +1132,7 @@ Page({
     const id = String(event && event.currentTarget && event.currentTarget.dataset.id || '')
     const source = this.data.responseCitations.find(item => item.id === id) || this.data.responseCitations[0]
     if (!source) {
-      wx.showToast({ title: '原文跳转正在建设中', icon: 'none' })
+      wx.showToast({ title: '回答中没有可打开的来源', icon: 'none' })
       return false
     }
     return this._sourceOpener.open(source, {
@@ -1219,8 +1234,26 @@ Page({
       connected = hasConnection(networkType)
     }
     if (connected) {
-      wx.showToast({ title: 'AI问答正在建设中', icon: 'none' })
-      return false
+      const messages = normalizeCompletedMessages(this.data.messages)
+      const previousMessages = messages.length >= 2 ? messages.slice(0, -2) : []
+      const rounds = completedRounds(previousMessages)
+      this.setData({
+        editingQuestion: false,
+        editingQuestionValue: '',
+        canSendEditedQuestion: false,
+        focusQuestionEditor: false,
+        messages: previousMessages,
+        completedRoundCount: rounds,
+        roundLabel: `${rounds}/${MAX_ROUNDS}`,
+        roundLimitReached: false,
+        previewState: '',
+        assistantState: 'idle',
+        answerMode: false,
+        draft: question,
+        canSend: true,
+        previousTurns: this.presentPreviousTurns(previousMessages, true)
+      })
+      return this.sendQuestion()
     }
 
     this.setData({

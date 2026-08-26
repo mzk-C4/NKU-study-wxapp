@@ -305,10 +305,12 @@
       <view class="new-topic-avatar" aria-hidden="true">
         <view class="new-topic-spark new-topic-spark--left"></view>
         <view class="new-topic-spark new-topic-spark--right"></view>
-        <view class="answer-avatar">
-          <view class="answer-eye answer-eye--left"></view>
-          <view class="answer-eye answer-eye--right"></view>
-          <view class="answer-smile"></view>
+        <view class="new-topic-logo">
+          <view class="new-topic-logo-face">
+            <view class="new-topic-logo-eye new-topic-logo-eye--left"></view>
+            <view class="new-topic-logo-eye new-topic-logo-eye--right"></view>
+            <view class="new-topic-logo-smile"></view>
+          </view>
         </view>
       </view>
       <view class="new-topic-title">今天想了解什么？</view>
@@ -342,8 +344,8 @@
 
     <view class="building-state" wx:else>
       <view class="building-mark">AI</view>
-      <view class="building-title">AI 问答正在建设中</view>
-      <view class="building-copy">普通指南和搜索已经可以使用。</view>
+      <view class="building-title">可以继续提问</view>
+      <view class="building-copy">我会检索现有资料并在回答中附上来源。</view>
     </view>
 
     <view class="continue-section" wx:if="{{networkError || showRecoveryActions}}">
@@ -362,13 +364,14 @@
   </view>
 
   <view class="composer-area">
+    <view class="composer-notice" wx:if="{{statusMessage}}" aria-live="polite">{{statusMessage}}</view>
     <view class="composer">
       <input
         class="composer-input"
         value="{{draft}}"
         maxlength="1000"
         focus="{{focusInput}}"
-        disabled="{{requestPending || roundLimitReached || buildingMode || assistantState === 'rate-limited' || (previewMode && previewState === 'generating')}}"
+        disabled="{{requestPending || roundLimitReached || assistantState === 'rate-limited' || (previewMode && previewState === 'generating')}}"
         confirm-type="send"
         placeholder="{{answerMode ? '继续追问这个问题' : '给学习指南针发送消息'}}"
         placeholder-class="composer-placeholder"
@@ -379,7 +382,7 @@
         bindconfirm="sendQuestion"
       />
       <button class="attachment-button" disabled="{{requestPending || previewState === 'generating'}}" aria-label="附件功能暂未开放" hover-class="icon-pressed" bindtap="showAttachmentUnavailable"><view class="paperclip-icon"></view></button>
-      <button class="send-button" aria-label="发送问题" disabled="{{!canSend || requestPending || roundLimitReached || buildingMode || assistantState === 'rate-limited' || previewState === 'generating'}}" hover-class="send-button--pressed" bindtap="sendQuestion"><text>↑</text></button>
+      <button class="send-button" aria-label="发送问题" disabled="{{!canSend || requestPending || roundLimitReached || assistantState === 'rate-limited' || previewState === 'generating'}}" hover-class="send-button--pressed" bindtap="sendQuestion"><text>↑</text></button>
     </view>
     <view class="composer-error" wx:if="{{inputError}}" aria-live="assertive">{{inputError}}</view>
     <view class="composer-error" wx:if="{{roundLimitReached}}">已达到10轮上限，请新开话题继续。</view>
