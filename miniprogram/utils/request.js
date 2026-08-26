@@ -17,7 +17,9 @@ function request(path, options = {}) {
       url: `${config.apiBaseUrl}${path}`,
       method: options.method || 'GET',
       data: options.data,
-      timeout: config.requestTimeout,
+      timeout: Number.isFinite(Number(options.timeout)) && Number(options.timeout) > 0
+        ? Number(options.timeout)
+        : config.requestTimeout,
       header: {
         'content-type': 'application/json',
         ...(token ? { authorization: `Bearer ${token}` } : {}),

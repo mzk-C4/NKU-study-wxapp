@@ -70,6 +70,8 @@ if (/page_size\s*:\s*(?:10[1-9]|1[1-9]\d|[2-9]\d{2,})/.test(miniJavaScript)) fai
 
 const runtimeJavaScript = walk(miniRoot).filter(file => file.endsWith('.js'))
 const publicApiOwner = path.join(miniRoot, 'services', 'public-api.js')
+const learningCompassApiOwner = path.join(miniRoot, 'features', 'learning-compass', 'api.js')
+const publicApiOwners = new Set([publicApiOwner, learningCompassApiOwner])
 const adapterOnlyEndpoints = [
   ['搜索索引', /['"`]\/search-index(?:['"`?#])/],
   ['指南读取', /['"`]\/guides(?:\/|\?|['"`])/],
@@ -78,7 +80,7 @@ const adapterOnlyEndpoints = [
   ['收藏', /['"`]\/favorites(?:\/|\?|['"`])/]
 ]
 for (const file of runtimeJavaScript) {
-  if (file === publicApiOwner) continue
+  if (publicApiOwners.has(file)) continue
   const source = fs.readFileSync(file, 'utf8')
   for (const [name, pattern] of adapterOnlyEndpoints) {
     if (pattern.test(source)) fail(`${name}路径只能由 public-api adapter 持有：${path.relative(root, file)}`)

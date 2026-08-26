@@ -1,1 +1,5 @@
-{ "navigationBarTitleText": "选课指南" }
+{
+  "navigationBarTitleText": "学习指南针",
+  "navigationBarBackgroundColor": "#FFFFFF",
+  "navigationBarTextStyle": "black"
+}
