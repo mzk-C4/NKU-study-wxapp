@@ -763,3 +763,52 @@ test('a failed follow-up keeps every previously completed message visible', t =>
   assert.equal(page.data.previousTurns[0].answer, '第一轮回答')
   assert.equal(page.data.recoveryTitle, 'AI服务暂时不可用')
 })
+
+test('AI response blocks are rebuilt for answers, refusals, restored history and every reset path', async t => {
+  const responses = [
+    { refused: false, answer: '# 成绩复核\n| 材料 | 时限 |\n| --- | --- |\n| **申请** | `3周` |\n<script>alert(1)</script>', applicable_scope: '', freshness_notice: '', citations: [] },
+    { refused: true, reason: 'INSUFFICIENT_EVIDENCE', answer: '暂无**足够依据**', applicable_scope: '', freshness_notice: '', citations: [] },
+    { refused: false, answer: '重新生成的回答', applicable_scope: '', freshness_notice: '', citations: [] },
+    { refused: false, answer: '编辑后的回答', applicable_scope: '', freshness_notice: '', citations: [] }
+  ]
+  installWx(t)
+  const page = createPage(assistantDefinition, { newTopicMode: true, draft: '成绩复核怎么申请？', canSend: true })
+  page._assistantController = createGuideAssistantController({ api: { async askGuideAssistant() { return responses.shift() } } })
+
+  await page.sendQuestion()
+  assert.equal(page.data.responseAnswer.includes('成绩复核'), true)
+  assert.equal(page.data.responseBlocks.some(block => block.type === 'table'), true)
+  assert.equal(page.data.responseBlocks.length > 0, true)
+  assert.equal(page.data.responseBlocks.at(-1).runs[0].html.includes('&lt;script&gt;'), true)
+
+  page.inputQuestion({ detail: { value: '没有文件依据的问题' } })
+  await page.sendQuestion()
+  assert.equal(page.data.previewState, 'refusal')
+  assert.equal(page.data.responseBlocks.length > 0, true)
+  const conversationKey = page.data.history[0].question
+  page.startNewTopic()
+  assert.deepEqual(page.data.responseBlocks, [])
+  page.selectHistory({ currentTarget: { dataset: { question: conversationKey } } })
+  assert.equal(page.data.responseBlocks.length > 0, true)
+  assert.equal(page.data.responseAnswer, '暂无**足够依据**')
+  assert.match(page.data.responseBlocks[0].runs.map(run => run.html || '').join(''), /<b>足够依据<\/b>/)
+
+  await page.regenerateAnswer()
+  assert.equal(page.data.responseAnswer, '重新生成的回答')
+  assert.equal(page.data.responseBlocks[0].runs[0].html, '重新生成的回答')
+  page.editQuestion()
+  page.inputEditedQuestion({ detail: { value: '编辑后的提问' } })
+  await page.submitEditedQuestion()
+  assert.equal(page.data.responseAnswer, '编辑后的回答')
+  assert.equal(page.data.responseBlocks[0].runs[0].html, '编辑后的回答')
+  page.applyAssistantFailure('service-error', '断网后重试', new Error('hidden'))
+  assert.equal(page.data.responseAnswer, '')
+  assert.deepEqual(page.data.responseBlocks, [])
+  page.startNewTopic()
+  page.deleteHistoryByQuestion(conversationKey)
+  assert.deepEqual(page.data.responseBlocks, [])
+
+  const template = fs.readFileSync(path.join(projectRoot, 'miniprogram/pages/guide-assistant/index.wxml'), 'utf8')
+  assert.match(template, /wx:for="\{\{responseBlocks\}\}"/)
+  assert.doesNotMatch(template, />\{\{responseAnswer\}\}</)
+})

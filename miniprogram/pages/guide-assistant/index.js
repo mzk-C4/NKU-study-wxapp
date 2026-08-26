@@ -8,6 +8,7 @@ const {
   lastCompletedExchange
 } = require('../../features/guide-assistant/controller')
 const { createSourceOpener } = require('../../utils/source-opener')
+const { parseMarkdown, validHttpsUrl } = require('../../utils/markdown')
 
 const STORAGE_KEY = 'nkustudy_guide_assistant_local_state'
 const MAX_QUESTION_LENGTH = 1000
@@ -219,6 +220,7 @@ Page({
     inputError: '',
     statusMessage: '',
     responseAnswer: '',
+    responseBlocks: parseMarkdown(''),
     responseScope: '',
     responseFreshness: '',
     responseReason: '',
@@ -297,6 +299,7 @@ Page({
       roundLabel: `${completedRoundCount}/${MAX_ROUNDS}`,
       roundLimitReached: completedRoundCount >= MAX_ROUNDS,
       responseAnswer: restoredResponse ? restoredResponse.content : '',
+      responseBlocks: parseMarkdown(restoredResponse ? restoredResponse.content : ''),
       responseScope: restoredResponse ? restoredResponse.applicable_scope : '',
       responseFreshness: restoredResponse ? restoredResponse.freshness_notice : '',
       responseReason: restoredResponse ? restoredResponse.reason : '',
@@ -479,6 +482,12 @@ Page({
       previewState: 'generating',
       assistantState: 'generating',
       answerMode: false,
+      responseAnswer: '',
+      responseBlocks: parseMarkdown(''),
+      responseScope: '',
+      responseFreshness: '',
+      responseReason: '',
+      responseCitations: [],
       newTopicMode: false,
       networkError: false,
       networkConnected: true,
@@ -515,6 +524,7 @@ Page({
         roundLabel: `${rounds}/${MAX_ROUNDS}`,
         roundLimitReached: rounds >= MAX_ROUNDS,
         responseAnswer: response.answer || '',
+        responseBlocks: parseMarkdown(response.answer || ''),
         responseScope: response.applicable_scope || '',
         responseFreshness: response.freshness_notice || '',
         responseReason: response.reason || '',
@@ -529,6 +539,20 @@ Page({
     }
 
     return this.applyAssistantFailure(result.state, question, result.error)
+  },
+
+  presentMarkdown(value) { return parseMarkdown(value) },
+
+  openMarkdownLink(event) {
+    const href = validHttpsUrl(event && event.currentTarget && event.currentTarget.dataset.href)
+    if (!href || typeof wx.setClipboardData !== 'function') return
+    wx.setClipboardData({ data: href, success: () => wx.showToast({ title: '安全链接已复制', icon: 'none' }) })
+  },
+
+  openMarkdownLink(event) {
+    const href = validHttpsUrl(event && event.currentTarget && event.currentTarget.dataset.href)
+    if (!href || typeof wx.setClipboardData !== 'function') return
+    wx.setClipboardData({ data: href, success: () => wx.showToast({ title: '安全链接已复制', icon: 'none' }) })
   },
 
   presentCitations(citations) {
@@ -552,6 +576,7 @@ Page({
         key: `turn-${index / 2 + 1}`,
         question: normalized[index].content,
         answer: response.content,
+        blocks: parseMarkdown(response.content || ''),
         refused: response.refused,
         scope: response.applicable_scope
       })
@@ -561,6 +586,14 @@ Page({
 
   applyAssistantFailure(state, question, error) {
     const safeQuestion = boundedQuestion(question)
+    this.setData({
+      responseAnswer: '',
+      responseBlocks: parseMarkdown(''),
+      responseScope: '',
+      responseFreshness: '',
+      responseReason: '',
+      responseCitations: []
+    })
     if (state === 'invalid-question') {
       this.setData({
         previewState: '',
@@ -780,6 +813,7 @@ Page({
       roundLabel: `${rounds}/${MAX_ROUNDS}`,
       roundLimitReached: rounds >= MAX_ROUNDS,
       responseAnswer: exchange ? exchange.response.content : '',
+      responseBlocks: parseMarkdown(exchange ? exchange.response.content : ''),
       responseScope: exchange ? exchange.response.applicable_scope : '',
       responseFreshness: exchange ? exchange.response.freshness_notice : '',
       responseReason: exchange ? exchange.response.reason : '',
@@ -997,6 +1031,7 @@ Page({
       roundLabel: `0/${MAX_ROUNDS}`,
       roundLimitReached: false,
       responseAnswer: '',
+      responseBlocks: parseMarkdown(''),
       responseScope: '',
       responseFreshness: '',
       responseReason: '',
@@ -1060,6 +1095,7 @@ Page({
       roundLimitReached: false,
       inputError: '',
       responseAnswer: '',
+      responseBlocks: parseMarkdown(''),
       responseScope: '',
       responseFreshness: '',
       responseReason: '',
@@ -1112,6 +1148,7 @@ Page({
       answerMode: false,
       showRecoveryActions: false,
       responseAnswer: '',
+      responseBlocks: parseMarkdown(''),
       responseScope: '',
       responseFreshness: '',
       responseReason: '',

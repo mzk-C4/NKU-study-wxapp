@@ -331,3 +331,12 @@
 - [x] 本轮客户端修改已整理为第二次提交并推送当前功能分支。
 - [ ] PR创建、非作者审核、合并与正式发版。
 - [ ] `教通字〔2026〕18号`原件后续补入；不阻塞首期功能上线，但阻止宣称材料零缺口。
+
+## 十五、2026-08-26 学习指南针客户端质量闭环
+
+- 本轮仅核对并完善客户端 Markdown、AI `responseBlocks`、指南正文结构化渲染、章节导航、内联反馈和五分类展示；未更改 API 契约、生产配置或后端状态。
+- AI 正常回答、业务拒答、历史恢复/选择、重新生成、编辑重问、新话题、删除会话和传输失败均不会复用旧 `responseBlocks`；回答、拒答和历史答案都通过结构化块渲染。
+- 指南及学院 variant 正文保持原始 `body` 兼容字段，同时由 `blocks`、`previewBlocks`、`visibleBlocks` 控制渲染；章节锚点稳定唯一，切换、展开和 variant 更新会重新测量。
+- 同页反馈仅调用现有 `feedback-api/submit`，只提交 `title`、`content`、`type`、`resourceRef`；内容附带指南、当前章节与可用来源上下文，不离开当前页。
+- 自动化证据：新增 Markdown、AI blocks、章节/导航、反馈与图标布局回归；`npm.cmd test`、`npm.cmd run check:miniprogram` 和 `node scripts/release-preflight.js` 均通过。人工微信验收按本轮范围未执行。
+- 30题生产评测候选继续保持未批准、未读取、未运行，且本轮没有生产 AI 调用或 Token 读取。`project.config.json` 是既有用户改动，未触碰；其既有尾随空白仍使全局 `git diff --check` 失败。

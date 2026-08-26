@@ -123,7 +123,9 @@
         <view class="answer-question-bubble previous-turn-question">{{turn.question}}</view>
         <view class="answer-card previous-turn-answer">
           <view class="previous-turn-label">{{turn.refused ? '学习指南针拒答' : '学习指南针回答'}}</view>
-          <view class="answer-paragraph">{{turn.answer}}</view>
+          <view class="answer-markdown">
+            <view wx:for="{{turn.blocks}}" wx:key="id" wx:for-item="block" class="answer-paragraph"><block wx:for="{{block.runs}}" wx:key="id" wx:for-item="run"><button wx:if="{{run.kind === 'link'}}" class="answer-markdown-link" data-href="{{run.href}}" bindtap="openMarkdownLink">{{run.text}}</button><rich-text wx:else nodes="{{run.html}}"></rich-text></block></view>
+          </view>
           <view class="answer-reminder" wx:if="{{turn.scope}}"><view class="answer-info-icon">i</view><text>适用范围：{{turn.scope}}</text></view>
         </view>
       </view>
@@ -142,8 +144,14 @@
           <view class="answer-heading-title">学习指南针回答</view>
         </view>
 
-        <view class="answer-paragraph" wx:if="{{responseAnswer}}">
-          {{responseAnswer}}
+        <view class="answer-markdown" wx:if="{{responseAnswer}}">
+          <block wx:for="{{responseBlocks}}" wx:key="id" wx:for-item="block">
+            <view wx:if="{{block.type === 'heading'}}" class="answer-markdown-heading"><block wx:for="{{block.runs}}" wx:key="id" wx:for-item="run"><button wx:if="{{run.kind === 'link'}}" class="answer-markdown-link" data-href="{{run.href}}" bindtap="openMarkdownLink">{{run.text}}</button><rich-text wx:else nodes="{{run.html}}"></rich-text></block></view>
+            <view wx:elif="{{block.type === 'paragraph'}}" class="answer-paragraph"><block wx:for="{{block.runs}}" wx:key="id" wx:for-item="run"><button wx:if="{{run.kind === 'link'}}" class="answer-markdown-link" data-href="{{run.href}}" bindtap="openMarkdownLink">{{run.text}}</button><rich-text wx:else nodes="{{run.html}}"></rich-text></block></view>
+            <view wx:elif="{{block.type === 'list-item'}}" class="answer-markdown-list"><text>{{block.marker}}</text><view><block wx:for="{{block.runs}}" wx:key="id" wx:for-item="run"><rich-text nodes="{{run.html}}"></rich-text></block></view></view>
+            <view wx:elif="{{block.type === 'blockquote'}}" class="answer-markdown-quote"><block wx:for="{{block.runs}}" wx:key="id" wx:for-item="run"><rich-text nodes="{{run.html}}"></rich-text></block></view>
+            <scroll-view wx:elif="{{block.type === 'table'}}" class="answer-markdown-table-scroll" scroll-x><view class="answer-markdown-table"><view class="answer-markdown-row answer-markdown-row--head"><view wx:for="{{block.headers}}" wx:key="id" class="answer-markdown-cell"><block wx:for="{{item.runs}}" wx:key="id" wx:for-item="run"><rich-text nodes="{{run.html}}"></rich-text></block></view></view><view wx:for="{{block.rows}}" wx:key="id" class="answer-markdown-row"><view wx:for="{{item.cells}}" wx:key="id" class="answer-markdown-cell"><block wx:for="{{item.runs}}" wx:key="id" wx:for-item="run"><rich-text nodes="{{run.html}}"></rich-text></block></view></view></view></scroll-view>
+          </block>
         </view>
         <block wx:else>
         <view class="answer-paragraph">
@@ -256,7 +264,7 @@
           </view>
           <view class="refusal-heading-title">现有资料暂时无法回答</view>
         </view>
-        <view class="refusal-copy" wx:if="{{responseAnswer}}">{{responseAnswer}}</view>
+        <view wx:if="{{responseBlocks.length}}" class="answer-markdown"><view wx:for="{{responseBlocks}}" wx:key="id" wx:for-item="block" class="refusal-copy"><block wx:for="{{block.runs}}" wx:key="id" wx:for-item="run"><button wx:if="{{run.kind === 'link'}}" class="answer-markdown-link" data-href="{{run.href}}" bindtap="openMarkdownLink">{{run.text}}</button><rich-text wx:else nodes="{{run.html}}"></rich-text></block></view></view>
         <block wx:else>
           <view class="refusal-copy">当前已发布指南没有足够依据回答这个问题。</view>
           <view class="refusal-copy">我不会根据模型记忆补充校内规则。</view>

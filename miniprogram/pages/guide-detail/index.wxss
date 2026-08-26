@@ -124,3 +124,36 @@ button::after { border: 0; }
 .transfer-tabbar-item > text:first-child { font-size: 32rpx; }
 .transfer-tabbar-item--active { color: #522093; font-weight: 750; background: linear-gradient(145deg, #F5EFFB, #EEE4F8); border-radius: 15rpx; }
 .transfer-tabbar-item--pressed { opacity: .72; }
+
+/* Shared safe Markdown blocks. Tables retain a readable column width and scroll horizontally. */
+.markdown-heading { margin: 24rpx 0 12rpx; color: #2E2440; font-weight: 750; line-height: 1.45; }
+.markdown-heading--1, .markdown-heading--2 { font-size: 28rpx; }
+.markdown-heading--3, .markdown-heading--4 { font-size: 25rpx; }
+.markdown-paragraph, .markdown-quote { margin: 0 0 17rpx; color: #3F394A; font-size: 24rpx; line-height: 1.78; white-space: pre-wrap; }
+.markdown-list-item { display: flex; gap: 12rpx; margin: 0 0 12rpx; color: #3F394A; font-size: 24rpx; line-height: 1.72; }
+.markdown-marker { flex: 0 0 auto; color: #5D259C; font-weight: 700; }
+.markdown-quote { padding: 16rpx 20rpx; border-left: 6rpx solid #B89ADD; border-radius: 0 14rpx 14rpx 0; background: #F8F5FB; }
+.markdown-link { display: inline; margin: 0; padding: 0; color: #522093; background: transparent; font-size: inherit; line-height: inherit; text-decoration: underline; }
+.markdown-table-scroll { width: 100%; margin: 18rpx 0; white-space: nowrap; }
+.markdown-table { display: table; min-width: max-content; border: 1rpx solid #DDD4E7; border-radius: 14rpx; overflow: hidden; background: #FFF; }
+.markdown-table-row { display: table-row; }
+.markdown-table-row--head { color: #3E1B71; background: #F0E8F8; font-weight: 700; }
+.markdown-table-cell { display: table-cell; min-width: 156rpx; padding: 16rpx 18rpx; border-right: 1rpx solid #E5DFEB; border-bottom: 1rpx solid #E5DFEB; color: #3F394A; font-size: 22rpx; line-height: 1.55; white-space: normal; vertical-align: top; }
+
+.detail-feedback { display:block; margin-top:30rpx; padding:18rpx; }
+.detail-feedback > text { display:block; margin-bottom:14rpx; }
+.feedback-buttons { display:flex; gap:14rpx; }
+.feedback-button { flex:1; min-width:0; min-height:80rpx; }
+.detail-feedback-entry { display:flex; align-items:center; justify-content:center; gap:14rpx; width:100% !important; min-height:88rpx; margin:22rpx 0 0 !important; border-radius:18rpx; color:#fff; background:#59209B; font-size:24rpx; }
+.detail-feedback-entry-icon { width:24rpx; height:24rpx; border:3rpx solid currentColor; border-radius:5rpx; box-sizing:border-box; }
+.inline-feedback { margin-top:18rpx; padding:22rpx; border:1rpx solid #E5DAF0; border-radius:18rpx; background:#FCFAFD; }
+.inline-feedback-types { display:flex; flex-wrap:wrap; gap:10rpx; margin:14rpx 0; }
+.inline-feedback-type { min-height:62rpx; margin:0 !important; padding:0 16rpx; border-radius:31rpx; color:#51495D; background:#F4F1F6; font-size:21rpx; }
+.inline-feedback-type--active { color:#522093; background:#EDE4F8; }
+.inline-feedback-input { width:100%; min-height:160rpx; padding:14rpx; border:1rpx solid #DED5E7; border-radius:12rpx; box-sizing:border-box; }
+.inline-feedback-count { margin-top:6rpx; color:#786F83; font-size:20rpx; text-align:right; }
+.inline-feedback-actions { display:flex; gap:14rpx; margin-top:16rpx; }
+.inline-feedback-actions button { flex:1; min-height:72rpx; }
+.inline-feedback-submit { color:#fff; background:#59209B; }
+.inline-feedback-success { margin-top:12rpx; color:#24703D; }
+.inline-feedback-error { margin-top:12rpx; color:#B42318; }

@@ -20,18 +20,6 @@ const HOME_CATEGORIES = Object.freeze(CATEGORY_ORDER.map(value => {
   const info = getCategoryInfo(value)
   return { value, label: value, symbol: info.symbol, tone: info.tone }
 }))
-const GUIDE_PRESENTATION = Object.freeze({
-  '选课与修读': { symbol: '▥', tone: 'purple' },
-  '考试与成绩': { symbol: '★', tone: 'gold' },
-  '学籍与毕业': { symbol: '学', tone: 'green' },
-  '学业拓展': { symbol: '◆', tone: 'blue' },
-  '规范与权益': { symbol: '⚖', tone: 'red' },
-  'course-selection': { symbol: '▦', tone: 'purple' },
-  'add-drop': { symbol: '↺', tone: 'purple' },
-  'exam-grade': { symbol: '≡', tone: 'gold' },
-  'training-program': { symbol: '●', tone: 'green' }
-})
-
 function categoryOptions(facets = [], resolved = false) {
   const available = new Set(Array.isArray(facets) ? facets : [])
   return [
@@ -41,7 +29,7 @@ function categoryOptions(facets = [], resolved = false) {
 }
 
 function presentGuide(guide) {
-  const presentation = GUIDE_PRESENTATION[guide.category] || { symbol: '◇', tone: 'blue' }
+  const presentation = getCategoryInfo(guide.category)
   const dateMatch = String(guide.updated_at || '').match(/^\d{4}-\d{2}-\d{2}/)
   return {
     ...guide,
