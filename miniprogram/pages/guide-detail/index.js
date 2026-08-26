@@ -408,7 +408,7 @@ Page({
     const value = String(event && event.currentTarget && event.currentTarget.dataset.value || '')
     if (value !== 'helpful' && value !== 'unhelpful') return
     this.setData({ feedback: value, feedbackPanelOpen: value === 'unhelpful' })
-    wx.showToast({ title: value === 'helpful' ? '已记录在本机' : '请在下方说明问题', icon: 'none' })
+    wx.showToast({ title: value === 'helpful' ? '已记录在本机' : '请在弹窗中说明问题', icon: 'none' })
   },
 
   openInlineFeedback() { this.setData({ feedbackPanelOpen: true, feedbackStatus: '' }) },
@@ -434,7 +434,11 @@ Page({
       if (!result || result.statusCode >= 400) throw new Error('submit failed')
       this.setData({ feedbackSubmitting: false, feedbackStatus: 'success', feedbackContent: '' })
     } catch (_) { this.setData({ feedbackSubmitting: false, feedbackStatus: 'error' }) }
-  },  goBack() {
+  },
+
+  noop() {},
+
+  goBack() {
     wx.navigateBack({ delta: 1, fail() { wx.switchTab({ url: '/pages/guides/index' }) } })
   }
 })

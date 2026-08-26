@@ -207,8 +207,8 @@
         <view class="answer-tools">
           <button class="answer-tool" aria-label="复制回答" hover-class="icon-pressed" bindtap="copyAnswer"><view class="copy-shape answer-copy-shape"><view></view></view></button>
           <button class="answer-tool answer-regenerate" aria-label="重新生成回答" hover-class="icon-pressed" bindtap="regenerateAnswer">↻</button>
-          <button class="answer-tool {{answerFeedback === 'helpful' ? 'answer-tool--active' : ''}}" aria-label="回答有帮助" data-value="helpful" hover-class="icon-pressed" bindtap="rateAnswer"><view class="thumb-icon"><view class="thumb-palm"></view><view class="thumb-finger"></view></view></button>
-          <button class="answer-tool {{answerFeedback === 'unhelpful' ? 'answer-tool--active' : ''}}" aria-label="回答没有帮助" data-value="unhelpful" hover-class="icon-pressed" bindtap="rateAnswer"><view class="thumb-icon thumb-icon--down"><view class="thumb-palm"></view><view class="thumb-finger"></view></view></button>
+          <button class="answer-tool {{answerFeedback === 'helpful' ? 'answer-tool--active' : ''}}" aria-label="回答有帮助" data-value="helpful" hover-class="icon-pressed" bindtap="rateAnswer"><image class="answer-tool-icon" mode="aspectFit" src="{{answerFeedback === 'helpful' ? '/assets/icons/thumb-up-active.svg' : '/assets/icons/thumb-up.svg'}}"></image></button>
+          <button class="answer-tool {{answerFeedback === 'unhelpful' ? 'answer-tool--active' : ''}}" aria-label="回答没有帮助" data-value="unhelpful" hover-class="icon-pressed" bindtap="rateAnswer"><image class="answer-tool-icon" mode="aspectFit" src="{{answerFeedback === 'unhelpful' ? '/assets/icons/thumb-down-active.svg' : '/assets/icons/thumb-down.svg'}}"></image></button>
         </view>
       </view>
     </block>

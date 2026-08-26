@@ -340,3 +340,10 @@
 - 同页反馈仅调用现有 `feedback-api/submit`，只提交 `title`、`content`、`type`、`resourceRef`；内容附带指南、当前章节与可用来源上下文，不离开当前页。
 - 自动化证据：新增 Markdown、AI blocks、章节/导航、反馈与图标布局回归；`npm.cmd test`、`npm.cmd run check:miniprogram` 和 `node scripts/release-preflight.js` 均通过。人工微信验收按本轮范围未执行。
 - 30题生产评测候选继续保持未批准、未读取、未运行，且本轮没有生产 AI 调用或 Token 读取。`project.config.json` 是既有用户改动，未触碰；其既有尾随空白仍使全局 `git diff --check` 失败。
+
+### 2026-08-26 补充：反馈弹窗与回答评价图标
+
+- 指南详情的“反馈本指南问题”改为固定遮罩居中弹窗；点击遮罩或关闭按钮可关闭，弹窗内容区不会误触关闭，仍复用既有反馈接口与原有提交状态。
+- AI 回答的点赞、点踩由 CSS 手绘形状替换为本地 SVG 资源，保留未选中和选中两种状态，避免不同渲染环境下图形变形。
+- 自动化证据：`node --test test/guide-pages.test.js` 22/22、`npm.cmd test` 141/141、`npm.cmd run check:miniprogram` 和 `node scripts/release-preflight.js` 均通过。
+- 未运行微信开发者工具、真机与大字体人工验收；未调用生产 AI、未读取 Token。`project.config.json` 与三份 30 题候选文件继续排除在本轮提交之外。

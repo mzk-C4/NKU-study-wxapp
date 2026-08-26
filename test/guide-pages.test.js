@@ -745,6 +745,11 @@ test('guide inline feedback stays on-page, submits only the proven payload and p
 
   page.rateGuide({ currentTarget: { dataset: { value: 'unhelpful' } } })
   assert.equal(page.data.feedbackPanelOpen, true)
+  page.closeInlineFeedback()
+  assert.equal(page.data.feedbackPanelOpen, false)
+  page.openInlineFeedback()
+  assert.equal(page.data.feedbackPanelOpen, true)
+  assert.equal(typeof page.noop, 'function')
   page.inputFeedbackContent({ detail: { value: '   ' } })
   await page.submitInlineFeedback()
   assert.equal(submitted.length, 0)
@@ -769,10 +774,15 @@ test('guide inline feedback stays on-page, submits only the proven payload and p
 
   const source = fs.readFileSync(path.join(projectRoot, 'miniprogram/pages/guide-detail/index.js'), 'utf8')
   const template = fs.readFileSync(path.join(projectRoot, 'miniprogram/pages/guide-detail/index.wxml'), 'utf8')
+  const styles = fs.readFileSync(path.join(projectRoot, 'miniprogram/pages/guide-detail/index.wxss'), 'utf8')
   assert.doesNotMatch(source, /copyCorrectionUrl/)
   assert.doesNotMatch(template, /目录|收藏|分享/)
   assert.equal((template.match(/反馈本指南问题/g) || []).length, 2)
   assert.match(template, /feedback-buttons/)
+  assert.match(template, /class="feedback-modal-mask"[^>]*wx:if="\{\{feedbackPanelOpen\}\}"[^>]*bindtap="closeInlineFeedback"/)
+  assert.match(template, /class="inline-feedback feedback-modal-card"[^>]*catchtap="noop"/)
+  assert.match(template, /aria-label="关闭反馈弹窗"/)
+  assert.match(styles, /\.feedback-modal-mask\s*\{[^}]*position:\s*fixed[^}]*inset:\s*0[^}]*z-index:\s*90/s)
 })
 
 test('learning compass categories and assistant actions use the shared icon owner and accessible controls', () => {
@@ -784,9 +794,17 @@ test('learning compass categories and assistant actions use the shared icon owne
   const detailTemplate = fs.readFileSync(path.join(projectRoot, 'miniprogram/pages/guide-detail/index.wxml'), 'utf8')
   const assistantTemplate = fs.readFileSync(path.join(projectRoot, 'miniprogram/pages/guide-assistant/index.wxml'), 'utf8')
   const assistantStyles = fs.readFileSync(path.join(projectRoot, 'miniprogram/pages/guide-assistant/index.wxss'), 'utf8')
+  const iconAssets = ['thumb-up.svg', 'thumb-up-active.svg', 'thumb-down.svg', 'thumb-down-active.svg']
   assert.match(guideSource, /getCategoryInfo/)
   assert.doesNotMatch(guideSource, /GUIDE_PRESENTATION/)
   assert.match(detailTemplate, /本指南对你有帮助吗？<\/text><view class="feedback-buttons"/)
   for (const label of ['复制回答', '回答有帮助', '回答没有帮助']) assert.match(assistantTemplate, new RegExp(`aria-label="${label}"`))
   assert.match(assistantStyles, /\.answer-tool\s*\{[^}]*min-width:\s*80rpx[^}]*min-height:\s*80rpx/s)
+  assert.match(assistantStyles, /\.answer-tool-icon\s*\{[^}]*width:\s*36rpx[^}]*height:\s*36rpx/s)
+  assert.doesNotMatch(assistantTemplate, /thumb-palm|thumb-finger/)
+  assert.doesNotMatch(assistantStyles, /\.thumb-palm|\.thumb-finger/)
+  for (const asset of iconAssets) {
+    assert.equal(fs.existsSync(path.join(projectRoot, 'miniprogram/assets/icons', asset)), true)
+    assert.match(assistantTemplate, new RegExp(`/assets/icons/${asset.replace('.', '\\.')}`))
+  }
 })

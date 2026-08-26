@@ -132,7 +132,28 @@
 
       <view class="detail-feedback"><text>本指南对你有帮助吗？</text><view class="feedback-buttons"><button class="feedback-button {{feedback === 'helpful' ? 'feedback-button--active' : ''}}" data-value="helpful" bindtap="rateGuide">有帮助</button><button class="feedback-button {{feedback === 'unhelpful' ? 'feedback-button--active' : ''}}" data-value="unhelpful" bindtap="rateGuide">没帮助</button></view></view>
       <button class="detail-feedback-entry" hover-class="detail-dock-action--pressed" bindtap="openInlineFeedback" aria-label="反馈本指南问题"><text class="detail-feedback-entry-icon"></text><text>反馈本指南问题</text></button>
-      <view class="inline-feedback" wx:if="{{feedbackPanelOpen}}"><view class="inline-feedback-title">反馈此指南</view><view class="inline-feedback-types"><button wx:for="{{feedbackTypes}}" wx:key="value" data-value="{{item.value}}" class="inline-feedback-type {{feedbackType === item.value ? 'inline-feedback-type--active' : ''}}" bindtap="chooseFeedbackType">{{item.label}}</button></view><textarea class="inline-feedback-input" maxlength="1000" value="{{feedbackContent}}" bindinput="inputFeedbackContent" placeholder="请说明问题或建议"></textarea><view class="inline-feedback-count">{{feedbackContent.length}}/1000</view><view class="inline-feedback-actions"><button bindtap="closeInlineFeedback" disabled="{{feedbackSubmitting}}">取消</button><button class="inline-feedback-submit" bindtap="submitInlineFeedback" loading="{{feedbackSubmitting}}" disabled="{{feedbackSubmitting || !feedbackContent}}">提交</button></view><view wx:if="{{feedbackStatus === 'success'}}" class="inline-feedback-success">已提交，感谢你的反馈。</view><view wx:if="{{feedbackStatus === 'error'}}" class="inline-feedback-error">提交失败，请检查网络后重试。</view></view>
+      <view class="feedback-modal-mask" wx:if="{{feedbackPanelOpen}}" bindtap="closeInlineFeedback">
+        <view class="inline-feedback feedback-modal-card" catchtap="noop" aria-label="反馈此指南">
+          <view class="feedback-modal-head">
+            <view>
+              <view class="inline-feedback-title">反馈此指南</view>
+              <view class="feedback-modal-guide">{{guide.title}}</view>
+            </view>
+            <button class="feedback-modal-close" aria-label="关闭反馈弹窗" bindtap="closeInlineFeedback">×</button>
+          </view>
+          <view class="inline-feedback-types">
+            <button wx:for="{{feedbackTypes}}" wx:key="value" data-value="{{item.value}}" class="inline-feedback-type {{feedbackType === item.value ? 'inline-feedback-type--active' : ''}}" bindtap="chooseFeedbackType">{{item.label}}</button>
+          </view>
+          <textarea class="inline-feedback-input" maxlength="1000" value="{{feedbackContent}}" bindinput="inputFeedbackContent" placeholder="请说明问题或建议"></textarea>
+          <view class="inline-feedback-count">{{feedbackContent.length}}/1000</view>
+          <view class="inline-feedback-actions">
+            <button bindtap="closeInlineFeedback" disabled="{{feedbackSubmitting}}">取消</button>
+            <button class="inline-feedback-submit" bindtap="submitInlineFeedback" loading="{{feedbackSubmitting}}" disabled="{{feedbackSubmitting || !feedbackContent}}">提交</button>
+          </view>
+          <view wx:if="{{feedbackStatus === 'success'}}" class="inline-feedback-success">已提交，感谢你的反馈。</view>
+          <view wx:if="{{feedbackStatus === 'error'}}" class="inline-feedback-error">提交失败，请检查网络后重试。</view>
+        </view>
+      </view>
 
 </view>
     </block>

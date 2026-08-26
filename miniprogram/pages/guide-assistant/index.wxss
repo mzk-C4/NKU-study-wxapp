@@ -900,11 +900,7 @@ button::after { border: 0; }
 .answer-tool--active { color: #5B1EA5; background: #F1EAF8; border-radius: 50%; }
 .answer-copy-shape { transform: scale(.86); }
 .answer-regenerate { font-size: 39rpx; }
-
-.thumb-icon { position: relative; width: 28rpx; height: 30rpx; }
-.thumb-palm { position: absolute; left: 10rpx; top: 10rpx; width: 16rpx; height: 15rpx; border: 3rpx solid currentColor; border-radius: 4rpx; box-sizing: border-box; }
-.thumb-finger { position: absolute; left: 3rpx; top: 2rpx; width: 13rpx; height: 19rpx; border-left: 3rpx solid currentColor; border-bottom: 3rpx solid currentColor; border-radius: 0 0 0 8rpx; transform: skew(-13deg); box-sizing: border-box; }
-.thumb-icon--down { transform: rotate(180deg); }
+.answer-tool-icon { width: 36rpx; height: 36rpx; display: block; }
 
 .new-topic-state {
   padding: 84rpx 8rpx 44rpx;

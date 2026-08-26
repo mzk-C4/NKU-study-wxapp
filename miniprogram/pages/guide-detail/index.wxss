@@ -146,7 +146,12 @@ button::after { border: 0; }
 .feedback-button { flex:1; min-width:0; min-height:80rpx; }
 .detail-feedback-entry { display:flex; align-items:center; justify-content:center; gap:14rpx; width:100% !important; min-height:88rpx; margin:22rpx 0 0 !important; border-radius:18rpx; color:#fff; background:#59209B; font-size:24rpx; }
 .detail-feedback-entry-icon { width:24rpx; height:24rpx; border:3rpx solid currentColor; border-radius:5rpx; box-sizing:border-box; }
-.inline-feedback { margin-top:18rpx; padding:22rpx; border:1rpx solid #E5DAF0; border-radius:18rpx; background:#FCFAFD; }
+.feedback-modal-mask { position:fixed; inset:0; z-index:90; display:flex; align-items:center; justify-content:center; padding:32rpx; box-sizing:border-box; background:rgba(28,16,40,.58); }
+.inline-feedback { width:100%; max-width:640rpx; max-height:78vh; margin:0; padding:28rpx; overflow-y:auto; border:1rpx solid #E5DAF0; border-radius:30rpx; box-sizing:border-box; background:#FFFDF8; box-shadow:0 22rpx 64rpx rgba(43,18,62,.24); }
+.feedback-modal-head { display:flex; align-items:flex-start; justify-content:space-between; gap:20rpx; }
+.inline-feedback-title { color:#2B123E; font-size:30rpx; font-weight:750; line-height:1.4; }
+.feedback-modal-guide { max-width:480rpx; margin-top:8rpx; overflow:hidden; color:#746E79; font-size:21rpx; line-height:1.5; text-overflow:ellipsis; white-space:nowrap; }
+.feedback-modal-close { width:64rpx !important; min-width:64rpx; height:64rpx; min-height:64rpx; margin:0 !important; padding:0; border-radius:50%; color:#6F6972; background:#F0EBF2; font-size:36rpx; line-height:64rpx; }
 .inline-feedback-types { display:flex; flex-wrap:wrap; gap:10rpx; margin:14rpx 0; }
 .inline-feedback-type { min-height:62rpx; margin:0 !important; padding:0 16rpx; border-radius:31rpx; color:#51495D; background:#F4F1F6; font-size:21rpx; }
 .inline-feedback-type--active { color:#522093; background:#EDE4F8; }
