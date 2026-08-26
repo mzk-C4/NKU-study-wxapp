@@ -5,6 +5,7 @@ const path = require('node:path')
 
 const publicApi = require('../miniprogram/features/learning-compass/api')
 const navigation = require('../miniprogram/utils/navigation')
+const feedbackApi = require('../miniprogram/utils/feedback-api')
 
 const projectRoot = path.resolve(__dirname, '..')
 
@@ -645,15 +646,14 @@ test('PDF and DOCX sources download and open while correction copy failures stay
   assert.equal(await page.copySourceUrl(), true)
   page.data.guide.source = { fileUrl: 'https://resources.nkustudy.top/guide-sources/rules.docx', fileType: 'DOCX' }
   assert.equal(await page.copySourceUrl(), true)
-  assert.equal(await page.copyCorrectionUrl(), false)
   assert.deepEqual(downloads, [
     'https://resources.nkustudy.top/guide-sources/rules.pdf',
     'https://resources.nkustudy.top/guide-sources/rules.docx'
   ])
   assert.deepEqual(opened.map(item => item.fileType), ['pdf', 'docx'])
   assert.equal(opened.every(item => item.showMenu === true), true)
-  assert.deepEqual(copied, ['https://nkustudy.top/feedback?guide=guide-id'])
-  assert.deepEqual(toasts.map(item => item.title), ['复制失败，请稍后重试。'])
+  assert.deepEqual(copied, [])
+  assert.deepEqual(toasts.map(item => item.title), [])
   assert.doesNotMatch(toasts.map(item => item.title).join(' '), /provider|clipboard failure/i)
 
   const template = fs.readFileSync(path.join(projectRoot, 'miniprogram/pages/guide-detail/index.wxml'), 'utf8')
@@ -662,5 +662,149 @@ test('PDF and DOCX sources download and open while correction copy failures stay
   }
   assert.match(template, /查看完整原文件/)
   assert.match(template, /bindtap="copySourceUrl"/)
-  assert.match(template, /bindtap="copyCorrectionUrl"/)
+  assert.doesNotMatch(template, /copyCorrectionUrl|目录|收藏|分享/)
+  assert.match(template, /bindtap="openInlineFeedback"/)
+  assert.match(template, /feedbackPanelOpen/)
+})
+
+
+test('guide sections render only structured visible blocks, keep stable anchors and remeasure navigation', async t => {
+  const scrolls = []
+  let measures = 0
+  replaceMethod(t, publicApi, 'getGuide', async () => guide('gpa-guide', {
+    sections: [
+      { id: 'gpa rules', title: 'GPA', body: '# 计算\n第一段\n第二段\n| 等级 | 绩点 |\n| --- | --- |\n| A | **4.0** |', source_ids: ['SRC-GPA'] },
+      { id: 'gpa rules', title: '补充', body: '补充说明', source_ids: ['SRC-OTHER'] }
+    ],
+    sources: []
+  }))
+  installWx(t, {
+    createSelectorQuery() {
+      const query = {
+        selectAll() { return query }, boundingClientRect() { return query }, selectViewport() { return query }, scrollOffset() { return query },
+        exec(callback) { measures += 1; callback([[{ top: 120 }, { top: 420 }], { scrollTop: 30 }]) }
+      }
+      return query
+    },
+    pageScrollTo(options) { scrolls.push(options) }
+  })
+  const page = createPage(detailDefinition)
+
+  await page.onLoad({ id: 'gpa-guide' })
+  const [first, second] = page.data.guide.sections
+  for (const section of [first, second]) {
+    for (const key of ['body', 'blocks', 'previewBlocks', 'visibleBlocks', 'expanded', 'hasMore', 'tabId', 'anchorId']) assert.ok(Object.hasOwn(section, key))
+  }
+  assert.notEqual(first.id, second.id)
+  assert.notEqual(first.tabId, second.tabId)
+  assert.notEqual(first.anchorId, second.anchorId)
+  assert.equal(first.blocks.at(-1).type, 'table')
+  assert.equal(first.visibleBlocks.length, first.blocks.length)
+
+  page.toggleSection({ currentTarget: { dataset: { id: first.id } } })
+  assert.equal(page.data.guide.sections[0].expanded, false)
+  assert.equal(page.data.guide.sections[0].visibleBlocks.length, first.previewBlocks.length)
+  page.selectSection({ currentTarget: { dataset: { id: second.id } } })
+  assert.equal(page.data.activeSectionTabId, second.tabId)
+  assert.equal(scrolls.at(-1).scrollTop, 336)
+  assert.equal(scrolls.at(-1).duration, 280)
+  page.onPageScroll({ scrollTop: 400 })
+  assert.equal(page.data.activeSectionId, second.id)
+  assert.ok(measures >= 3)
+
+  const template = fs.readFileSync(path.join(projectRoot, 'miniprogram/pages/guide-detail/index.wxml'), 'utf8')
+  assert.match(template, /scroll-into-view="\{\{activeSectionTabId\}\}"/)
+  assert.match(template, /wx:for="\{\{item\.visibleBlocks\}\}"/)
+  assert.match(template, /block\.type === 'table'/)
+  assert.doesNotMatch(template, /\{\{item\.(body|preview)\}\}/)
+  assert.doesNotMatch(template, /_sectionTops/)
+})
+
+test('guide inline feedback stays on-page, submits only the proven payload and preserves retry input', async t => {
+  const submitted = []
+  const routes = []
+  const copied = []
+  let attempt = 0
+  replaceMethod(t, feedbackApi, 'submitFeedback', async payload => {
+    submitted.push(payload)
+    attempt += 1
+    if (attempt === 1) throw new Error('network')
+    return { statusCode: 200 }
+  })
+  installWx(t, {
+    navigateTo(options) { routes.push(options.url) },
+    setClipboardData(options) { copied.push(options.data); options.success() }
+  })
+  const page = createPage(detailDefinition, {
+    guide: {
+      id: 'guide-id', title: '成绩复核', category: 'exam-grade',
+      sections: [{ id: 'section-a', sourceIds: ['SRC-1', 'SRC-2'] }]
+    },
+    activeSectionId: 'section-a'
+  })
+
+  page.rateGuide({ currentTarget: { dataset: { value: 'unhelpful' } } })
+  assert.equal(page.data.feedbackPanelOpen, true)
+  page.closeInlineFeedback()
+  assert.equal(page.data.feedbackPanelOpen, false)
+  page.openInlineFeedback()
+  assert.equal(page.data.feedbackPanelOpen, true)
+  assert.equal(typeof page.noop, 'function')
+  page.inputFeedbackContent({ detail: { value: '   ' } })
+  await page.submitInlineFeedback()
+  assert.equal(submitted.length, 0)
+  page.chooseFeedbackType({ currentTarget: { dataset: { value: 'layout' } } })
+  page.inputFeedbackContent({ detail: { value: '表格在小屏阅读困难' } })
+  const first = page.submitInlineFeedback()
+  await page.submitInlineFeedback()
+  await first
+  assert.equal(submitted.length, 1)
+  assert.deepEqual(Object.keys(submitted[0]).sort(), ['content', 'resourceRef', 'title', 'type'])
+  assert.equal(submitted[0].resourceRef, 'guide-id')
+  assert.equal(submitted[0].type, 'bug')
+  assert.match(submitted[0].content, /guide_id=guide-id; guide_title=成绩复核; category=exam-grade; page_path=\/pages\/guide-detail\/index; section_id=section-a; source_ids=SRC-1,SRC-2/)
+  assert.equal(page.data.feedbackStatus, 'error')
+  assert.equal(page.data.feedbackContent, '表格在小屏阅读困难')
+  await page.submitInlineFeedback()
+  assert.equal(submitted.length, 2)
+  assert.equal(page.data.feedbackStatus, 'success')
+  assert.equal(page.data.feedbackContent, '')
+  assert.deepEqual(routes, [])
+  assert.deepEqual(copied, [])
+
+  const source = fs.readFileSync(path.join(projectRoot, 'miniprogram/pages/guide-detail/index.js'), 'utf8')
+  const template = fs.readFileSync(path.join(projectRoot, 'miniprogram/pages/guide-detail/index.wxml'), 'utf8')
+  const styles = fs.readFileSync(path.join(projectRoot, 'miniprogram/pages/guide-detail/index.wxss'), 'utf8')
+  assert.doesNotMatch(source, /copyCorrectionUrl/)
+  assert.doesNotMatch(template, /目录|收藏|分享/)
+  assert.equal((template.match(/反馈本指南问题/g) || []).length, 2)
+  assert.match(template, /feedback-buttons/)
+  assert.match(template, /class="feedback-modal-mask"[^>]*wx:if="\{\{feedbackPanelOpen\}\}"[^>]*bindtap="closeInlineFeedback"/)
+  assert.match(template, /class="inline-feedback feedback-modal-card"[^>]*catchtap="noop"/)
+  assert.match(template, /aria-label="关闭反馈弹窗"/)
+  assert.match(styles, /\.feedback-modal-mask\s*\{[^}]*position:\s*fixed[^}]*inset:\s*0[^}]*z-index:\s*90/s)
+})
+
+test('learning compass categories and assistant actions use the shared icon owner and accessible controls', () => {
+  const learningCompass = require('../miniprogram/utils/learning-compass')
+  assert.deepEqual(Object.values(learningCompass.CATEGORY_INFO).map(item => [item.symbol, item.tone]), [
+    ['▥', 'purple'], ['★', 'gold'], ['学', 'green'], ['◆', 'blue'], ['⚖', 'red']
+  ])
+  const guideSource = fs.readFileSync(path.join(projectRoot, 'miniprogram/pages/guides/index.js'), 'utf8')
+  const detailTemplate = fs.readFileSync(path.join(projectRoot, 'miniprogram/pages/guide-detail/index.wxml'), 'utf8')
+  const assistantTemplate = fs.readFileSync(path.join(projectRoot, 'miniprogram/pages/guide-assistant/index.wxml'), 'utf8')
+  const assistantStyles = fs.readFileSync(path.join(projectRoot, 'miniprogram/pages/guide-assistant/index.wxss'), 'utf8')
+  const iconAssets = ['thumb-up.svg', 'thumb-up-active.svg', 'thumb-down.svg', 'thumb-down-active.svg']
+  assert.match(guideSource, /getCategoryInfo/)
+  assert.doesNotMatch(guideSource, /GUIDE_PRESENTATION/)
+  assert.match(detailTemplate, /本指南对你有帮助吗？<\/text><view class="feedback-buttons"/)
+  for (const label of ['复制回答', '回答有帮助', '回答没有帮助']) assert.match(assistantTemplate, new RegExp(`aria-label="${label}"`))
+  assert.match(assistantStyles, /\.answer-tool\s*\{[^}]*min-width:\s*80rpx[^}]*min-height:\s*80rpx/s)
+  assert.match(assistantStyles, /\.answer-tool-icon\s*\{[^}]*width:\s*36rpx[^}]*height:\s*36rpx/s)
+  assert.doesNotMatch(assistantTemplate, /thumb-palm|thumb-finger/)
+  assert.doesNotMatch(assistantStyles, /\.thumb-palm|\.thumb-finger/)
+  for (const asset of iconAssets) {
+    assert.equal(fs.existsSync(path.join(projectRoot, 'miniprogram/assets/icons', asset)), true)
+    assert.match(assistantTemplate, new RegExp(`/assets/icons/${asset.replace('.', '\\.')}`))
+  }
 })

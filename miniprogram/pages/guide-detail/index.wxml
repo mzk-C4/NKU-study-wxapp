@@ -25,7 +25,7 @@
         <view class="transfer-picker-content">
           <view class="transfer-picker-label"><text class="transfer-picker-icon">▣</text><text>选择目标学院</text></view>
           <view class="transfer-picker-selection"><text>{{guide.transfer.selectedName}}</text><text>›</text></view>
-          <view class="transfer-picker-change">⇄&nbsp; 更换学院</view>
+          <view class="transfer-picker-change">⇄  更换学院</view>
         </view>
       </picker>
 
@@ -34,10 +34,10 @@
           <view class="transfer-card-heading"><view class="transfer-card-icon">⬡</view><view class="transfer-card-title">{{guide.transfer.schoolRule.title}}</view><view class="transfer-university-tag">全校适用</view></view>
           <view class="transfer-card-copy">{{guide.transfer.schoolRule.body}}</view>
           <view class="transfer-rule-topics">
-            <button class="transfer-topic" hover-class="transfer-topic--pressed" bindtap="showTransferTopic">♟&nbsp; 基本条件</button>
-            <button class="transfer-topic" hover-class="transfer-topic--pressed" bindtap="showTransferTopic">▥&nbsp; 申请流程</button>
-            <button class="transfer-topic" hover-class="transfer-topic--pressed" bindtap="showTransferTopic">▣&nbsp; 时间安排</button>
-            <button class="transfer-topic" hover-class="transfer-topic--pressed" bindtap="showTransferTopic">…&nbsp; 其他说明</button>
+            <button class="transfer-topic" hover-class="transfer-topic--pressed" bindtap="showTransferTopic">♟  基本条件</button>
+            <button class="transfer-topic" hover-class="transfer-topic--pressed" bindtap="showTransferTopic">▥  申请流程</button>
+            <button class="transfer-topic" hover-class="transfer-topic--pressed" bindtap="showTransferTopic">▣  时间安排</button>
+            <button class="transfer-topic" hover-class="transfer-topic--pressed" bindtap="showTransferTopic">…  其他说明</button>
           </view>
           <button class="transfer-source-row" data-kind="school" hover-class="transfer-source-row--pressed" bindtap="copyTransferSource"><text class="transfer-source-icon">▤</text><text>来源文件</text><text class="transfer-source-name">{{guide.transfer.schoolRule.sourceTitle}}</text><text class="transfer-source-number">{{guide.transfer.schoolRule.sourceNumber}}</text><text class="transfer-source-arrow">›</text></button>
         </view>
@@ -47,8 +47,8 @@
           <view class="transfer-card-copy">以下内容为本学院官方文件原文条款摘录，请以原文件为准。</view>
           <view class="transfer-panel-list">
             <view class="transfer-panel" wx:for="{{guide.transfer.panels}}" wx:key="key">
-              <button class="transfer-panel-head" data-key="{{item.key}}" hover-class="transfer-panel-head--pressed" bindtap="toggleTransferPanel"><text class="transfer-panel-icon">▧</text><text>{{item.title}}</text><text class="transfer-panel-action">{{item.expanded ? '收起' : '点击查看'}}&nbsp; {{item.expanded ? '⌃' : '⌄'}}</text></button>
-              <view class="transfer-panel-body" wx:if="{{item.expanded}}">{{item.body}}</view>
+              <button class="transfer-panel-head" data-key="{{item.key}}" hover-class="transfer-panel-head--pressed" bindtap="toggleTransferPanel"><text class="transfer-panel-icon">▧</text><text>{{item.title}}</text><text class="transfer-panel-action">{{item.expanded ? '收起' : '点击查看'}}  {{item.expanded ? '⌃' : '⌄'}}</text></button>
+              <view class="transfer-panel-body" wx:if="{{item.visibleBlocks.length}}"><block wx:for="{{item.visibleBlocks}}" wx:key="id" wx:for-item="block"><view wx:if="{{block.type !== 'table'}}" class="markdown-paragraph"><block wx:for="{{block.runs}}" wx:key="id" wx:for-item="run"><rich-text wx:if="{{run.kind !== 'link'}}" nodes="{{run.html}}"></rich-text><button wx:else class="markdown-link" data-href="{{run.href}}" bindtap="openMarkdownLink">{{run.text}}</button></block></view><scroll-view wx:else class="markdown-table-scroll" scroll-x><view class="markdown-table"><view class="markdown-table-row markdown-table-row--head"><view wx:for="{{block.headers}}" wx:key="id" class="markdown-table-cell"><block wx:for="{{item.runs}}" wx:key="id" wx:for-item="run"><rich-text nodes="{{run.html}}"></rich-text></block></view></view><view wx:for="{{block.rows}}" wx:key="id" class="markdown-table-row"><view wx:for="{{item.cells}}" wx:key="id" class="markdown-table-cell"><block wx:for="{{item.runs}}" wx:key="id" wx:for-item="run"><rich-text nodes="{{run.html}}"></rich-text></block></view></view></view></scroll-view></block></view>
             </view>
           </view>
           <button class="transfer-source-row transfer-source-row--college" data-kind="college" hover-class="transfer-source-row--pressed" bindtap="copyTransferSource"><text class="transfer-source-icon">▤</text><text>来源文件（学院官方发布）</text><text class="transfer-source-name transfer-source-name--file">{{guide.transfer.selectedSourceName}}</text><text class="transfer-source-filetype">{{guide.transfer.collegeSource.fileType}}</text><text class="transfer-source-arrow">›</text></button>
@@ -71,17 +71,17 @@
       <view class="detail-category detail-category--{{guide.categoryTone}}"><text>{{guide.categorySymbol}}</text><text>{{guide.category}}</text></view>
       <view class="detail-title">{{guide.title}}</view>
       <view class="detail-source-line"><view class="detail-source-mark">▣</view><text>来源：{{guide.source.title}}</text></view>
-      <view class="detail-source-meta"><view class="detail-document-number">{{guide.source.number}}</view><view class="detail-publisher">▣&nbsp; {{guide.source.publisher}}</view></view>
-      <view class="detail-date-line"><text>▣&nbsp; {{guide.updatedLabel}}</text><text>◉&nbsp; 原文阅读</text></view>
+      <view class="detail-source-meta"><view class="detail-document-number">{{guide.source.number}}</view><view class="detail-publisher">▣  {{guide.source.publisher}}</view></view>
+      <view class="detail-date-line"><text>▣  {{guide.updatedLabel}}</text><text>◉  原文阅读</text></view>
     </view>
 
-    <scroll-view class="detail-section-tabs" scroll-x enable-flex show-scrollbar="false">
+    <scroll-view class="detail-section-tabs" scroll-x enable-flex show-scrollbar="false" scroll-into-view="{{activeSectionTabId}}">
       <view class="detail-section-tab-row">
         <button
           wx:for="{{guide.sections}}"
           wx:key="id"
           class="detail-section-tab {{activeSectionId === item.id ? 'detail-section-tab--active' : ''}}"
-          data-id="{{item.id}}"
+          id="{{item.tabId}}" data-id="{{item.id}}"
           hover-class="detail-section-tab--pressed"
           bindtap="selectSection"
         ><text>{{item.ordinal}}</text><text>{{item.title}}</text></button>
@@ -94,17 +94,25 @@
         <view><view class="detail-scope-label">规范适用范围</view><view class="detail-scope-value">{{guide.scope}}</view></view>
       </view>
 
-      <view class="detail-section" wx:for="{{guide.sections}}" wx:key="id">
+      <view class="detail-section" id="{{item.anchorId}}" wx:for="{{guide.sections}}" wx:key="id">
         <view class="detail-section-heading">{{item.ordinal}}、{{item.title}}</view>
-        <view class="detail-section-body">{{item.expanded ? item.body : item.preview}}</view>
+        <view class="detail-section-body">
+          <block wx:for="{{item.visibleBlocks}}" wx:key="id" wx:for-item="block">
+            <view wx:if="{{block.type === 'heading'}}" class="markdown-heading"><block wx:for="{{block.runs}}" wx:key="id" wx:for-item="run"><rich-text wx:if="{{run.kind !== 'link'}}" nodes="{{run.html}}"></rich-text><button wx:else class="markdown-link" data-href="{{run.href}}" bindtap="openMarkdownLink">{{run.text}}</button></block></view>
+            <view wx:elif="{{block.type === 'paragraph'}}" class="markdown-paragraph"><block wx:for="{{block.runs}}" wx:key="id" wx:for-item="run"><rich-text wx:if="{{run.kind !== 'link'}}" nodes="{{run.html}}"></rich-text><button wx:else class="markdown-link" data-href="{{run.href}}" bindtap="openMarkdownLink">{{run.text}}</button></block></view>
+            <view wx:elif="{{block.type === 'list-item'}}" class="markdown-list-item"><text>{{block.marker}}</text><view><block wx:for="{{block.runs}}" wx:key="id" wx:for-item="run"><rich-text nodes="{{run.html}}"></rich-text></block></view></view>
+            <view wx:elif="{{block.type === 'blockquote'}}" class="markdown-quote"><block wx:for="{{block.runs}}" wx:key="id" wx:for-item="run"><rich-text nodes="{{run.html}}"></rich-text></block></view>
+            <scroll-view wx:elif="{{block.type === 'table'}}" class="markdown-table-scroll" scroll-x><view class="markdown-table"><view class="markdown-table-row markdown-table-row--head"><view wx:for="{{block.headers}}" wx:key="id" class="markdown-table-cell"><block wx:for="{{item.runs}}" wx:key="id" wx:for-item="run"><rich-text nodes="{{run.html}}"></rich-text></block></view></view><view wx:for="{{block.rows}}" wx:key="id" class="markdown-table-row"><view wx:for="{{item.cells}}" wx:key="id" class="markdown-table-cell"><block wx:for="{{item.runs}}" wx:key="id" wx:for-item="run"><rich-text nodes="{{run.html}}"></rich-text></block></view></view></view></scroll-view>
+          </block>
+        </view>
         <view class="detail-highlight" wx:if="{{item.highlights.length}}">
-          <view class="detail-highlight-title">▣&nbsp; 本节要点</view>
-          <view wx:for="{{item.highlights}}" wx:key="*this" class="detail-highlight-row">•&nbsp; {{item}}</view>
+          <view class="detail-highlight-title">▣  本节要点</view>
+          <view wx:for="{{item.highlights}}" wx:key="*this" class="detail-highlight-row">•  {{item}}</view>
         </view>
         <button
           wx:if="{{item.hasMore}}"
           class="detail-expand"
-          data-id="{{item.id}}"
+          id="{{item.tabId}}" data-id="{{item.id}}"
           hover-class="detail-expand--pressed"
           bindtap="toggleSection"
         >{{item.expanded ? '收起本节内容' : '展开查看本节全部内容'}} <text>{{item.expanded ? '⌃' : '⌄'}}</text></button>
@@ -122,15 +130,32 @@
         <button class="detail-source-open" hover-class="detail-source-open--pressed" bindtap="copySourceUrl">查看完整原文件 <text>↗</text></button>
       </view>
 
-      <view class="detail-feedback"><text>本指南对你有帮助吗？</text><button class="feedback-button {{feedback === 'helpful' ? 'feedback-button--active' : ''}}" data-value="helpful" bindtap="rateGuide">♧&nbsp; 有帮助</button><button class="feedback-button {{feedback === 'unhelpful' ? 'feedback-button--active' : ''}}" data-value="unhelpful" bindtap="rateGuide">♧&nbsp; 没帮助</button></view>
-
-      <view class="detail-action-dock">
-        <button class="detail-dock-action detail-dock-action--active" hover-class="detail-dock-action--pressed" bindtap="showUnavailable"><text>☷</text><text>目录</text></button>
-        <button class="detail-dock-action" hover-class="detail-dock-action--pressed" bindtap="showUnavailable"><text>☆</text><text>收藏</text></button>
-        <button class="detail-dock-action" hover-class="detail-dock-action--pressed" bindtap="showUnavailable"><text>⇧</text><text>分享</text></button>
-        <button class="detail-dock-action" hover-class="detail-dock-action--pressed" bindtap="copyCorrectionUrl"><text>▢</text><text>反馈</text></button>
+      <view class="detail-feedback"><text>本指南对你有帮助吗？</text><view class="feedback-buttons"><button class="feedback-button {{feedback === 'helpful' ? 'feedback-button--active' : ''}}" data-value="helpful" bindtap="rateGuide">有帮助</button><button class="feedback-button {{feedback === 'unhelpful' ? 'feedback-button--active' : ''}}" data-value="unhelpful" bindtap="rateGuide">没帮助</button></view></view>
+      <button class="detail-feedback-entry" hover-class="detail-dock-action--pressed" bindtap="openInlineFeedback" aria-label="反馈本指南问题"><text class="detail-feedback-entry-icon"></text><text>反馈本指南问题</text></button>
+      <view class="feedback-modal-mask" wx:if="{{feedbackPanelOpen}}" bindtap="closeInlineFeedback">
+        <view class="inline-feedback feedback-modal-card" catchtap="noop" aria-label="反馈此指南">
+          <view class="feedback-modal-head">
+            <view>
+              <view class="inline-feedback-title">反馈此指南</view>
+              <view class="feedback-modal-guide">{{guide.title}}</view>
+            </view>
+            <button class="feedback-modal-close" aria-label="关闭反馈弹窗" bindtap="closeInlineFeedback">×</button>
+          </view>
+          <view class="inline-feedback-types">
+            <button wx:for="{{feedbackTypes}}" wx:key="value" data-value="{{item.value}}" class="inline-feedback-type {{feedbackType === item.value ? 'inline-feedback-type--active' : ''}}" bindtap="chooseFeedbackType">{{item.label}}</button>
+          </view>
+          <textarea class="inline-feedback-input" maxlength="1000" value="{{feedbackContent}}" bindinput="inputFeedbackContent" placeholder="请说明问题或建议"></textarea>
+          <view class="inline-feedback-count">{{feedbackContent.length}}/1000</view>
+          <view class="inline-feedback-actions">
+            <button bindtap="closeInlineFeedback" disabled="{{feedbackSubmitting}}">取消</button>
+            <button class="inline-feedback-submit" bindtap="submitInlineFeedback" loading="{{feedbackSubmitting}}" disabled="{{feedbackSubmitting || !feedbackContent}}">提交</button>
+          </view>
+          <view wx:if="{{feedbackStatus === 'success'}}" class="inline-feedback-success">已提交，感谢你的反馈。</view>
+          <view wx:if="{{feedbackStatus === 'error'}}" class="inline-feedback-error">提交失败，请检查网络后重试。</view>
+        </view>
       </view>
-    </view>
+
+</view>
     </block>
   </view>
 </view>

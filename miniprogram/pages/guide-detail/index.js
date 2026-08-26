@@ -1,7 +1,9 @@
 const publicApi = require('../../features/learning-compass/api')
 const navigation = require('../../utils/navigation')
 const { getCategoryInfo, cleanSourceText } = require('../../utils/learning-compass')
+const { parseMarkdown, normalizeDisplayText } = require('../../utils/markdown')
 const { createSourceOpener } = require('../../utils/source-opener')
+const feedbackApi = require('../../utils/feedback-api')
 
 const CHINESE_ORDINALS = Object.freeze(['一', '二', '三', '四', '五', '六', '七', '八'])
 const TRANSFER_GUIDE_ID = 'transfer-major-2026'
@@ -75,12 +77,22 @@ function sourceMeta(source) {
 
 function transferPanelsForVariant(variant) {
   const sections = variant && Array.isArray(variant.sections) ? variant.sections : []
-  return sections.map((section, index) => ({
-    key: String(section.id || `variant-section-${index + 1}`),
-    title: String(section.title || `学院原文第${index + 1}节`),
-    body: cleanArticleBody(section.body),
-    expanded: index === 0
-  }))
+  return sections.map((section, index) => {
+    const body = normalizeDisplayText(section && section.body).replace(/\r/g, '').trim()
+    const blocks = parseMarkdown(body)
+    const previewBlocks = blocks.slice(0, 3)
+    const expanded = index === 0
+    return {
+      key: String(section.id || `variant-section-${index + 1}`),
+      title: String(section.title || `学院原文第${index + 1}节`),
+      body,
+      blocks,
+      previewBlocks,
+      visibleBlocks: expanded ? blocks : previewBlocks,
+      hasMore: blocks.length > previewBlocks.length,
+      expanded
+    }
+  })
 }
 
 function buildTransferModel(sections, sources, variants) {
@@ -130,6 +142,27 @@ function applyTransferVariant(guide, response) {
   }
 }
 
+function withVisibleBlocks(section, expanded) {
+  return { ...section, expanded, visibleBlocks: expanded ? section.blocks : section.previewBlocks }
+}
+
+function stableSectionId(value, index, seen) {
+  const normalized = String(value == null ? '' : value)
+    .trim()
+    .replace(/[^A-Za-z0-9_-]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 100)
+  const base = /^[A-Za-z]/.test(normalized) ? normalized : `section-${normalized || index + 1}`
+  let id = base
+  let suffix = 2
+  while (seen.has(id)) {
+    id = `${base}-${suffix}`
+    suffix += 1
+  }
+  seen.add(id)
+  return id
+}
+
 function presentGuide(rawGuide) {
   const raw = rawGuide && typeof rawGuide === 'object' ? rawGuide : {}
   const category = String(raw.category || '')
@@ -137,19 +170,25 @@ function presentGuide(rawGuide) {
   const rawSections = Array.isArray(raw.sections) && raw.sections.length
     ? raw.sections
     : Array.isArray(raw.steps) ? raw.steps : []
+  const sectionIds = new Set()
   const sections = rawSections.map((section, index) => {
-    const body = cleanArticleBody(section && section.body)
-    const preview = compactPreview(body)
-    return {
-      id: String(section && section.id || `section-${index + 1}`),
-      title: String(section && section.title || `正文第${index + 1}节`),
+    const body = normalizeDisplayText(section && section.body).replace(/\r/g, '').trim()
+    const blocks = parseMarkdown(body)
+    const previewBlocks = blocks.slice(0, 3)
+    const base = {
+      id: stableSectionId(section && section.id, index, sectionIds),
+      tabId: `guide-section-tab-${index}`,
+      anchorId: `guide-section-anchor-${index}`,
+      title: normalizeDisplayText(section && section.title || `正文第${index + 1}`),
       ordinal: CHINESE_ORDINALS[index] || String(index + 1),
       body,
-      preview,
-      expanded: index === 0,
-      hasMore: body.length > preview.length,
+      blocks,
+      previewBlocks,
+      hasMore: blocks.length > previewBlocks.length,
+      sourceIds: Array.isArray(section && section.source_ids) ? section.source_ids.map(value => String(value || '').trim()).filter(Boolean) : [],
       highlights: []
     }
+    return withVisibleBlocks(base, index === 0)
   })
   const source = Array.isArray(raw.sources) && raw.sources.length
     ? raw.sources[0]
@@ -208,7 +247,14 @@ Page({
     unavailable: false,
     guide: null,
     activeSectionId: '',
-    feedback: ''
+    feedback: '',
+    feedbackPanelOpen: false,
+    feedbackType: 'content',
+    feedbackContent: '',
+    feedbackSubmitting: false,
+    feedbackStatus: '',
+    feedbackTypes: [{ value: 'content', label: '内容错误' }, { value: 'outdated', label: '信息过期' }, { value: 'source', label: '来源问题' }, { value: 'layout', label: '排版问题' }, { value: 'other', label: '其他' }],
+    activeSectionTabId: ''
   },
 
   onLoad(options = {}) {
@@ -257,7 +303,7 @@ Page({
         if (this._isUnloaded || this._requestId !== requestId) return
         guide = applyTransferVariant(guide, variantResponse)
       }
-      this.setData({ loading: false, error: '', unavailable: false, guide, activeSectionId: guide.sections[0] ? guide.sections[0].id : '' })
+      this.setData({ loading: false, error: '', unavailable: false, guide, activeSectionId: guide.sections[0] ? guide.sections[0].id : '', activeSectionTabId: guide.sections[0] ? guide.sections[0].tabId : '' }, () => this.measureSections())
       if (typeof wx.setNavigationBarTitle === 'function') wx.setNavigationBarTitle({ title: guide.title })
     } catch (error) {
       if (this._isUnloaded || this._requestId !== requestId) return
@@ -272,15 +318,35 @@ Page({
   selectSection(event) {
     const id = String(event && event.currentTarget && event.currentTarget.dataset.id || '')
     if (!id || !this.data.guide) return
-    const sections = this.data.guide.sections.map(section => ({ ...section, expanded: section.id === id || section.expanded }))
-    this.setData({ guide: { ...this.data.guide, sections }, activeSectionId: id })
+    const sections = this.data.guide.sections.map(section => withVisibleBlocks(section, section.id === id || section.expanded))
+    this.setData({ guide: { ...this.data.guide, sections }, activeSectionId: id, activeSectionTabId: sections.find(section => section.id === id).tabId }, () => { this.measureSections(); this.scrollToSection(id) })
+  },
+
+  measureSections() {
+    if (!this.data.guide || typeof wx.createSelectorQuery !== 'function') return
+    wx.createSelectorQuery().selectAll('.detail-section').boundingClientRect().selectViewport().scrollOffset().exec(result => {
+      const rects = result && result[0] || []; const viewport = result && result[1] || { scrollTop: 0 };
+      this._sectionTops = rects.map((rect, index) => ({ id: this.data.guide.sections[index].id, top: rect.top + viewport.scrollTop }))
+    })
+  },
+
+  scrollToSection(id) {
+    const target = (this._sectionTops || []).find(item => item.id === id)
+    if (!target || typeof wx.pageScrollTo !== 'function') return
+    wx.pageScrollTo({ scrollTop: Math.max(0, target.top - this.data.statusBarHeight - 92), duration: 280 })
+  },
+
+  onPageScroll(event) {
+    const scrollTop = Number(event && event.scrollTop) || 0; const offset = scrollTop + this.data.statusBarHeight + 100
+    const active = (this._sectionTops || []).filter(item => item.top <= offset).pop(); if (!active || active.id === this.data.activeSectionId) return
+    const section = this.data.guide && this.data.guide.sections.find(item => item.id === active.id); if (section) this.setData({ activeSectionId: active.id, activeSectionTabId: section.tabId })
   },
 
   toggleSection(event) {
     const id = String(event && event.currentTarget && event.currentTarget.dataset.id || '')
     if (!id || !this.data.guide) return
-    const sections = this.data.guide.sections.map(section => (section.id === id ? { ...section, expanded: !section.expanded } : section))
-    this.setData({ guide: { ...this.data.guide, sections }, activeSectionId: id })
+    const sections = this.data.guide.sections.map(section => (section.id === id ? withVisibleBlocks(section, !section.expanded) : section))
+    this.setData({ guide: { ...this.data.guide, sections }, activeSectionId: id, activeSectionTabId: sections.find(section => section.id === id).tabId }, () => { this.measureSections(); this.scrollToSection(id) })
   },
 
   async chooseTransferCollege(event) {
@@ -295,7 +361,7 @@ Page({
     try {
       const response = await publicApi.getGuideVariant(guide.id, selected.id)
       if (this._isUnloaded || this._variantRequestId !== variantRequestId || !this.data.guide) return
-      this.setData({ guide: applyTransferVariant(this.data.guide, response) })
+      this.setData({ guide: applyTransferVariant(this.data.guide, response) }, () => this.measureSections())
     } catch (_) {
       if (this._isUnloaded || this._variantRequestId !== variantRequestId || !this.data.guide) return
       const currentGuide = this.data.guide
@@ -308,9 +374,11 @@ Page({
     const key = String(event && event.currentTarget && event.currentTarget.dataset.key || '')
     const guide = this.data.guide
     if (!guide || !guide.transfer || !key) return
-    const panels = guide.transfer.panels.map(panel => (
-      panel.key === key ? { ...panel, expanded: !panel.expanded } : panel
-    ))
+    const panels = guide.transfer.panels.map(panel => {
+      if (panel.key !== key) return panel
+      const expanded = !panel.expanded
+      return { ...panel, expanded, visibleBlocks: expanded ? panel.blocks : panel.previewBlocks }
+    })
     this.setData({ guide: { ...guide, transfer: { ...guide.transfer, panels } } })
   },
 
@@ -336,20 +404,39 @@ Page({
     return openSourceFile(guide.source)
   },
 
-  copyCorrectionUrl() {
-    return copyLink(this.data.guide && this.data.guide.correction_url, '纠错链接已复制')
-  },
-
   rateGuide(event) {
     const value = String(event && event.currentTarget && event.currentTarget.dataset.value || '')
     if (value !== 'helpful' && value !== 'unhelpful') return
-    this.setData({ feedback: value })
-    wx.showToast({ title: value === 'helpful' ? '感谢反馈' : '已记录反馈', icon: 'none' })
+    this.setData({ feedback: value, feedbackPanelOpen: value === 'unhelpful' })
+    wx.showToast({ title: value === 'helpful' ? '已记录在本机' : '请在弹窗中说明问题', icon: 'none' })
   },
 
-  showUnavailable() {
-    wx.showToast({ title: '功能正在建设中', icon: 'none' })
+  openInlineFeedback() { this.setData({ feedbackPanelOpen: true, feedbackStatus: '' }) },
+  closeInlineFeedback() { if (!this.data.feedbackSubmitting) this.setData({ feedbackPanelOpen: false, feedbackStatus: '' }) },
+  chooseFeedbackType(event) { this.setData({ feedbackType: String(event.currentTarget.dataset.value || 'content') }) },
+  inputFeedbackContent(event) { this.setData({ feedbackContent: String(event.detail.value || '').slice(0, 1000), feedbackStatus: '' }) },
+  async submitInlineFeedback() {
+    const guide = this.data.guide; const content = String(this.data.feedbackContent || '').trim()
+    if (!guide || !content || this.data.feedbackSubmitting) return
+    this.setData({ feedbackSubmitting: true, feedbackStatus: '' })
+    const activeSection = guide.sections.find(section => section.id === this.data.activeSectionId)
+    const contextParts = [
+      `guide_id=${guide.id}`,
+      `guide_title=${guide.title}`,
+      `category=${guide.category}`,
+      'page_path=/pages/guide-detail/index'
+    ]
+    if (activeSection) contextParts.push(`section_id=${activeSection.id}`)
+    if (activeSection && activeSection.sourceIds.length) contextParts.push(`source_ids=${activeSection.sourceIds.join(',')}`)
+    const context = `[${contextParts.join('; ')}]`
+    try {
+      const result = await feedbackApi.submitFeedback({ title: `指南反馈：${guide.title}`, content: `${context}\n${content}`, type: this.data.feedbackType === 'layout' ? 'bug' : 'content', resourceRef: guide.id })
+      if (!result || result.statusCode >= 400) throw new Error('submit failed')
+      this.setData({ feedbackSubmitting: false, feedbackStatus: 'success', feedbackContent: '' })
+    } catch (_) { this.setData({ feedbackSubmitting: false, feedbackStatus: 'error' }) }
   },
+
+  noop() {},
 
   goBack() {
     wx.navigateBack({ delta: 1, fail() { wx.switchTab({ url: '/pages/guides/index' }) } })

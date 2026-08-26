@@ -885,9 +885,10 @@ button::after { border: 0; }
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 52rpx !important;
-  min-width: 52rpx;
-  height: 52rpx;
+  width: 80rpx !important;
+  min-width: 80rpx;
+  min-height: 80rpx;
+  height: 80rpx;
   margin: 0 !important;
   padding: 0;
   color: #7180A5;
@@ -899,11 +900,7 @@ button::after { border: 0; }
 .answer-tool--active { color: #5B1EA5; background: #F1EAF8; border-radius: 50%; }
 .answer-copy-shape { transform: scale(.86); }
 .answer-regenerate { font-size: 39rpx; }
-
-.thumb-icon { position: relative; width: 28rpx; height: 30rpx; }
-.thumb-palm { position: absolute; left: 10rpx; top: 10rpx; width: 16rpx; height: 15rpx; border: 3rpx solid currentColor; border-radius: 4rpx; box-sizing: border-box; }
-.thumb-finger { position: absolute; left: 3rpx; top: 2rpx; width: 13rpx; height: 19rpx; border-left: 3rpx solid currentColor; border-bottom: 3rpx solid currentColor; border-radius: 0 0 0 8rpx; transform: skew(-13deg); box-sizing: border-box; }
-.thumb-icon--down { transform: rotate(180deg); }
+.answer-tool-icon { width: 36rpx; height: 36rpx; display: block; }
 
 .new-topic-state {
   padding: 84rpx 8rpx 44rpx;
@@ -1781,3 +1778,15 @@ button::after { border: 0; }
 @media (prefers-reduced-motion: reduce) {
   .generating-dot { animation: none; opacity: .58; transform: none; }
 }
+
+/* Shared safe answer Markdown blocks. */
+.answer-markdown-heading { margin: 20rpx 0 12rpx; color: #242039; font-size: 28rpx; font-weight: 750; line-height: 1.45; }
+.answer-markdown-list { display: flex; gap: 12rpx; margin: 0 0 12rpx; color: #343047; font-size: 27rpx; line-height: 1.75; }
+.answer-markdown-list > text { color: #6A34B7; font-weight: 700; }
+.answer-markdown-quote { margin: 16rpx 0; padding: 16rpx 20rpx; border-left: 6rpx solid #B99BE0; border-radius: 0 14rpx 14rpx 0; color: #423858; background: #F6F1FC; font-size: 27rpx; line-height: 1.75; }
+.answer-markdown-link { display: inline; margin: 0; padding: 0; color: #59209E; background: transparent; font-size: inherit; text-decoration: underline; }
+.answer-markdown-table-scroll { width: 100%; margin: 18rpx 0; white-space: nowrap; }
+.answer-markdown-table { display: table; min-width: max-content; overflow: hidden; border: 1rpx solid #DED5E9; border-radius: 14rpx; background: #FFF; }
+.answer-markdown-row { display: table-row; }
+.answer-markdown-row--head { color: #42187C; background: #F0E8F8; font-weight: 700; }
+.answer-markdown-cell { display: table-cell; min-width: 156rpx; padding: 16rpx 18rpx; border-right: 1rpx solid #E6DFED; border-bottom: 1rpx solid #E6DFED; color: #353043; font-size: 24rpx; line-height: 1.55; white-space: normal; vertical-align: top; }
