@@ -4,6 +4,8 @@ const fs = require('node:fs')
 const path = require('node:path')
 
 const navigation = require('../miniprogram/utils/navigation')
+const learningProfile = require('../miniprogram/utils/learning-profile')
+const { createGuideAssistantController } = require('../miniprogram/features/guide-assistant/controller')
 
 const projectRoot = path.resolve(__dirname, '..')
 
@@ -77,6 +79,14 @@ test('AI assistant offline page is registered and matches the approved recovery 
   assert.match(template, /学习指南针 AI 问答/)
   assert.match(template, /对话记录/)
   assert.match(template, /新开话题/)
+  assert.match(template, /正在查找资料并整理回答中/)
+  assert.match(template, /现有资料暂时无法回答/)
+  assert.match(template, /今天想了解什么/)
+  assert.match(template, /bindtap="chooseExampleQuestion"/)
+  assert.match(template, /disabled="{{requestPending \|\| roundLimitReached/)
+  assert.match(styles, /generating-card/)
+  assert.match(styles, /refusal-card/)
+  assert.match(styles, /new-topic-example/)
   assert.match(template, /bindtap="openConversationHistory"/)
   assert.match(template, /bindtap="startNewTopic"/)
   assert.match(template, /class="history-drawer"/)
@@ -97,7 +107,7 @@ test('AI assistant offline page is registered and matches the approved recovery 
   assert.match(template, /《南开大学本科课程考试与成绩管理规定》/)
   assert.match(template, /bindtap="openAnswerSource"/)
   assert.match(template, /class="source-title"[\s\S]*class="source-detail-row"[\s\S]*class="source-meta-group"[\s\S]*class="source-open-button"/)
-  assert.match(template, /当前第1\/10轮/)
+  assert.match(template, /当前已完成 \{\{roundLabel\}\} 轮/)
   assert.match(source, /请检查网络或重试/)
   assert.match(template, /浏览知识库/)
   assert.match(template, /去普通搜索/)
@@ -127,9 +137,90 @@ test('AI assistant offline page is registered and matches the approved recovery 
   assert.match(styles, /\.continue-card\s*\{[^}]*width:\s*100%\s*!important/s)
   assert.match(styles, /\.composer-area\s*\{[^}]*position:\s*fixed/s)
   assert.doesNotMatch(source, /public-api|wx\.request|guide-assistant\/answers/)
+  assert.doesNotMatch(template + source, /一键清空|清空全部|清除全部AI会话/)
+  assert.doesNotMatch(template + source, /auth_token|Authorization|Bearer|openid/i)
   assert.doesNotMatch(source, /showActionSheet/)
 })
 
+test('new-topic preview renders the welcome state and example buttons fill the composer', async t => {
+  let networkChecks = 0
+  installWx(t, {
+    getNetworkType(options) { networkChecks += 1; options.success({ networkType: 'wifi' }) }
+  })
+  const page = createPage(assistantDefinition)
+
+  await page.onLoad({ preview: 'new-topic' })
+
+  assert.equal(networkChecks, 0)
+  assert.equal(page.data.previewMode, true)
+  assert.equal(page.data.previewState, 'new-topic')
+  assert.equal(page.data.newTopicMode, true)
+  assert.equal(page.data.lastQuestion, '')
+  assert.deepEqual(page.data.exampleQuestions, [
+    '对课程成绩有异议，如何申请复核？',
+    '休学期满后如何申请复学？',
+    '本科课程作业中如何规范使用 AI 工具？'
+  ])
+
+  page.chooseExampleQuestion({ currentTarget: { dataset: { question: page.data.exampleQuestions[1] } } })
+  assert.equal(page.data.draft, '休学期满后如何申请复学？')
+  assert.equal(page.data.canSend, true)
+  assert.equal(page.data.focusInput, true)
+})
+
+test('generating preview is local, keeps the question, and disables submission', async t => {
+  let networkChecks = 0
+  installWx(t, {
+    getNetworkType(options) { networkChecks += 1; options.success({ networkType: 'wifi' }) }
+  })
+  const page = createPage(assistantDefinition)
+
+  await page.onLoad({ preview: 'generating' })
+
+  assert.equal(networkChecks, 0)
+  assert.equal(page.data.previewState, 'generating')
+  assert.equal(page.data.lastQuestion, '我对一门课程的成绩有异议，应该怎么申请复核？')
+  assert.equal(page.data.networkError, false)
+  page.inputQuestion({ detail: { value: '不应写入' } })
+  assert.equal(page.data.draft, '')
+  assert.equal(await page.sendQuestion(), false)
+})
+
+test('refusal preview keeps the question and stays separate from answer and offline states', async t => {
+  let networkChecks = 0
+  installWx(t, {
+    getNetworkType(options) { networkChecks += 1; options.success({ networkType: 'wifi' }) }
+  })
+  const page = createPage(assistantDefinition)
+
+  await page.onLoad({ preview: 'refusal' })
+
+  assert.equal(networkChecks, 0)
+  assert.equal(page.data.previewState, 'refusal')
+  assert.equal(page.data.lastQuestion, '宿舍晚上几点断电？')
+  assert.equal(page.data.answerMode, false)
+  assert.equal(page.data.networkError, false)
+})
+
+test('new topic submission only moves to the local generating state', async t => {
+  let networkChecks = 0
+  installWx(t, {
+    getNetworkType(options) { networkChecks += 1; options.success({ networkType: 'wifi' }) }
+  })
+  const page = createPage(assistantDefinition, {
+    newTopicMode: true,
+    previewMode: true,
+    previewState: 'new-topic',
+    draft: '本科课程作业中如何规范使用 AI 工具？',
+    canSend: true
+  })
+
+  assert.equal(await page.sendQuestion(), true)
+  assert.equal(networkChecks, 0)
+  assert.equal(page.data.previewState, 'generating')
+  assert.equal(page.data.lastQuestion, '本科课程作业中如何规范使用 AI 工具？')
+  assert.equal(page.data.draft, '')
+})
 test('loading the assistant while offline restores the question and registers network recovery', async t => {
   let listener
   let removed
@@ -485,7 +576,7 @@ test('manual retry only leaves the offline state after a confirmed connection', 
   assert.equal(await page.retryNetwork(), true)
   assert.equal(page.data.networkError, false)
   assert.equal(page.data.networkConnected, true)
-  assert.deepEqual(toasts.map(item => item.title), ['网络已恢复'])
+  assert.deepEqual(toasts.map(item => item.title), ['网络已恢复，请再次发送'])
 })
 
 test('guide AI entry stays honest online and opens the approved fallback offline', t => {
@@ -558,4 +649,133 @@ test('assistant navigation encodes a bounded question in the stable route', t =>
     '/pages/guide-assistant/index?question=%E6%88%90%E7%BB%A9%E5%A4%8D%E6%A0%B8%EF%BC%9F&preview=network-error',
     '/pages/guide-assistant/index?question=%E6%88%90%E7%BB%A9%E5%A4%8D%E6%A0%B8%EF%BC%9F&preview=answer'
   ])
+})
+
+test('reference page waits for the controller, renders real data, and restores one multi-round conversation', async t => {
+  const requests = []
+  installWx(t, {
+    getStorageSync(key) {
+      if (key === learningProfile.STORAGE_KEY) {
+        return { version: 1, admission_year: '2025', major: '计算机科学与技术' }
+      }
+      return null
+    }
+  })
+  const responses = [
+    {
+      refused: false,
+      reason: '',
+      answer: '第一轮真实回答',
+      applicable_scope: '2025级本科生',
+      freshness_notice: '以最新官方文件为准。',
+      citations: [{
+        id: 'SRC-003',
+        title: '南开大学本科课程考试与成绩管理规定',
+        document_no: '教字〔2024〕2号',
+        publisher: '南开大学教务部',
+        file_type: 'pdf',
+        file_url: 'http://127.0.0.1:3000/__local__/learning-compass/source-files/SRC-003',
+        official_page_url: ''
+      }]
+    },
+    {
+      refused: true,
+      reason: 'SOURCE_CONFLICT',
+      answer: '第二轮来源存在差异，无法给出统一结论。',
+      applicable_scope: '',
+      freshness_notice: '请以最新正式通知为准。',
+      citations: []
+    }
+  ]
+  const page = createPage(assistantDefinition, {
+    newTopicMode: true,
+    buildingMode: false,
+    draft: '第一轮问题',
+    canSend: true
+  })
+  page._assistantController = createGuideAssistantController({
+    api: {
+      async askGuideAssistant(input) {
+        requests.push(input)
+        return responses.shift()
+      }
+    }
+  })
+
+  assert.equal(await page.sendQuestion(), true)
+  assert.equal(page.data.responseAnswer, '第一轮真实回答')
+  assert.equal(page.data.responseCitations[0].id, 'SRC-003')
+  assert.equal(page.data.completedRoundCount, 1)
+  assert.equal(page.data.history.length, 1)
+  assert.deepEqual(requests[0].profile, { admission_year: '2025', major: '计算机科学与技术' })
+
+  page.inputQuestion({ detail: { value: '第二轮同主题问题' } })
+  assert.equal(await page.sendQuestion(), true)
+  assert.equal(page.data.previewState, 'refusal')
+  assert.equal(page.data.responseReason, 'SOURCE_CONFLICT')
+  assert.equal(page.data.completedRoundCount, 2)
+  assert.equal(page.data.history.length, 1)
+  assert.equal(page.data.history[0].rounds, 2)
+  assert.equal(requests[1].history.length, 2)
+
+  const conversationKey = page.data.history[0].question
+  page.startNewTopic()
+  assert.equal(page.data.completedRoundCount, 0)
+  page.openConversationHistory()
+  page.selectHistory({ currentTarget: { dataset: { question: conversationKey } } })
+  assert.equal(page.data.completedRoundCount, 2)
+  assert.equal(page.data.messages.length, 4)
+  assert.equal(page.data.previousTurns.length, 1)
+  assert.equal(page.data.previousTurns[0].answer, '第一轮真实回答')
+  assert.equal(page.data.responseAnswer, '第二轮来源存在差异,无法给出统一结论。')
+})
+
+test('401 recovery logs in once and leaves the original question for manual retry', async t => {
+  const toasts = []
+  installWx(t, { showToast(options) { toasts.push(options.title) } })
+  let submitCalls = 0
+  let loginCalls = 0
+  const page = createPage(assistantDefinition, {
+    assistantState: 'auth-required',
+    lastQuestion: '原问题',
+    showRecoveryActions: true
+  })
+  page._assistantController = {
+    async recoverAuthentication() { loginCalls += 1; return { ok: true, manualRetryRequired: true } },
+    async submit() { submitCalls += 1 }
+  }
+
+  assert.equal(await page.recoverAuthentication(), true)
+  assert.equal(loginCalls, 1)
+  assert.equal(submitCalls, 0)
+  assert.equal(page.data.draft, '原问题')
+  assert.equal(page.data.canSend, true)
+  assert.deepEqual(toasts, ['登录成功，请再次发送'])
+})
+
+test('a failed follow-up keeps every previously completed message visible', t => {
+  installWx(t)
+  const messages = [
+    { role: 'user', content: '第一轮问题' },
+    {
+      role: 'assistant',
+      content: '第一轮回答',
+      refused: false,
+      applicable_scope: '本科生',
+      freshness_notice: '以最新文件为准。',
+      citations: []
+    }
+  ]
+  const page = createPage(assistantDefinition, {
+    messages,
+    completedRoundCount: 1,
+    activeConversationQuestion: '第一轮问题'
+  })
+
+  page.applyAssistantFailure('service-error', '第二轮问题', new Error('private diagnostics'))
+
+  assert.equal(page.data.previousTurns.length, 1)
+  assert.equal(page.data.previousTurns[0].question, '第一轮问题')
+  assert.equal(page.data.previousTurns[0].answer, '第一轮回答')
+  assert.equal(page.data.recoveryTitle, 'AI服务暂时不可用')
 })

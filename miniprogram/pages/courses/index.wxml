@@ -63,5 +63,4 @@
   <course-card wx:for="{{courses}}" wx:key="id" course="{{item}}" bindselect="openCourse"></course-card>
   <view class="load-more-button section" wx:if="{{hasMore}}" bindtap="showMore">显示更多课程</view>
   <view class="micro section" wx:if="{{!loading && courses.length && !hasMore}}">已显示全部课程</view>
-  <view class="course-fab" bindtap="submitCourse">＋ 投稿</view>
 </view>

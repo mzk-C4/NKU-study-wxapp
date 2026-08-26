@@ -1,6 +1,14 @@
 const navigation = require('../../utils/navigation')
-const { reportVisit } = require('../../utils/visit-report')
-const theme = require('../../utils/theme')
+const learningProfile = require('../../utils/learning-profile')
+const config = require('../../config')
+const assistantRuntime = require('../../features/guide-assistant/runtime')
+const {
+  MAX_ROUNDS,
+  normalizeCompletedMessages,
+  completedRounds,
+  lastCompletedExchange
+} = require('../../features/guide-assistant/controller')
+const { createSourceOpener } = require('../../utils/source-opener')
 
 const STORAGE_KEY = 'nkustudy_guide_assistant_local_state'
 const MAX_QUESTION_LENGTH = 1000
@@ -8,6 +16,13 @@ const MAX_HISTORY_TITLE_LENGTH = 50
 const LOCAL_RETENTION_MS = 30 * 24 * 60 * 60 * 1000
 const DAY_MS = 24 * 60 * 60 * 1000
 const ANSWER_PREVIEW_QUESTION = '我对一门课程的成绩有异议，应该怎么申请复核？'
+const REFUSAL_PREVIEW_QUESTION = '宿舍晚上几点断电？'
+const NEW_TOPIC_EXAMPLES = Object.freeze([
+  '对课程成绩有异议，如何申请复核？',
+  '休学期满后如何申请复学？',
+  '本科课程作业中如何规范使用 AI 工具？'
+])
+const GENERATING_DOTS = Object.freeze([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
 const ANSWER_CLIPBOARD_TEXT = [
   '你可以在下一学期开学3周内，向开课单位提出书面申请。开课单位受理后会组织人员复议，并给出复议意见；超过时限，开课单位可以不予受理。',
   '如果复议后确需更改成绩，任课教师不能直接修改。应由任课教师填写成绩更改申请，经开课单位审批、系统提交并由教务部批准后完成更改。',
@@ -34,13 +49,23 @@ function decodeQuestion(value) {
 function normalizeHistory(value, now = Date.now()) {
   if (!Array.isArray(value)) return []
   return value.map(item => {
-    const question = boundedQuestion(item && item.question)
+    const messages = normalizeCompletedMessages(item && item.messages)
+    const exchange = lastCompletedExchange(messages)
+    const question = boundedQuestion(item && item.question) || boundedQuestion(exchange && exchange.question)
+    const latestQuestion = boundedQuestion(item && item.latestQuestion) || boundedQuestion(exchange ? exchange.question : question)
+    const state = ['answer', 'refusal', 'network-error'].includes(item && item.state)
+      ? item.state
+      : (exchange && exchange.response.refused ? 'refusal' : exchange ? 'answer' : 'network-error')
     return {
       question,
+      latestQuestion,
       title: boundedHistoryTitle(item && item.title) || boundedHistoryTitle(question),
-      state: item && item.state === 'answer' ? 'answer' : 'network-error',
+      state,
       updatedAt: Number(item && item.updatedAt) || now,
-      pinned: Boolean(item && item.pinned)
+      pinned: Boolean(item && item.pinned),
+      messages,
+      rounds: completedRounds(messages),
+      readOnly: Boolean(question && !messages.length)
     }
   }).filter(item => (
     item.question &&
@@ -49,18 +74,23 @@ function normalizeHistory(value, now = Date.now()) {
   )).sort((left, right) => right.updatedAt - left.updatedAt)
 }
 
-function addHistoryEntry(history, question, state) {
+function addHistoryEntry(history, question, state, details = {}) {
   const normalizedQuestion = boundedQuestion(question)
   if (!normalizedQuestion) return normalizeHistory(history)
   const normalizedHistory = normalizeHistory(history)
   const previous = normalizedHistory.find(item => item.question === normalizedQuestion)
+  const messages = normalizeCompletedMessages(details.messages || (previous && previous.messages))
   return [
     {
       question: normalizedQuestion,
+      latestQuestion: boundedQuestion(details.latestQuestion) || boundedQuestion(lastCompletedExchange(messages)?.question) || normalizedQuestion,
       title: previous ? previous.title : boundedHistoryTitle(normalizedQuestion),
-      state: state === 'answer' ? 'answer' : 'network-error',
+      state: ['answer', 'refusal'].includes(state) ? state : 'network-error',
       updatedAt: Date.now(),
-      pinned: Boolean(previous && previous.pinned)
+      pinned: Boolean(previous && previous.pinned),
+      messages,
+      rounds: completedRounds(messages),
+      readOnly: Boolean(normalizedQuestion && !messages.length)
     },
     ...normalizedHistory.filter(item => item.question !== normalizedQuestion)
   ]
@@ -169,6 +199,7 @@ Page({
   data: {
     statusBarHeight: 20,
     lastQuestion: '',
+    activeConversationQuestion: '',
     draft: '',
     canSend: false,
     focusInput: false,
@@ -179,6 +210,27 @@ Page({
     previewMode: false,
     previewState: '',
     answerMode: false,
+    buildingMode: false,
+    requestPending: false,
+    assistantState: 'idle',
+    messages: [],
+    previousTurns: [],
+    completedRoundCount: 0,
+    roundLabel: '0/10',
+    roundLimitReached: false,
+    inputError: '',
+    responseAnswer: '',
+    responseScope: '',
+    responseFreshness: '',
+    responseReason: '',
+    responseCitations: [],
+    recoveryTitle: '',
+    recoveryCopy: '',
+    authRecovering: false,
+    showRecoveryActions: false,
+    learningProfileLabel: learningProfile.formatLabel(learningProfile.emptyProfile()),
+    exampleQuestions: NEW_TOPIC_EXAMPLES,
+    generatingDots: GENERATING_DOTS,
     newTopicMode: false,
     history: [],
     historyDrawerOpen: false,
@@ -197,29 +249,63 @@ Page({
   },
 
   async onLoad(options = {}) {
-    reportVisit('/mp/guide-assistant')
     this._isUnloaded = false
+    this._assistantController = assistantRuntime.createController()
+    this._sourceOpener = createSourceOpener()
     this._networkListener = this.handleNetworkChange.bind(this)
     const stored = readLocalState() || {}
+    const currentLearningProfile = learningProfile.read()
     const optionQuestion = decodeQuestion(options.question)
-    const previewState = options.preview === 'answer'
-      ? 'answer'
-      : options.preview === 'network-error' ? 'network-error' : ''
+    const requestedPreview = String(options.preview || '')
+    const previewState = ['answer', 'network-error', 'new-topic', 'generating', 'refusal'].includes(requestedPreview)
+      ? requestedPreview
+      : ''
     const previewMode = Boolean(previewState)
-    const answerMode = previewState === 'answer'
-    const lastQuestion = optionQuestion || (answerMode ? ANSWER_PREVIEW_QUESTION : stored.lastQuestion || '')
-    const draft = optionQuestion ? '' : stored.draft || ''
-    const history = previewMode
+    const productionBuildMode = !previewMode && config.apiProfile !== 'reference'
+    const storedConversation = normalizeHistory(stored.history).find(item => (
+      item.question === boundedQuestion(stored.lastQuestion) ||
+      item.latestQuestion === boundedQuestion(stored.lastQuestion)
+    ))
+    const storedMessages = storedConversation ? storedConversation.messages : []
+    const storedExchange = lastCompletedExchange(storedMessages)
+    const answerMode = previewState === 'answer' || (!previewMode && !productionBuildMode && storedConversation && storedConversation.state === 'answer')
+    const restoredState = !previewMode && !productionBuildMode && storedConversation ? storedConversation.state : ''
+    const visualQuestion = previewState === 'generating'
+      ? optionQuestion || ANSWER_PREVIEW_QUESTION
+      : previewState === 'refusal'
+        ? optionQuestion || REFUSAL_PREVIEW_QUESTION
+        : ''
+    const lastQuestion = previewState === 'new-topic'
+      ? ''
+      : optionQuestion || visualQuestion || (previewState === 'answer' ? ANSWER_PREVIEW_QUESTION : storedExchange ? storedExchange.question : stored.lastQuestion || '')
+    const draft = optionQuestion || previewMode ? '' : stored.draft || ''
+    const history = ['answer', 'network-error'].includes(previewState) && lastQuestion
       ? addHistoryEntry(stored.history, lastQuestion, previewState)
       : normalizeHistory(stored.history)
+    const restoredResponse = !previewMode && storedExchange ? storedExchange.response : null
+    const completedRoundCount = ['answer', 'refusal'].includes(previewState) ? 1 : completedRounds(storedMessages)
     this.setData({
       statusBarHeight: getStatusBarHeight(),
       lastQuestion,
+      activeConversationQuestion: storedConversation ? storedConversation.question : lastQuestion,
       draft,
       previewMode,
-      previewState,
+      previewState: previewState || restoredState,
       answerMode,
-      newTopicMode: false,
+      buildingMode: productionBuildMode,
+      assistantState: previewState || (productionBuildMode ? 'building' : storedConversation ? storedConversation.state : 'idle'),
+      messages: storedMessages,
+      previousTurns: this.presentPreviousTurns(storedMessages),
+      completedRoundCount,
+      roundLabel: `${completedRoundCount}/${MAX_ROUNDS}`,
+      roundLimitReached: completedRoundCount >= MAX_ROUNDS,
+      responseAnswer: restoredResponse ? restoredResponse.content : '',
+      responseScope: restoredResponse ? restoredResponse.applicable_scope : '',
+      responseFreshness: restoredResponse ? restoredResponse.freshness_notice : '',
+      responseReason: restoredResponse ? restoredResponse.reason : '',
+      responseCitations: restoredResponse ? this.presentCitations(restoredResponse.citations) : [],
+      learningProfileLabel: learningProfile.formatLabel(currentLearningProfile),
+      newTopicMode: !productionBuildMode && (previewState === 'new-topic' || (!previewState && !lastQuestion)),
       history,
       canSend: Boolean(boundedQuestion(draft))
     })
@@ -242,16 +328,30 @@ Page({
       })
       return
     }
+    if (['new-topic', 'generating', 'refusal'].includes(this.data.previewState)) {
+      this.setData({
+        networkConnected: true,
+        networkError: false,
+        retrying: false,
+        networkHint: ''
+      })
+      return
+    }
     if (typeof wx.onNetworkStatusChange === 'function') {
       wx.onNetworkStatusChange(this._networkListener)
     }
     await this.refreshNetworkState()
   },
 
-  onShow() { theme.onPageShow() },
+  onShow() {
+    if (this._isUnloaded) return
+    const learningProfileLabel = learningProfile.formatLabel(learningProfile.read())
+    if (learningProfileLabel !== this.data.learningProfileLabel) this.setData({ learningProfileLabel })
+  },
 
   onUnload() {
     this._isUnloaded = true
+    if (this._assistantController) this._assistantController.cancel()
     saveLocalState(this.data.lastQuestion, this.data.draft, this.data.history)
     if (this._networkListener && typeof wx.offNetworkStatusChange === 'function') {
       wx.offNetworkStatusChange(this._networkListener)
@@ -290,9 +390,17 @@ Page({
   },
 
   inputQuestion(event) {
-    if (this._isUnloaded) return
+    if (this._isUnloaded || this.data.requestPending || this.data.roundLimitReached || this.data.buildingMode || this.data.previewState === 'generating' || (this.data.previewMode && this.data.previewState === 'refusal')) return
     const draft = String(event && event.detail ? event.detail.value : '').slice(0, MAX_QUESTION_LENGTH)
-    this.setData({ draft, canSend: Boolean(boundedQuestion(draft)) })
+    this.setData({ draft, canSend: Boolean(boundedQuestion(draft)), inputError: '' })
+    saveLocalState(this.data.lastQuestion, draft, this.data.history)
+  },
+
+  chooseExampleQuestion(event) {
+    if (this._isUnloaded || ['generating', 'refusal'].includes(this.data.previewState)) return
+    const draft = boundedQuestion(event && event.currentTarget && event.currentTarget.dataset.question)
+    if (!draft) return
+    this.setData({ draft, canSend: true, focusInput: true })
     saveLocalState(this.data.lastQuestion, draft, this.data.history)
   },
 
@@ -307,23 +415,50 @@ Page({
   },
 
   async sendQuestion() {
-    if (this._isUnloaded) return false
-    const question = boundedQuestion(this.data.draft)
-    if (!question) return false
-    if (this.data.previewState === 'answer') {
+    if (this._isUnloaded || this.data.requestPending || this.data.roundLimitReached) return false
+    if (this.data.buildingMode) {
       wx.showToast({ title: 'AI问答正在建设中', icon: 'none' })
       return false
     }
-    let connected = false
-    if (!this.data.previewMode) {
-      const networkType = await getNetworkType()
-      if (this._isUnloaded) return false
-      connected = hasConnection(networkType)
+    if (['generating', 'refusal'].includes(this.data.previewState) && !this.data.previewMode) return false
+    const question = boundedQuestion(this.data.draft)
+    if (!question) {
+      this.setData({ inputError: '请输入问题后再发送。' })
+      return false
     }
-    if (!connected) {
-      const history = addHistoryEntry(this.data.history, question, 'network-error')
+    if (this.data.previewMode && this.data.newTopicMode && !this.data.networkError) {
       this.setData({
         lastQuestion: question,
+        draft: '',
+        canSend: false,
+        focusInput: false,
+        previewMode: true,
+        previewState: 'generating',
+        answerMode: false,
+        newTopicMode: false,
+        networkConnected: true,
+        networkError: false,
+        networkHint: ''
+      })
+      saveLocalState(question, '', this.data.history)
+      return true
+    }
+    if (this.data.previewMode) {
+      wx.showToast({ title: 'AI问答正在建设中', icon: 'none' })
+      return false
+    }
+    const networkType = await getNetworkType()
+    if (this._isUnloaded) return false
+    const connected = hasConnection(networkType)
+    if (!connected) {
+      const conversationQuestion = this.data.activeConversationQuestion || question
+      const history = addHistoryEntry(this.data.history, conversationQuestion, 'network-error', {
+        messages: this.data.messages,
+        latestQuestion: question
+      })
+      this.setData({
+        lastQuestion: question,
+        activeConversationQuestion: conversationQuestion,
         draft: '',
         canSend: false,
         focusInput: false,
@@ -331,14 +466,161 @@ Page({
         networkError: true,
         retrying: false,
         answerMode: false,
+        assistantState: 'network-error',
+        previewState: '',
         newTopicMode: false,
         history,
+        showRecoveryActions: true,
         networkHint: '请检查网络或重试'
       })
       saveLocalState(question, '', history)
       return true
     }
-    wx.showToast({ title: 'AI问答正在建设中', icon: 'none' })
+
+    this.setData({
+      lastQuestion: question,
+      activeConversationQuestion: this.data.activeConversationQuestion || question,
+      requestPending: true,
+      previewMode: false,
+      previewState: 'generating',
+      assistantState: 'generating',
+      answerMode: false,
+      newTopicMode: false,
+      networkError: false,
+      networkConnected: true,
+      showRecoveryActions: false,
+      recoveryTitle: '',
+      recoveryCopy: '',
+      inputError: '',
+      canSend: false,
+      previousTurns: this.presentPreviousTurns(this.data.messages, true)
+    })
+    if (!this._assistantController) this._assistantController = assistantRuntime.createController()
+    const result = await this._assistantController.submit({
+      question,
+      messages: this.data.messages,
+      profile: learningProfile.read()
+    })
+    if (this._isUnloaded || !result || result.stale) return false
+    this.setData({ requestPending: false })
+    if (result.accepted && (result.state === 'answer' || result.state === 'refusal')) {
+      const response = result.response || {}
+      const messages = normalizeCompletedMessages(result.messages)
+      const rounds = completedRounds(messages)
+      const conversationQuestion = this.data.activeConversationQuestion || question
+      const history = addHistoryEntry(this.data.history, conversationQuestion, result.state, { messages, latestQuestion: question })
+      this.setData({
+        previewState: result.state,
+        assistantState: result.state,
+        answerMode: result.state === 'answer',
+        draft: '',
+        canSend: false,
+        messages,
+        completedRoundCount: rounds,
+        roundLabel: `${rounds}/${MAX_ROUNDS}`,
+        roundLimitReached: rounds >= MAX_ROUNDS,
+        responseAnswer: response.answer || '',
+        responseScope: response.applicable_scope || '',
+        responseFreshness: response.freshness_notice || '',
+        responseReason: response.reason || '',
+        responseCitations: this.presentCitations(response.citations),
+        previousTurns: this.presentPreviousTurns(messages),
+        history,
+        activeConversationQuestion: conversationQuestion,
+        showRecoveryActions: result.state === 'refusal'
+      })
+      saveLocalState(question, '', history)
+      return true
+    }
+
+    return this.applyAssistantFailure(result.state, question, result.error)
+  },
+
+  presentCitations(citations) {
+    return (Array.isArray(citations) ? citations : []).map((source, index) => ({
+      ...source,
+      sourceLabel: `来源${index + 1}`,
+      metaLabel: [source.document_no, source.publisher].filter(Boolean).join(' · '),
+      opening: false,
+      openFailed: false,
+      canCopy: Boolean(source.official_page_url || source.file_url)
+    }))
+  },
+
+  presentPreviousTurns(messages, includeLatest = false) {
+    const normalized = normalizeCompletedMessages(messages)
+    const turns = []
+    const limit = includeLatest ? normalized.length : Math.max(0, normalized.length - 2)
+    for (let index = 0; index + 1 < limit; index += 2) {
+      const response = normalized[index + 1]
+      turns.push({
+        key: `turn-${index / 2 + 1}`,
+        question: normalized[index].content,
+        answer: response.content,
+        refused: response.refused,
+        scope: response.applicable_scope
+      })
+    }
+    return turns
+  },
+
+  applyAssistantFailure(state, question, error) {
+    const safeQuestion = boundedQuestion(question)
+    if (state === 'invalid-question') {
+      this.setData({
+        previewState: '',
+        assistantState: state,
+        lastQuestion: safeQuestion,
+        draft: safeQuestion,
+        canSend: true,
+        inputError: (error && error.message) || '请检查问题内容后再发送。',
+        newTopicMode: this.data.completedRoundCount === 0,
+        previousTurns: this.presentPreviousTurns(this.data.messages, true)
+      })
+      return false
+    }
+    if (state === 'network-error') {
+      const conversationQuestion = this.data.activeConversationQuestion || safeQuestion
+      const history = addHistoryEntry(this.data.history, conversationQuestion, 'network-error', {
+        messages: this.data.messages,
+        latestQuestion: safeQuestion
+      })
+      this.setData({
+        previewState: '',
+        assistantState: state,
+        lastQuestion: safeQuestion,
+        draft: '',
+        canSend: false,
+        networkConnected: false,
+        networkError: true,
+        networkHint: '请检查网络或重试',
+        showRecoveryActions: true,
+        history,
+        activeConversationQuestion: conversationQuestion,
+        previousTurns: this.presentPreviousTurns(this.data.messages, true)
+      })
+      saveLocalState(safeQuestion, '', history)
+      return false
+    }
+    const recovery = state === 'auth-required'
+      ? { title: '需要微信登录', copy: '登录后原问题会保留，请主动再次发送。' }
+      : state === 'rate-limited'
+        ? { title: '当前使用次数已达限制', copy: '你仍可浏览普通指南和使用搜索。' }
+        : { title: 'AI服务暂时不可用', copy: '普通指南、搜索和已完成会话不受影响。' }
+    this.setData({
+      previewState: '',
+      assistantState: state || 'service-error',
+      lastQuestion: safeQuestion,
+      draft: '',
+      canSend: false,
+      answerMode: false,
+      newTopicMode: false,
+      showRecoveryActions: true,
+      recoveryTitle: recovery.title,
+      recoveryCopy: recovery.copy,
+      inputError: '',
+      previousTurns: this.presentPreviousTurns(this.data.messages, true)
+    })
     return false
   },
 
@@ -360,9 +642,49 @@ Page({
       networkConnected: true,
       networkError: false,
       retrying: false,
-      networkHint: ''
+      networkHint: '',
+      assistantState: 'idle',
+      showRecoveryActions: false,
+      draft: this.data.lastQuestion,
+      canSend: Boolean(this.data.lastQuestion)
     })
-    wx.showToast({ title: '网络已恢复', icon: 'success' })
+    wx.showToast({ title: '网络已恢复，请再次发送', icon: 'success' })
+    return true
+  },
+
+  async recoverAuthentication() {
+    if (this._isUnloaded || this.data.authRecovering) return false
+    this.setData({ authRecovering: true })
+    const result = await this._assistantController.recoverAuthentication()
+    if (this._isUnloaded) return false
+    if (!result || !result.ok) {
+      this.setData({ authRecovering: false })
+      wx.showToast({ title: '微信登录未完成', icon: 'none' })
+      return false
+    }
+    this.setData({
+      authRecovering: false,
+      assistantState: 'idle',
+      recoveryTitle: '',
+      recoveryCopy: '',
+      showRecoveryActions: false,
+      draft: this.data.lastQuestion,
+      canSend: Boolean(this.data.lastQuestion)
+    })
+    wx.showToast({ title: '登录成功，请再次发送', icon: 'success' })
+    return true
+  },
+
+  prepareManualRetry() {
+    if (this._isUnloaded || this.data.assistantState === 'rate-limited') return false
+    this.setData({
+      assistantState: 'idle',
+      recoveryTitle: '',
+      recoveryCopy: '',
+      showRecoveryActions: false,
+      draft: this.data.lastQuestion,
+      canSend: Boolean(this.data.lastQuestion)
+    })
     return true
   },
 
@@ -389,7 +711,10 @@ Page({
     const fallbackState = this.data.answerMode ? 'answer' : 'network-error'
     const history = this.data.history.length
       ? normalizeHistory(this.data.history)
-      : addHistoryEntry([], this.data.lastQuestion, fallbackState)
+      : addHistoryEntry([], this.data.activeConversationQuestion || this.data.lastQuestion, fallbackState, {
+        messages: this.data.messages,
+        latestQuestion: this.data.lastQuestion
+      })
     this.setData({
       history,
       historyDrawerOpen: true,
@@ -438,8 +763,11 @@ Page({
     const item = history.find(entry => entry.question === question)
     if (!item) return
     const answerMode = item.state === 'answer'
+    const exchange = lastCompletedExchange(item.messages)
+    const rounds = completedRounds(item.messages)
     this.setData({
-      lastQuestion: item.question,
+      lastQuestion: exchange ? exchange.question : item.latestQuestion || item.question,
+      activeConversationQuestion: item.question,
       draft: '',
       canSend: false,
       focusInput: false,
@@ -447,9 +775,20 @@ Page({
       editingQuestionValue: '',
       canSendEditedQuestion: false,
       focusQuestionEditor: false,
-      previewMode: true,
+      previewMode: item.readOnly,
       previewState: item.state,
       answerMode,
+      assistantState: item.state,
+      messages: item.messages,
+      previousTurns: this.presentPreviousTurns(item.messages),
+      completedRoundCount: rounds,
+      roundLabel: `${rounds}/${MAX_ROUNDS}`,
+      roundLimitReached: rounds >= MAX_ROUNDS,
+      responseAnswer: exchange ? exchange.response.content : '',
+      responseScope: exchange ? exchange.response.applicable_scope : '',
+      responseFreshness: exchange ? exchange.response.freshness_notice : '',
+      responseReason: exchange ? exchange.response.reason : '',
+      responseCitations: exchange ? this.presentCitations(exchange.response.citations) : [],
       newTopicMode: false,
       historyDrawerOpen: false,
       historySearch: '',
@@ -460,10 +799,11 @@ Page({
       canSaveHistoryRename: false,
       focusHistoryRename: false,
       answerFeedback: '',
-      networkConnected: answerMode,
-      networkError: !answerMode,
+      networkConnected: item.state !== 'network-error',
+      networkError: item.state === 'network-error',
       retrying: false,
-      networkHint: answerMode ? '' : '请检查网络或重试',
+      networkHint: answerMode || item.state === 'refusal' ? '' : '请检查网络或重试',
+      showRecoveryActions: item.state !== 'answer',
       history
     })
     saveLocalState(item.question, '', history)
@@ -616,7 +956,7 @@ Page({
     const previousHistory = normalizeHistory(this.data.history)
     if (!previousHistory.some(item => item.question === normalizedQuestion)) return false
     const history = previousHistory.filter(item => item.question !== normalizedQuestion)
-    if (boundedQuestion(this.data.lastQuestion) !== normalizedQuestion) {
+    if (boundedQuestion(this.data.activeConversationQuestion || this.data.lastQuestion) !== normalizedQuestion) {
       this.setData({
         history,
         historyGroups: buildHistoryGroups(history, this.data.historySearch),
@@ -634,6 +974,7 @@ Page({
     const stayOffline = this.data.networkError && this.data.previewState === 'network-error'
     this.setData({
       lastQuestion: '',
+      activeConversationQuestion: '',
       draft: '',
       canSend: false,
       focusInput: false,
@@ -654,6 +995,18 @@ Page({
       canSaveHistoryRename: false,
       focusHistoryRename: false,
       answerFeedback: '',
+      assistantState: stayOffline ? 'network-error' : 'idle',
+      messages: [],
+      previousTurns: [],
+      completedRoundCount: 0,
+      roundLabel: `0/${MAX_ROUNDS}`,
+      roundLimitReached: false,
+      responseAnswer: '',
+      responseScope: '',
+      responseFreshness: '',
+      responseReason: '',
+      responseCitations: [],
+      showRecoveryActions: stayOffline,
       networkConnected: !stayOffline,
       networkError: stayOffline,
       retrying: false,
@@ -671,11 +1024,23 @@ Page({
 
   startNewTopic() {
     if (this._isUnloaded) return
-    const previousState = this.data.answerMode ? 'answer' : 'network-error'
-    const history = addHistoryEntry(this.data.history, this.data.lastQuestion, previousState)
+    if (this.data.buildingMode) {
+      wx.showToast({ title: 'AI问答正在建设中', icon: 'none' })
+      return
+    }
+    const previousState = this.data.previewState === 'refusal'
+      ? 'refusal'
+      : this.data.answerMode ? 'answer' : 'network-error'
+    const history = addHistoryEntry(
+      this.data.history,
+      this.data.activeConversationQuestion || this.data.lastQuestion,
+      previousState,
+      { messages: this.data.messages, latestQuestion: this.data.lastQuestion }
+    )
     const stayOffline = this.data.networkError && this.data.previewState === 'network-error'
     this.setData({
       lastQuestion: '',
+      activeConversationQuestion: '',
       draft: '',
       canSend: false,
       focusInput: false,
@@ -696,6 +1061,19 @@ Page({
       canSaveHistoryRename: false,
       focusHistoryRename: false,
       answerFeedback: '',
+      assistantState: stayOffline ? 'network-error' : 'idle',
+      messages: [],
+      previousTurns: [],
+      completedRoundCount: 0,
+      roundLabel: `0/${MAX_ROUNDS}`,
+      roundLimitReached: false,
+      inputError: '',
+      responseAnswer: '',
+      responseScope: '',
+      responseFreshness: '',
+      responseReason: '',
+      responseCitations: [],
+      showRecoveryActions: stayOffline,
       networkConnected: !stayOffline,
       networkError: stayOffline,
       retrying: false,
@@ -711,7 +1089,7 @@ Page({
     if (typeof wx.setClipboardData !== 'function') return Promise.resolve(false)
     return new Promise(resolve => {
       wx.setClipboardData({
-        data: ANSWER_CLIPBOARD_TEXT,
+        data: this.data.responseAnswer || ANSWER_CLIPBOARD_TEXT,
         success() {
           wx.showToast({ title: '回答已复制', icon: 'success' })
           resolve(true)
@@ -735,9 +1113,30 @@ Page({
     wx.showToast({ title: value === 'helpful' ? '感谢反馈' : '已记录反馈', icon: 'none' })
   },
 
-  openAnswerSource() {
-    wx.showToast({ title: '原文跳转正在建设中', icon: 'none' })
-    return Promise.resolve(false)
+  async openAnswerSource(event) {
+    const id = String(event && event.currentTarget && event.currentTarget.dataset.id || '')
+    const source = this.data.responseCitations.find(item => item.id === id) || this.data.responseCitations[0]
+    if (!source) {
+      wx.showToast({ title: '原文跳转正在建设中', icon: 'none' })
+      return false
+    }
+    return this._sourceOpener.open(source, {
+      onState: state => {
+        if (this._isUnloaded) return
+        const responseCitations = this.data.responseCitations.map(item => (
+          item.id === source.id
+            ? { ...item, opening: state.phase === 'opening', openFailed: state.phase === 'failed', canCopy: state.canCopy }
+            : item
+        ))
+        this.setData({ responseCitations })
+      }
+    })
+  },
+
+  copyAnswerSource(event) {
+    const id = String(event && event.currentTarget && event.currentTarget.dataset.id || '')
+    const source = this.data.responseCitations.find(item => item.id === id)
+    return source ? this._sourceOpener.copyFallback(source) : Promise.resolve(false)
   },
 
   editQuestion() {
@@ -780,6 +1179,38 @@ Page({
       wx.showToast({ title: '问题不能为空', icon: 'none' })
       return false
     }
+    if (this.data.previewMode && this.data.previewState === 'refusal') {
+      this.setData({
+        lastQuestion: question,
+        editingQuestion: false,
+        editingQuestionValue: '',
+        canSendEditedQuestion: false,
+        focusQuestionEditor: false,
+        previewMode: true,
+        previewState: 'generating',
+        answerMode: false,
+        newTopicMode: false,
+        networkConnected: true,
+        networkError: false,
+        networkHint: ''
+      })
+      saveLocalState(question, this.data.draft, this.data.history)
+      return true
+    }
+
+    if (!this.data.previewMode && this.data.previewState === 'refusal') {
+      this.setData({
+        editingQuestion: false,
+        editingQuestionValue: '',
+        canSendEditedQuestion: false,
+        focusQuestionEditor: false,
+        previewState: '',
+        assistantState: 'idle',
+        draft: question,
+        canSend: true
+      })
+      return this.sendQuestion()
+    }
 
     let connected = false
     if (!this.data.previewMode) {
@@ -811,6 +1242,10 @@ Page({
 
   showAttachmentUnavailable() {
     wx.showToast({ title: '暂不支持附件', icon: 'none' })
+  },
+
+  openLearningProfile() {
+    wx.switchTab({ url: '/pages/profile/index' })
   },
 
   openLibrary() {

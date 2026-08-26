@@ -13,10 +13,11 @@
     "test:pages": "node --test test/page-state.test.js test/courses-multiselect.test.js",
     "test:search-guide": "node --test test/api-config.test.js test/public-api.test.js test/search-page.test.js test/guide-pages.test.js test/guide-assistant.test.js",
     "test:content": "node --test test/markdown.test.js test/visit-report.test.js test/resource-actions.test.js",
+    "test:learning-compass": "node --test test/learning-compass-api.test.js test/guide-assistant-controller.test.js test/guide-assistant.test.js test/learning-profile.test.js test/source-opener.test.js",
     "verify:quick": "npm run check:miniprogram",
     "verify:local": "npm test",
     "verify:external": "node scripts/release-preflight.js",
-    "test": "npm run test:contract && npm run test:pages && npm run test:search-guide && npm run test:content && npm run check:miniprogram"
+    "test": "npm run test:contract && npm run test:pages && npm run test:search-guide && npm run test:content && npm run test:learning-compass && npm run check:miniprogram"
   },
   "engines": { "node": ">=18" }
 }

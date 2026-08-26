@@ -23,6 +23,59 @@
 
     <view class="notice section" wx:if="{{contentError}}"><view class="notice-mark">!</view><text>{{contentError}}</text></view>
 
+    <view class="card learning-card section">
+      <view class="learning-header">
+        <view>
+          <view class="learning-title">学习信息</view>
+          <view class="learning-copy">仅保存在本机，用于让指南和 AI 优先匹配你的年级与专业。</view>
+        </view>
+        <view class="learning-status">{{learningProfileLabel}}</view>
+      </view>
+      <block wx:if="{{!editingLearningProfile}}">
+        <view class="learning-summary-row"><text class="learning-summary-label">入学年份</text><text class="learning-summary-value">{{learningAdmissionYearLabel}}</text></view>
+        <view class="learning-summary-row"><text class="learning-summary-label">专业</text><text class="learning-summary-value">{{learningMajorLabel}}</text></view>
+        <view class="learning-actions">
+          <button class="learning-primary-button" hover-class="learning-button--pressed" bindtap="editLearningProfile">编辑学习信息</button>
+          <button wx:if="{{hasLearningProfile}}" class="learning-clear-button" hover-class="learning-button--pressed" bindtap="confirmClearLearningProfile">清除学习信息</button>
+        </view>
+      </block>
+      <view class="learning-form" wx:else>
+        <view class="learning-field">
+          <view class="learning-label">入学年份（可选）</view>
+          <view class="learning-help">填写四位年份，例如 2025。</view>
+          <input
+            class="learning-input {{admissionYearError ? 'learning-input--error' : ''}}"
+            type="number"
+            maxlength="4"
+            value="{{admissionYearInput}}"
+            focus="{{focusAdmissionYear}}"
+            cursor-spacing="28"
+            aria-label="入学年份，四位数字"
+            bindinput="inputAdmissionYear"
+          />
+          <view class="learning-error" wx:if="{{admissionYearError}}" aria-live="assertive">{{admissionYearError}}</view>
+        </view>
+        <view class="learning-field">
+          <view class="learning-label">专业（可选）</view>
+          <view class="learning-help">请填写正式专业名称，最多100字。</view>
+          <input
+            class="learning-input {{majorError ? 'learning-input--error' : ''}}"
+            maxlength="100"
+            value="{{majorInput}}"
+            focus="{{focusMajor}}"
+            cursor-spacing="28"
+            aria-label="专业名称，最多100字"
+            bindinput="inputMajor"
+          />
+          <view class="learning-error" wx:if="{{majorError}}" aria-live="assertive">{{majorError}}</view>
+        </view>
+        <view class="learning-actions">
+          <button class="learning-secondary-button" hover-class="learning-button--pressed" bindtap="cancelLearningProfileEdit">取消编辑</button>
+          <button class="learning-primary-button" hover-class="learning-button--pressed" bindtap="saveLearningProfile">保存学习信息</button>
+        </view>
+      </view>
+    </view>
+
     <view class="card menu section">
       <view class="menu-row" bindtap="toggleFavorites"><text>我的收藏</text><text class="muted">{{favoriteLabel}} {{favoritesVisible ? '⌃' : '›'}}</text></view>
       <view class="menu-row" bindtap="openSubmit"><text>资料投稿</text><text class="muted">{{submissionLabel}} ›</text></view>

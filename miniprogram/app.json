@@ -8,15 +8,15 @@
     "pages/course-overview/index",
     "pages/course-resources/index",
     "pages/course-reviews/index",
-    "pages/resource-detail/index",
     "pages/guide-detail/index",
+    "pages/guide-category/index",
     "pages/guide-assistant/index",
     "pages/submit-resource/index",
     "pages/write-review/index",
     "pages/feedback-web/index",
+    "pages/participate-web/index",
     "pages/reviews-tab/index",
-    "pages/feedback/index",
-    "pages/participate-web/index"
+    "pages/feedback/index"
   ],
   "window": {
     "navigationBarTitleText": "NKUStudy",
@@ -66,7 +66,6 @@
   "usingComponents": {
     "state-view": "components/state-view/index",
     "course-card": "components/course-card/index",
-    "course-detail-tabs": "components/course-detail-tabs/index",
     "tag-chip": "components/tag-chip/index"
   },
   "style": "v2",

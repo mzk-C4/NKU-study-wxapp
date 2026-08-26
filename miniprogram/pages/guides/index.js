@@ -1,29 +1,32 @@
-const { reportVisit } = require('../../utils/visit-report')
-const theme = require('../../utils/theme')
-const publicApi = require('../../services/public-api')
+const publicApi = require('../../features/learning-compass/api')
+const config = require('../../config')
 const navigation = require('../../utils/navigation')
+const { CATEGORY_ORDER, getCategoryInfo } = require('../../utils/learning-compass')
+const learningProfile = require('../../utils/learning-profile')
 
 const PAGE_SIZE = 20
-const CATEGORY_CONFIG = Object.freeze([
-  { value: 'course-selection', label: '选课流程' },
-  { value: 'training-program', label: '培养方案' },
-  { value: 'add-drop', label: '退补选' },
-  { value: 'exam-grade', label: '考试成绩' }
-])
+const CATEGORY_CONFIG = Object.freeze(CATEGORY_ORDER.map(value => ({ value, label: value })))
 const CATEGORY_LABELS = Object.freeze({
+  '选课与修读': '选课与修读',
+  '考试与成绩': '考试与成绩',
+  '学籍与毕业': '学籍与毕业',
+  '学业拓展': '学业拓展',
+  '规范与权益': '规范与权益',
   'course-selection': '选课流程',
   'training-program': '培养方案',
   'add-drop': '退补选',
   'exam-grade': '考试成绩'
 })
-const HOME_CATEGORIES = Object.freeze([
-  { value: 'selection-study', label: '选课与修读', symbol: '▥', tone: 'purple', query: '选课' },
-  { value: 'exam-grade', label: '考试与成绩', symbol: '★', tone: 'gold', query: '成绩' },
-  { value: 'academic-status', label: '学籍与毕业', symbol: '学', tone: 'green', query: '学籍' },
-  { value: 'academic-growth', label: '学业拓展', symbol: '◆', tone: 'blue', query: '微专业' },
-  { value: 'rights-rules', label: '规范与权益', symbol: '⚖', tone: 'red', query: '规范' }
-])
+const HOME_CATEGORIES = Object.freeze(CATEGORY_ORDER.map(value => {
+  const info = getCategoryInfo(value)
+  return { value, label: value, symbol: info.symbol, tone: info.tone }
+}))
 const GUIDE_PRESENTATION = Object.freeze({
+  '选课与修读': { symbol: '▥', tone: 'purple' },
+  '考试与成绩': { symbol: '★', tone: 'gold' },
+  '学籍与毕业': { symbol: '学', tone: 'green' },
+  '学业拓展': { symbol: '◆', tone: 'blue' },
+  '规范与权益': { symbol: '⚖', tone: 'red' },
   'course-selection': { symbol: '▦', tone: 'purple' },
   'add-drop': { symbol: '↺', tone: 'purple' },
   'exam-grade': { symbol: '≡', tone: 'gold' },
@@ -93,21 +96,21 @@ Page({
     categories: categoryOptions(),
     homeCategories: HOME_CATEGORIES,
     activeHomeCategory: HOME_CATEGORIES[0].value,
-    guideContextLabel: '年级未设置 · 专业未设置',
+    guideContextLabel: learningProfile.formatLabel(learningProfile.emptyProfile()),
     dataUpdatedAt: ''
   },
 
   onLoad() {
-    reportVisit('/mp/guides')
     this._isUnloaded = false
     this._requestId = 0
+    this.refreshLearningProfile()
     return this.loadGuides()
   },
   onShow() {
-    theme.onPageShow()
     // Tab 页会被缓存：切回时只恢复已有状态，不能覆盖 error/empty/ready，
     // 也不能为同一个初始请求再发一次读取。
     this._isVisible = true
+    this.refreshLearningProfile()
   },
   onHide() {
     this._isVisible = false
@@ -138,19 +141,28 @@ Page({
   retryLoadMore() {
     if (this.data.hasMore && !this.data.loadingMore) return this.loadGuides({ append: true })
   },
+  refreshLearningProfile() {
+    if (this._isUnloaded) return
+    const guideContextLabel = learningProfile.formatLabel(learningProfile.read())
+    if (guideContextLabel !== this.data.guideContextLabel) this.setData({ guideContextLabel })
+  },
   openSearch() {
     navigation.openSearch('')
   },
   openAllGuides() {
-    navigation.openSearch('')
+    navigation.openGuideCategory('')
   },
   openHomeCategory(event) {
     const value = String(event && event.currentTarget && event.currentTarget.dataset.value || '')
     const category = HOME_CATEGORIES.find(item => item.value === value)
     if (!category || this._isUnloaded) return
-    this.setData({ activeHomeCategory: category.value }, () => navigation.openSearch(category.query))
+    this.setData({ activeHomeCategory: category.value }, () => navigation.openGuideCategory(category.value))
   },
   openAssistant() {
+    if (config.apiProfile === 'reference') {
+      navigation.openGuideAssistant()
+      return
+    }
     if (isDevelopRuntime()) {
       navigation.openGuideAssistant(ASSISTANT_PREVIEW_QUESTION, { previewAnswer: true })
       return

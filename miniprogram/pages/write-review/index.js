@@ -9,8 +9,7 @@ function createWriteReviewPage(api = publicApi) {
     courseId: '', loading: true, submitting: false, course: null,
     error: '',
     teacher: '', scoreOptions: [1, 2, 3, 4, 5], rating: 0,
-    tagOptions: [],
-    selectedTags: [], body: '', anonymous: true,
+    body: '', anonymous: true,
     minLength: 12, moderationRequired: true
   },
   onLoad(options) { reportVisit('/mp/write-review'); this.setData({ courseId: options.course_id || '' }); this.prepare() },
@@ -19,11 +18,9 @@ function createWriteReviewPage(api = publicApi) {
     try {
       const home = await (typeof api.getHome === 'function' ? api.getHome().catch(() => null) : Promise.resolve(null))
       const course = await api.getCourse(this.data.courseId)
-      const groups = await api.getCourseReviewGroups(course)
       const submission = home && home.review_submission ? home.review_submission : null
-      const tagOptions = [...new Set(groups.flatMap(group => (group.items || []).flatMap(review => review.tags)))].map(text => ({ text, selected: false }))
       this.setData({
-        course, tagOptions, loading: false, error: '',
+        course, loading: false, error: '',
         minLength: submission ? submission.min_length : 12,
         moderationRequired: submission ? submission.moderation_required : true
       })
@@ -34,22 +31,17 @@ function createWriteReviewPage(api = publicApi) {
   inputTeacher(event) { this.setData({ teacher: event.detail.value }) },
   chooseTeacher(event) { this.setData({ teacher: event.currentTarget.dataset.teacher }) },
   setRating(event) { this.setData({ rating: Number(event.currentTarget.dataset.score) }) },
-  toggleTag(event) {
-    const tag = event.currentTarget.dataset.tag
-    const selectedTags = this.data.selectedTags.includes(tag) ? this.data.selectedTags.filter(item => item !== tag) : [...this.data.selectedTags, tag]
-    this.setData({ selectedTags, tagOptions: this.data.tagOptions.map(item => ({ ...item, selected: selectedTags.includes(item.text) })) })
-  },
   inputBody(event) { this.setData({ body: event.detail.value }) },
   toggleAnonymous(event) { this.setData({ anonymous: event.detail.value }) },
   async submit() {
-    const { course, teacher, rating, selectedTags, body, anonymous, minLength } = this.data
+    const { course, teacher, rating, body, anonymous, minLength } = this.data
     if (!teacher.trim() || !rating || body.trim().length < minLength) {
       wx.showToast({ title: `请填写教师、完成评分并填写至少 ${minLength} 字`, icon: 'none' })
       return
     }
     this.setData({ submitting: true })
     try {
-      await api.submitReview({ course_id: course.id, teacher: teacher.trim(), rating, tags: selectedTags, body: body.trim(), anonymous })
+      await api.submitReview({ course_id: course.id, teacher: teacher.trim(), rating, body: body.trim(), anonymous })
       const content = this.data.moderationRequired
         ? '评价已进入审核，通过后将公开展示，公开页面保持匿名。'
         : '评价已提交并公开展示，公开页面保持匿名。'

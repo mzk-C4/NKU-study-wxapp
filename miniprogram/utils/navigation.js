@@ -17,6 +17,12 @@ function openGuide(guideId) {
   wx.navigateTo({ url: `/pages/guide-detail/index?id=${encodeURIComponent(guideId)}` })
 }
 
+function openGuideCategory(category = '') {
+  const normalized = String(category == null ? '' : category).trim().slice(0, 40)
+  const suffix = normalized ? `?category=${encodeURIComponent(normalized)}` : ''
+  wx.navigateTo({ url: `/pages/guide-category/index${suffix}` })
+}
+
 function openGuideAssistant(question = '', options = {}) {
   const normalized = String(question == null ? '' : question).trim().slice(0, 1000)
   const params = []
@@ -27,4 +33,11 @@ function openGuideAssistant(question = '', options = {}) {
   wx.navigateTo({ url: `/pages/guide-assistant/index${suffix}` })
 }
 
-module.exports = { openCourse, openSearch, openCourseResources, openGuide, openGuideAssistant }
+module.exports = {
+  openCourse,
+  openSearch,
+  openCourseResources,
+  openGuide,
+  openGuideCategory,
+  openGuideAssistant
+}

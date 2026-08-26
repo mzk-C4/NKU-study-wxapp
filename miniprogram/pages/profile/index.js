@@ -3,6 +3,18 @@ const theme = require('../../utils/theme')
 const navigation = require('../../utils/navigation')
 const { publicApi } = require('../../services/public-api')
 const authSession = require('../../utils/auth-session')
+const learningProfile = require('../../utils/learning-profile')
+
+function learningProfileView(profile) {
+  const value = profile || learningProfile.emptyProfile()
+  return {
+    learningProfile: value,
+    learningProfileLabel: learningProfile.formatLabel(value),
+    learningAdmissionYearLabel: value.admission_year ? `${value.admission_year}级` : '未设置',
+    learningMajorLabel: value.major || '未设置',
+    hasLearningProfile: Boolean(value.admission_year || value.major)
+  }
+}
 
 const STATUS_LABELS = { approved: '已公开', pending: '审核中', rejected: '未通过', hidden: '已隐藏', needs_changes: '待修改' }
 
@@ -61,11 +73,123 @@ function createProfilePage(api = publicApi, sessionStore = authSession) {
       passwordInput1: '',
       passwordInput2: '',
       passwordSaving: false,
-      hasWebPassword: false
+      hasWebPassword: false,
+      ...learningProfileView(learningProfile.emptyProfile()),
+      editingLearningProfile: false,
+      admissionYearInput: '',
+      majorInput: '',
+      admissionYearError: '',
+      majorError: '',
+      focusAdmissionYear: false,
+      focusMajor: false
     },
 
     onLoad() { reportVisit('/mp/profile') },
-    onShow() { this.refresh(); theme.onPageShow() },
+    onShow() { this.refreshLearningProfile(); this.refresh(); theme.onPageShow() },
+
+    refreshLearningProfile() {
+      this.setData(learningProfileView(learningProfile.read()))
+    },
+
+    editLearningProfile() {
+      const profile = learningProfile.read()
+      this.setData({
+        ...learningProfileView(profile),
+        editingLearningProfile: true,
+        admissionYearInput: profile.admission_year,
+        majorInput: profile.major,
+        admissionYearError: '',
+        majorError: '',
+        focusAdmissionYear: false,
+        focusMajor: false
+      }, () => this.setData({ focusAdmissionYear: true }))
+    },
+
+    inputAdmissionYear(event) {
+      this.setData({
+        admissionYearInput: String(event && event.detail ? event.detail.value : ''),
+        admissionYearError: ''
+      })
+    },
+
+    inputMajor(event) {
+      this.setData({
+        majorInput: String(event && event.detail ? event.detail.value : ''),
+        majorError: ''
+      })
+    },
+
+    cancelLearningProfileEdit() {
+      const profile = learningProfile.read()
+      this.setData({
+        ...learningProfileView(profile),
+        editingLearningProfile: false,
+        admissionYearInput: '',
+        majorInput: '',
+        admissionYearError: '',
+        majorError: '',
+        focusAdmissionYear: false,
+        focusMajor: false
+      })
+    },
+
+    saveLearningProfile() {
+      const result = learningProfile.save({ admission_year: this.data.admissionYearInput, major: this.data.majorInput })
+      if (!result.ok) {
+        this.setData({
+          admissionYearError: result.field === 'admission_year' ? result.error : '',
+          majorError: result.field === 'major' ? result.error : '',
+          focusAdmissionYear: result.field === 'admission_year',
+          focusMajor: result.field === 'major'
+        })
+        if (result.field) wx.showToast({ title: '请检查学习信息', icon: 'none' })
+        else wx.showModal({ title: '无法保存学习信息', content: result.error, showCancel: false, confirmText: '我知道了' })
+        return false
+      }
+      this.setData({
+        ...learningProfileView(result.value),
+        editingLearningProfile: false,
+        admissionYearInput: '',
+        majorInput: '',
+        admissionYearError: '',
+        majorError: '',
+        focusAdmissionYear: false,
+        focusMajor: false
+      })
+      wx.showToast({ title: '学习信息已保存', icon: 'success' })
+      return true
+    },
+
+    confirmClearLearningProfile() {
+      wx.showModal({
+        title: '清除本机学习信息？',
+        content: '只会清除入学年份和专业，不会删除 AI 会话、课程浏览历史或指南内容。',
+        cancelText: '取消',
+        confirmText: '清除',
+        confirmColor: '#B42318',
+        success: result => { if (result && result.confirm) this.clearLearningProfile() }
+      })
+    },
+
+    clearLearningProfile() {
+      const result = learningProfile.clear()
+      if (!result.ok) {
+        wx.showModal({ title: '无法清除学习信息', content: result.error, showCancel: false, confirmText: '我知道了' })
+        return false
+      }
+      this.setData({
+        ...learningProfileView(result.value),
+        editingLearningProfile: false,
+        admissionYearInput: '',
+        majorInput: '',
+        admissionYearError: '',
+        majorError: '',
+        focusAdmissionYear: false,
+        focusMajor: false
+      })
+      wx.showToast({ title: '本机学习信息已清除', icon: 'success' })
+      return true
+    },
 
     resetLoggedOut(history) {
       this.setData({
