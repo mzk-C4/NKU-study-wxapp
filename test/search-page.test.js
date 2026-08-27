@@ -546,6 +546,20 @@ test('home quick-grid removed, search compact', () => {
   assert.ok(!source.includes('搜索课程、教师或关键词'), 'search placeholder should be short')
 })
 
+test('home footer lists every collaborator before the non-official disclaimer', () => {
+  const template = fs.readFileSync(path.join(projectRoot, 'miniprogram/pages/home/index.wxml'), 'utf8')
+  const source = fs.readFileSync(path.join(projectRoot, 'miniprogram/pages/home/index.js'), 'utf8')
+  const style = fs.readFileSync(path.join(projectRoot, 'miniprogram/pages/home/index.wxss'), 'utf8')
+
+  for (const value of ['马兆坤', '2512538', 'M_zepher_king', '南开指南针', 'nkulife_', 'guideNO1', 'Shview', 'sh465431276adas@outlook.com', '洪修睿', '2513326', 'Code-your-Adm', '丁宇鑫', '2512100', 'wenjiandehuayecai']) {
+    assert.equal(source.includes(value), true, `missing collaborator field: ${value}`)
+  }
+  assert.ok(template.indexOf('class="collaborators section"') < template.indexOf('学生共建 · 非南开大学官方平台'))
+  assert.match(template, /wx:for="\{\{collaborators\}\}"[^>]*wx:key="id"/)
+  assert.match(style, /\.collaborator-meta\s*\{[^}]*flex-wrap:\s*wrap/)
+  assert.match(style, /\.collaborator-account\s*\{[^}]*word-break:\s*break-all/)
+})
+
 test('search result cards fill the page and the clear action stays inside the search field', () => {
   const template = fs.readFileSync(path.join(projectRoot, 'miniprogram/pages/search/index.wxml'), 'utf8')
   const style = fs.readFileSync(path.join(projectRoot, 'miniprogram/pages/search/index.wxss'), 'utf8')
