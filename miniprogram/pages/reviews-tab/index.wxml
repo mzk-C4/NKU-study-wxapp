@@ -1,18 +1,18 @@
 <view class="page">
   <view class="search-box reviews-search">
     <view class="search-icon"></view>
-    <input class="reviews-search-input" value="{{keyword}}" placeholder="搜索课程或教师" confirm-type="search" bindinput="inputKeyword" bindconfirm="dismissKeyboard" />
-    <view wx:if="{{keyword}}" class="reviews-search-clear" catchtap="clearKeyword">×</view>
+    <input class="reviews-search-input" value="{{keyword}}" placeholder="搜索课程或教师" maxlength="80" confirm-type="search" aria-label="搜索课程或教师" bindinput="inputKeyword" bindconfirm="dismissKeyboard" />
+    <button wx:if="{{keyword}}" class="reviews-search-clear" aria-label="清除搜索词" hover-class="reviews-search-clear--pressed" catchtap="clearKeyword">×</button>
   </view>
   <view class="card" style="margin-bottom: 16rpx;padding: 16rpx 24rpx;display:flex;justify-content:space-between;align-items:center;">
     <text class="micro">共 {{statCourses}} 门课，{{statReviews}} 个评价</text>
     <text class="micro" wx:if="{{filteredGroups.length > pageSize}}">已加载 {{visibleGroups.length}}/{{filteredGroups.length}}</text>
   </view>
-  <state-view loading="{{loading}}" error="{{error}}" empty="{{!loading && !error && !visibleGroups.length}}" empty-text="{{keyword ? '没有匹配的课程或教师' : '暂无评价'}}" bindretry="loadGroups"></state-view>
+  <state-view loading="{{loading}}" error="{{error}}" empty="{{!loading && !error && !visibleGroups.length}}" empty-text="{{hasSearchQuery ? '没有匹配的课程或教师' : '暂无评价'}}" bindretry="loadGroups"></state-view>
   <view class="card review-group-card" wx:for="{{visibleGroups}}" wx:key="group_key" data-group="{{item}}" bindtap="openGroup">
     <view class="group-left">
-      <view class="group-course">{{item.course_name}}</view>
-      <view class="micro">{{item.teacher_name}}</view>
+      <rich-text class="group-course" nodes="{{item.highlighted_course_name}}"></rich-text>
+      <rich-text class="micro group-teacher" nodes="{{item.highlighted_teacher_name}}"></rich-text>
     </view>
     <view class="group-right">
       <view class="group-score" wx:if="{{item.rating_average}}">{{item.rating_average}}</view>
