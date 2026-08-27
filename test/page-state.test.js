@@ -114,3 +114,14 @@ test('profile clears a rejected session without leaving stale personal data', as
   assert.deepEqual(page.data.reviews, [])
   global.wx = originalWx
 })
+
+test('profile login action owns a full-width native button layout', () => {
+  const fs = require('node:fs')
+  const path = require('node:path')
+  const root = path.join(__dirname, '..')
+  const markup = fs.readFileSync(path.join(root, 'miniprogram/pages/profile/index.wxml'), 'utf8')
+  const styles = fs.readFileSync(path.join(root, 'miniprogram/pages/profile/index.wxss'), 'utf8')
+
+  assert.match(markup, /class="login-button"[^>]*>微信登录<\/button>/)
+  assert.match(styles, /\.login-button\s*\{[^}]*width:\s*100%\s*!important[^}]*min-width:\s*100%[^}]*max-width:\s*100%[^}]*margin:\s*24rpx\s+0\s+0\s*!important/s)
+})
