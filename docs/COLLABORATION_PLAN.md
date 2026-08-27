@@ -347,3 +347,12 @@
 - AI 回答的点赞、点踩由 CSS 手绘形状替换为本地 SVG 资源，保留未选中和选中两种状态，避免不同渲染环境下图形变形。
 - 自动化证据：`node --test test/guide-pages.test.js` 22/22、`npm.cmd test` 141/141、`npm.cmd run check:miniprogram` 和 `node scripts/release-preflight.js` 均通过。
 - 未运行微信开发者工具、真机与大字体人工验收；未调用生产 AI、未读取 Token。`project.config.json` 与三份 30 题候选文件继续排除在本轮提交之外。
+
+### 2026-08-27 独立评价 Tab 课程/教师模糊搜索
+
+- 已完成独立“评价”Tab 的公开评价分组本地课程名/教师名搜索；结果仍是一张“课程＋教师”分组卡，并只用稳定 `group_key` 编码进入原有评价详情。
+- 复用 `search-utils` 的 NFKC、80 字上限、token 与散字匹配；评价页小型纯函数 adapter 先逐字段确定候选，再用 Fuse 作确定性稳定排序。通用高亮/HTML 转义已抽至 `utils/search-highlight`，主搜索页继续通过原有 presentation 导出使用，回归测试保持通过。
+- 修改范围仅限评价 Tab 搜索、共享高亮 owner、专项测试与测试脚本；课程统计改为按 `course_id` 去重，无 id 时以安全归一化课程名后备，评价总数仍汇总当前分组。
+- 自动化证据：专项评价搜索测试、`test:search-guide`、`test:pages`、`check:miniprogram` 与完整 `npm test` 均已在隔离工作树执行；微信开发者工具、真机、体验版未运行。
+- 未修改公开 API、生产数据或部署状态；未调用 `/search-index`，未改服务端、评价详情、提交或审核逻辑。
+- 验收收尾：输入框保留用户原始（最多 80 字）内容，归一化查询仅作为内部状态；评价详情导航严格只接受并编码 API 的 `group_key`。`project.config.json` 为人工验收期间的既有开发者工具改动，已保留并排除在本任务范围外。
