@@ -7,7 +7,7 @@
         <view class="profile-sub">{{isLoggedIn ? '微信身份已验证，可同步收藏与评价' : '浏览课程、资料和评价无需登录'}}</view>
       </view>
     </view>
-    <button wx:if="{{!isLoggedIn}}" class="login-button" loading="{{loading}}" disabled="{{loading}}" bindtap="login">微信账号登录</button>
+    <button wx:if="{{!isLoggedIn}}" class="login-button" loading="{{loading}}" disabled="{{loading}}" bindtap="login">微信登录</button>
     <view wx:else class="profile-actions">
       <button class="hero-button" bindtap="startEditProfile">编辑昵称</button>
       <button class="hero-button hero-button--quiet" loading="{{loading}}" disabled="{{loading}}" bindtap="logout">退出登录</button>

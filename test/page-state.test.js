@@ -128,3 +128,14 @@ test('profile resource submission opens the registered NKUStudy participate web-
   assert.match(profile, /wx\.navigateTo\(\{ url: '\/pages\/participate-web\/index' \}\)/)
   assert.match(participate, /https:\/\/nkustudy\.top\/participate\//)
 })
+
+test('profile login action owns a full-width native button layout', () => {
+  const fs = require('node:fs')
+  const path = require('node:path')
+  const root = path.join(__dirname, '..')
+  const markup = fs.readFileSync(path.join(root, 'miniprogram/pages/profile/index.wxml'), 'utf8')
+  const styles = fs.readFileSync(path.join(root, 'miniprogram/pages/profile/index.wxss'), 'utf8')
+
+  assert.match(markup, /class="login-button"[^>]*>微信登录<\/button>/)
+  assert.match(styles, /\.login-button\s*\{[^}]*width:\s*100%\s*!important[^}]*min-width:\s*100%[^}]*max-width:\s*100%[^}]*margin:\s*24rpx\s+0\s+0\s*!important/s)
+})
