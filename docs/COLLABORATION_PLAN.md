@@ -794,3 +794,12 @@
 - 发布交接继续保持客户端边界：原始材料、生成知识数据、reference server、Qwen provider 与密钥不进入小程序提交；production profile 在正式 AI 契约完成前保持零 AI 网络调用。
 - 自动化 `PASS`：完整 `npm test` 共 158 项断言通过；小程序静态门禁为 17 页面/5 Tab；23 个 WXML 文件零错误；只读生产预检通过 `https://nkustudy.top/api/v1/home`。
 - 微信开发者工具、真机、大字体验、体验版与正式生产 AI 联调本轮未执行；本地合并不包含推送、PR 或部署。
+
+## 四十四、2026-08-27 本地 main 汇总
+
+- 本地 `main` 已依次汇总缓存的 `origin/main@d30fe15`、完整指南与个人中心修复分支 `feat/participate-webview@a790e5a`，以及首页协作者/公开站点统计分支 `feat/home-collaborators@b858a37`。
+- 首页现展示五位协作者，并以匿名公开的 `visit-api` 统计呈现安全运行时长与累计访问量；生产 `GET /visit-api/stats` 只读检查返回 `ok=true`，当前未返回 `startedAt`，客户端按已核验启用时间兼容展示。
+- 旧备份分支和已被主线等价吸收或替代的历史功能分支未重复合并，避免重复提交和恢复废弃实现；未跟踪的 `NKU-study-resources/` 继续保留在提交范围外。
+- GitHub 抓取在普通连接、授权连接和 HTTP/1.1 重试中分别因 443 不可达或连接重置失败；因此本轮只可确认合并了 2026-08-25 已缓存的远端引用，不能断言 2026-08-27 远端没有更新。
+- 自动化 `PASS`：完整 `npm test` 各阶段合计 166/166；小程序静态门禁 17 页面/5 Tab；23 个 WXML 文件零错误；只读生产 `/api/v1/home` 预检与 `/visit-api/stats` 检查均通过。
+- 微信开发者工具、真机、大字体验、体验版、正式生产 AI 联调、远端推送与 PR 本轮未执行。

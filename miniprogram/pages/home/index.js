@@ -1,15 +1,56 @@
-const { reportVisit } = require('../../utils/visit-report')
+const { reportVisit, getVisitStats } = require('../../utils/visit-report')
+const { buildSiteStatus } = require('../../utils/site-status')
 const theme = require('../../utils/theme')
 const { publicApi } = require('../../services/public-api')
 const navigation = require('../../utils/navigation')
 
 Page({
   data: {
- loading: true, error: '', home: null, hotCourses: [], latestUpdates: [] },
+    loading: true,
+    error: '',
+    home: null,
+    siteStatus: null,
+    hotCourses: [],
+    latestUpdates: [],
+    collaborators: [
+      { id: 'mzk', name: '马兆坤', identity: '2512538', account: 'M_zepher_king' },
+      { id: 'nkulife', name: '南开指南针', identity: 'nkulife_', account: 'guideNO1' },
+      { id: 'shview', name: 'Shview', identity: '', account: 'sh465431276adas@outlook.com' },
+      { id: 'hxr', name: '洪修睿', identity: '2513326', account: 'Code-your-Adm' },
+      { id: 'dyx', name: '丁宇鑫', identity: '2512100', account: 'wenjiandehuayecai' }
+    ]
+  },
 
-  onLoad() { reportVisit('/mp/home'); this.loadHome() },
-    onShow() { theme.onPageShow() },
-  onPullDownRefresh() { this.loadHome().finally(() => wx.stopPullDownRefresh()) },
+  onLoad() {
+    this.loadSiteStatus(reportVisit('/mp/home'), true)
+    this.loadHome()
+  },
+  onShow() {
+    theme.onPageShow()
+    this.refreshSiteStatus()
+  },
+  onPullDownRefresh() {
+    this.loadSiteStatus(getVisitStats())
+    this.loadHome().finally(() => wx.stopPullDownRefresh())
+  },
+
+  async loadSiteStatus(statsPromise, fallbackToRead = false) {
+    try {
+      let stats = await statsPromise
+      if (!stats && fallbackToRead) stats = await getVisitStats()
+      const siteStatus = buildSiteStatus(stats)
+      if (!siteStatus) return
+      this.siteStats = stats
+      this.setData({ siteStatus })
+    } catch (_) {
+      // 状态栏失败不影响主页内容和访问。
+    }
+  },
+
+  refreshSiteStatus() {
+    const siteStatus = buildSiteStatus(this.siteStats)
+    if (siteStatus) this.setData({ siteStatus })
+  },
 
   async loadHome() {
     this.setData({ loading: true, error: '' })

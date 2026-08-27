@@ -127,6 +127,15 @@ Fuse 权重为 `name 0.30 / short_name 0.20 / aliases 0.15 / tags 0.15 / teacher
 
 `download_url` 只接受 HTTPS 且主机严格等于 `resources.nkustudy.top`。客户端不拼接 `basePath`、内部文件路径或 R2 地址。
 
+## 公开站点访问统计
+
+首页通过独立于 `/api/v1` 的公开站点统计接口展示运行时长与累计访问量：
+
+- `POST https://nkustudy.top/visit-api/hit` 只发送 `{ "path": "/mp/<page>" }`，页面名限制为小写字母、数字和中划线；响应中的公开统计可用于首页展示。
+- `GET https://nkustudy.top/visit-api/stats` 只读取 `total`、`today`、`updatedAt` 和可选的 `startedAt`；客户端不读取访客明细或身份字段。
+
+统计请求不携带 Token、OpenID 或设备标识，失败时静默降级，不得阻塞首页业务内容。生产接口尚未返回 `startedAt` 时，客户端使用已核验的网站启用时间兼容展示；字段上线后以服务端值为准。
+
 ## 明确不调用
 
 仍不调用：
