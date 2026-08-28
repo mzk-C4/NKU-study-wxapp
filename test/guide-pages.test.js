@@ -334,6 +334,9 @@ test('guide home implements the approved Learning Compass visual contract', () =
   assert.match(template, /搜索选课、成绩、学籍、AI规范等问题/)
   assert.match(template, /问问学习指南针/)
   assert.match(template, /基于已审核的学校文件回答，并附原文来源/)
+  assert.match(template, /PDF 学生资料/)
+  assert.match(template, /学生整理内容仅供参考，重要事项以学校最新通知为准/)
+  assert.match(template, /\{\{pdfDocuments\.length\}\} 份/)
   assert.match(template, /近期更新/)
   assert.doesNotMatch(template, />培养方案</)
   assert.deepEqual(guidesDefinition.data.homeCategories.map(item => item.label), [
@@ -347,6 +350,38 @@ test('guide home implements the approved Learning Compass visual contract', () =
   assert.match(styles, /\.view-all\s*\{[^}]*margin:\s*0\s+0\s+0\s+auto\s*!important/s)
   assert.match(styles, /\.guide-intro\s*\{[^}]*linear-gradient/s)
   assert.match(styles, /\.assistant-card\s*\{[^}]*border-radius/s)
+  assert.match(styles, /\.pdf-document-card\s*\{[^}]*width:\s*100%\s*!important/s)
+  assert.deepEqual(guidesDefinition.data.pdfDocuments.map(item => [item.title, item.file_url]), [
+    ['在 NKU 健康地爬行指南', 'https://resources.nkustudy.top/guide-sources/nku-healthy-crawling-guide.pdf'],
+    ['南开大学选课教程', 'https://resources.nkustudy.top/guide-sources/nankai-course-selection-tutorial.pdf'],
+    ['选课、公共课与体育', 'https://resources.nkustudy.top/guide-sources/nku-course-selection-and-general-courses.pdf'],
+    ['三学院课程与专业分流', 'https://resources.nkustudy.top/guide-sources/nku-college-courses-and-major-placement.pdf'],
+    ['AI 工具与科研入门', 'https://resources.nkustudy.top/guide-sources/nku-ai-tools-and-research-starter.pdf'],
+    ['辅修、竞赛与推免准备', 'https://resources.nkustudy.top/guide-sources/nku-minor-competitions-and-postgraduate-recommendation.pdf'],
+    ['计算机考研备考路线', 'https://resources.nkustudy.top/guide-sources/nku-postgraduate-entrance-exam-roadmap.pdf']
+  ])
+})
+
+test('guide PDF cards download and open only the selected trusted document', async t => {
+  const downloads = []
+  const opened = []
+  installWx(t, {
+    downloadFile(options) {
+      downloads.push(options.url)
+      options.success({ statusCode: 200, tempFilePath: '/tmp/guide.pdf' })
+    },
+    openDocument(options) {
+      opened.push({ filePath: options.filePath, fileType: options.fileType, showMenu: options.showMenu })
+      options.success()
+    }
+  })
+  const page = createPage(guidesDefinition)
+
+  assert.equal(await page.openPdfDocument({ currentTarget: { dataset: { id: 'nku-postgraduate-entrance-exam-roadmap' } } }), true)
+  assert.deepEqual(downloads, ['https://resources.nkustudy.top/guide-sources/nku-postgraduate-entrance-exam-roadmap.pdf'])
+  assert.deepEqual(opened, [{ filePath: '/tmp/guide.pdf', fileType: 'pdf', showMenu: true }])
+  assert.equal(page.data.openingDocumentId, '')
+  assert.equal(await page.openPdfDocument({ currentTarget: { dataset: { id: 'unknown-document' } } }), false)
 })
 
 test('guide home search, category and AI controls have honest recoverable behavior', t => {
