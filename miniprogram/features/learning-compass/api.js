@@ -160,6 +160,8 @@ function mapVariant(value, isReference) {
 }
 
 function buildAssistantRequest(input = {}) {
+  const admissionYearText = unicode(input.profile && input.profile.admission_year, 4)
+  const admissionYear = /^\d{4}$/.test(admissionYearText) ? Number(admissionYearText) : 0
   const profile = input.profile && typeof input.profile === 'object' ? input.profile : {}
   return {
     question: unicode(input.question, 1000),
@@ -168,7 +170,7 @@ function buildAssistantRequest(input = {}) {
       content: unicode(item && item.content, 1000)
     })).filter(item => item.content) : [],
     profile: {
-      ...(unicode(profile.admission_year, 4) ? { admission_year: unicode(profile.admission_year, 4) } : {}),
+      ...(admissionYear ? { admission_year: admissionYear } : {}),
       ...(unicode(profile.major, 100) ? { major: unicode(profile.major, 100) } : {})
     }
   }
@@ -187,14 +189,6 @@ function mapAssistant(value, isReference) {
   }
 }
 
-function productionAiError() {
-  const error = new Error('AI问答生产接口尚未正式启用。')
-  error.statusCode = 0
-  error.code = 'AI_PRODUCTION_NOT_ENABLED'
-  error.kind = 'feature_unavailable'
-  return error
-}
-
 function createApi(client = request, options = {}) {
   const isReference = (options.apiProfile || config.apiProfile) === 'reference'
   return {
@@ -204,8 +198,9 @@ function createApi(client = request, options = {}) {
       return client.get(`/guides/${encode(guideId)}/variants/${encode(variantId)}`).then(value => mapVariant(value, isReference))
     },
     askGuideAssistant(input) {
-      if (!isReference) return Promise.reject(productionAiError())
-      return client.post('/guide-assistant/answers', buildAssistantRequest(input), { timeout: 30000 }).then(value => mapAssistant(value, true))
+      return client.post('/guide-assistant/answers', buildAssistantRequest(input), {
+        timeout: 30000, auth: 'required'
+      }).then(value => mapAssistant(value, isReference))
     },
     validateGuideFileUrl(value) { return guideFileUrl(value, isReference) },
     isAllowedGuideFileUrl(value) { return Boolean(guideFileUrl(value, isReference)) },

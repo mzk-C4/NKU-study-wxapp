@@ -56,3 +56,41 @@ test('returns empty blocks for empty or non-string input', () => {
   assert.deepEqual(parseMarkdown(null), [])
   assert.deepEqual(parseMarkdown(undefined), [])
 })
+test('parses headings, blockquotes, ordered lists and complete markdown tables', () => {
+  const blocks = parseMarkdown([
+    '# 标题',
+    '> 引用 **重点**',
+    '- 无序项 *强调*',
+    '1) 有序项 `代码`',
+    '| 项目 | 说明 |',
+    '| --- | --- |',
+    '| **GPA** | [官方说明](https://nkustudy.top/rules) |'
+  ].join('\n'))
+
+  assert.equal(blocks[0].type, 'heading')
+  assert.equal(blocks[0].level, 1)
+  assert.equal(blocks[1].type, 'blockquote')
+  assert.match(blocks[1].runs.map(run => run.html || '').join(''), /<b>重点<\/b>/)
+  assert.deepEqual(blocks.slice(2, 4).map(block => block.listType), ['unordered', 'ordered'])
+  assert.match(blocks[3].runs.map(run => run.html || '').join(''), /<code>代码<\/code>/)
+
+  const table = blocks[4]
+  assert.equal(table.type, 'table')
+  assert.equal(table.headers.length, 2)
+  assert.equal(table.rows.length, 1)
+  assert.match(table.rows[0].cells[0].runs[0].html, /<b>GPA<\/b>/)
+  assert.deepEqual(table.rows[0].cells[1].runs[0], {
+    id: 'run-0', kind: 'link', text: '官方说明', href: 'https://nkustudy.top/rules'
+  })
+})
+
+test('normalizes nbsp entities and never turns unsafe links or HTML into rich content', () => {
+  const blocks = parseMarkdown('甲&nbsp;乙 &#160;丙 &#xA0;丁 &8nbsp;戊\n[HTTP](http://example.com) [JS](javascript:alert(1)) <img src=x onerror=alert(1)>')
+  const text = blocks[0].runs.map(run => run.html || '').join('')
+  assert.equal(text.includes('&nbsp;'), false)
+  assert.match(text, /甲 乙 丙 丁 戊/)
+  assert.equal(blocks[1].runs.some(run => run.kind === 'link'), false)
+  const unsafe = blocks[1].runs.map(run => run.html || '').join('')
+  assert.match(unsafe, /&lt;img src=x onerror=alert\(1\)&gt;/)
+  assert.equal(unsafe.includes('<img'), false)
+})

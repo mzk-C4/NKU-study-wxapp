@@ -1,9 +1,15 @@
 const { reportVisit } = require('../../utils/visit-report')
 const theme = require('../../utils/theme')
 const { publicApi } = require('../../services/public-api')
+const {
+  buildReviewGroupUrl,
+  getReviewListState,
+  getReviewSearchStats,
+  searchReviewGroups
+} = require('./search')
 
 Page({
-  data: { loading: true, error: '', keyword: '', allGroups: [], filteredGroups: [], visibleGroups: [], page: 1, pageSize: 20, hasMore: false, statCourses: 0, statReviews: 0 },
+  data: { loading: true, error: '', keyword: '', hasSearchQuery: false, allGroups: [], filteredGroups: [], visibleGroups: [], page: 1, pageSize: 20, hasMore: false, statCourses: 0, statReviews: 0 },
   onLoad() { reportVisit('/mp/reviews-tab'); this.loadGroups() },
   onPullDownRefresh() { this.loadGroups().finally(() => wx.stopPullDownRefresh()) },
   onReachBottom() { if (this.data.hasMore && !this.data.loading) this.loadMore() },
@@ -16,16 +22,21 @@ Page({
     } catch (error) { this.setData({ loading: false, error: error.message }) }
   },
   applyFilter(groups, keyword) {
-    const kw = String(keyword || '').trim().toLowerCase()
-    const filtered = kw ? groups.filter(g => `${g.course_name} ${g.teacher_name}`.toLowerCase().includes(kw)) : groups
+    const rawKeyword = String(keyword == null ? '' : keyword).slice(0, 80)
+    const searched = searchReviewGroups(groups, rawKeyword)
+    const filtered = searched.results
+    const list = getReviewListState(filtered, this.data.pageSize)
+    const stats = getReviewSearchStats(filtered)
     this.setData({
       allGroups: groups,
       filteredGroups: filtered,
-      visibleGroups: filtered.slice(0, this.data.pageSize),
-      page: 1,
-      hasMore: filtered.length > this.data.pageSize,
-      statCourses: filtered.length,
-      statReviews: filtered.reduce((sum, g) => sum + (g.review_count || 0), 0),
+      visibleGroups: list.visibleGroups,
+      page: list.page,
+      hasMore: list.hasMore,
+      keyword: rawKeyword,
+      hasSearchQuery: Boolean(searched.query),
+      statCourses: stats.statCourses,
+      statReviews: stats.statReviews,
       loading: false
     })
   },
@@ -34,13 +45,12 @@ Page({
   dismissKeyboard() { if (wx.hideKeyboard) wx.hideKeyboard() },
   loadMore() {
     const next = this.data.page + 1
-    const end = next * this.data.pageSize
-    const visible = this.data.filteredGroups.slice(0, end)
-    this.setData({ visibleGroups: visible, page: next, hasMore: end < this.data.filteredGroups.length })
+    const list = getReviewListState(this.data.filteredGroups, this.data.pageSize, next)
+    this.setData(list)
   },
   openGroup(event) {
     const group = event.currentTarget.dataset.group
-    const key = group.group_key || group.key
-    if (key) wx.navigateTo({ url: `/pages/course-reviews/index?group_key=${encodeURIComponent(key)}` })
+    const url = buildReviewGroupUrl(group)
+    if (url) wx.navigateTo({ url })
   }
 })

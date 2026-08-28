@@ -147,6 +147,7 @@
 .guide-search::after,
 .assistant-action::after,
 .home-category::after,
+.pdf-document-card::after,
 .view-all::after,
 .guide-row::after,
 .load-more-button::after {
@@ -383,6 +384,99 @@
   background: #6A2E96;
   transform: translateX(-50%);
 }
+
+.pdf-section-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20rpx;
+  margin: 34rpx 12rpx 18rpx;
+}
+
+.pdf-section-title {
+  color: #211C24;
+  font-size: 34rpx;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.pdf-section-note {
+  margin-top: 5rpx;
+  color: #7B7381;
+  font-size: 19rpx;
+  line-height: 1.45;
+}
+
+.pdf-section-count {
+  flex: 0 0 auto;
+  padding-bottom: 2rpx;
+  color: #79539A;
+  font-size: 20rpx;
+  font-variant-numeric: tabular-nums;
+}
+
+.pdf-document-list {
+  overflow: hidden;
+  border: 1rpx solid #E9E2EC;
+  border-radius: 28rpx;
+  background: #FFFFFF;
+  box-shadow: 0 12rpx 32rpx rgba(55,38,69,.07);
+}
+
+.pdf-document-card {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  width: 100% !important;
+  min-width: 100%;
+  max-width: 100%;
+  min-height: 174rpx;
+  margin: 0 !important;
+  padding: 24rpx;
+  border-bottom: 1rpx solid #EEE9F1;
+  border-radius: 0;
+  color: #211C24;
+  background: #FFFFFF;
+  text-align: left;
+  line-height: 1.4;
+  box-sizing: border-box;
+}
+
+.pdf-document-card:last-child { border-bottom: 0; }
+.pdf-document-card--pressed { background: #F8F4FA; }
+.pdf-document-card[disabled] { opacity: .62; }
+
+.pdf-document-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 76rpx;
+  height: 92rpx;
+  border: 2rpx solid #D9CBE3;
+  border-radius: 13rpx;
+  color: #5B287D;
+  background: #F7F1FA;
+  font-size: 17rpx;
+  font-weight: 800;
+  box-sizing: border-box;
+}
+
+.pdf-document-main { min-width: 0; flex: 1; }
+.pdf-document-title { color: #211C24; font-size: 27rpx; font-weight: 750; line-height: 1.4; }
+.pdf-document-description {
+  display: -webkit-box;
+  overflow: hidden;
+  margin-top: 7rpx;
+  color: #625A69;
+  font-size: 20rpx;
+  line-height: 1.5;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.pdf-document-meta { margin-top: 8rpx; color: #8A8190; font-size: 18rpx; line-height: 1.4; font-variant-numeric: tabular-nums; }
+.pdf-document-action { display: flex; align-items: center; gap: 4rpx; flex: 0 0 auto; color: #5B287D; font-size: 20rpx; font-weight: 650; white-space: nowrap; }
+.pdf-document-action text { font-size: 34rpx; line-height: 1; }
 
 .guide-section-head {
   display: flex;

@@ -1,6 +1,5 @@
 const navigation = require('../../utils/navigation')
 const learningProfile = require('../../utils/learning-profile')
-const config = require('../../config')
 const assistantRuntime = require('../../features/guide-assistant/runtime')
 const {
   MAX_ROUNDS,
@@ -9,6 +8,7 @@ const {
   lastCompletedExchange
 } = require('../../features/guide-assistant/controller')
 const { createSourceOpener } = require('../../utils/source-opener')
+const { parseMarkdown, validHttpsUrl } = require('../../utils/markdown')
 
 const STORAGE_KEY = 'nkustudy_guide_assistant_local_state'
 const MAX_QUESTION_LENGTH = 1000
@@ -210,7 +210,6 @@ Page({
     previewMode: false,
     previewState: '',
     answerMode: false,
-    buildingMode: false,
     requestPending: false,
     assistantState: 'idle',
     messages: [],
@@ -219,7 +218,9 @@ Page({
     roundLabel: '0/10',
     roundLimitReached: false,
     inputError: '',
+    statusMessage: '',
     responseAnswer: '',
+    responseBlocks: parseMarkdown(''),
     responseScope: '',
     responseFreshness: '',
     responseReason: '',
@@ -261,15 +262,14 @@ Page({
       ? requestedPreview
       : ''
     const previewMode = Boolean(previewState)
-    const productionBuildMode = !previewMode && config.apiProfile !== 'reference'
     const storedConversation = normalizeHistory(stored.history).find(item => (
       item.question === boundedQuestion(stored.lastQuestion) ||
       item.latestQuestion === boundedQuestion(stored.lastQuestion)
     ))
     const storedMessages = storedConversation ? storedConversation.messages : []
     const storedExchange = lastCompletedExchange(storedMessages)
-    const answerMode = previewState === 'answer' || (!previewMode && !productionBuildMode && storedConversation && storedConversation.state === 'answer')
-    const restoredState = !previewMode && !productionBuildMode && storedConversation ? storedConversation.state : ''
+    const answerMode = previewState === 'answer' || (!previewMode && storedConversation && storedConversation.state === 'answer')
+    const restoredState = !previewMode && storedConversation ? storedConversation.state : ''
     const visualQuestion = previewState === 'generating'
       ? optionQuestion || ANSWER_PREVIEW_QUESTION
       : previewState === 'refusal'
@@ -292,20 +292,20 @@ Page({
       previewMode,
       previewState: previewState || restoredState,
       answerMode,
-      buildingMode: productionBuildMode,
-      assistantState: previewState || (productionBuildMode ? 'building' : storedConversation ? storedConversation.state : 'idle'),
+      assistantState: previewState || (storedConversation ? storedConversation.state : 'idle'),
       messages: storedMessages,
       previousTurns: this.presentPreviousTurns(storedMessages),
       completedRoundCount,
       roundLabel: `${completedRoundCount}/${MAX_ROUNDS}`,
       roundLimitReached: completedRoundCount >= MAX_ROUNDS,
       responseAnswer: restoredResponse ? restoredResponse.content : '',
+      responseBlocks: parseMarkdown(restoredResponse ? restoredResponse.content : ''),
       responseScope: restoredResponse ? restoredResponse.applicable_scope : '',
       responseFreshness: restoredResponse ? restoredResponse.freshness_notice : '',
       responseReason: restoredResponse ? restoredResponse.reason : '',
       responseCitations: restoredResponse ? this.presentCitations(restoredResponse.citations) : [],
       learningProfileLabel: learningProfile.formatLabel(currentLearningProfile),
-      newTopicMode: !productionBuildMode && (previewState === 'new-topic' || (!previewState && !lastQuestion)),
+      newTopicMode: previewState === 'new-topic' || (!previewState && !lastQuestion),
       history,
       canSend: Boolean(boundedQuestion(draft))
     })
@@ -390,7 +390,7 @@ Page({
   },
 
   inputQuestion(event) {
-    if (this._isUnloaded || this.data.requestPending || this.data.roundLimitReached || this.data.buildingMode || this.data.previewState === 'generating' || (this.data.previewMode && this.data.previewState === 'refusal')) return
+    if (this._isUnloaded || this.data.requestPending || this.data.roundLimitReached || this.data.previewState === 'generating' || (this.data.previewMode && this.data.previewState === 'refusal')) return
     const draft = String(event && event.detail ? event.detail.value : '').slice(0, MAX_QUESTION_LENGTH)
     this.setData({ draft, canSend: Boolean(boundedQuestion(draft)), inputError: '' })
     saveLocalState(this.data.lastQuestion, draft, this.data.history)
@@ -416,10 +416,6 @@ Page({
 
   async sendQuestion() {
     if (this._isUnloaded || this.data.requestPending || this.data.roundLimitReached) return false
-    if (this.data.buildingMode) {
-      wx.showToast({ title: 'AI问答正在建设中', icon: 'none' })
-      return false
-    }
     if (['generating', 'refusal'].includes(this.data.previewState) && !this.data.previewMode) return false
     const question = boundedQuestion(this.data.draft)
     if (!question) {
@@ -444,9 +440,10 @@ Page({
       return true
     }
     if (this.data.previewMode) {
-      wx.showToast({ title: 'AI问答正在建设中', icon: 'none' })
+      wx.showToast({ title: '当前为视觉预览，不能发送', icon: 'none' })
       return false
     }
+    if (this.data.statusMessage) this.setData({ statusMessage: '' })
     const networkType = await getNetworkType()
     if (this._isUnloaded) return false
     const connected = hasConnection(networkType)
@@ -485,12 +482,19 @@ Page({
       previewState: 'generating',
       assistantState: 'generating',
       answerMode: false,
+      responseAnswer: '',
+      responseBlocks: parseMarkdown(''),
+      responseScope: '',
+      responseFreshness: '',
+      responseReason: '',
+      responseCitations: [],
       newTopicMode: false,
       networkError: false,
       networkConnected: true,
       showRecoveryActions: false,
       recoveryTitle: '',
       recoveryCopy: '',
+      statusMessage: '',
       inputError: '',
       canSend: false,
       previousTurns: this.presentPreviousTurns(this.data.messages, true)
@@ -520,6 +524,7 @@ Page({
         roundLabel: `${rounds}/${MAX_ROUNDS}`,
         roundLimitReached: rounds >= MAX_ROUNDS,
         responseAnswer: response.answer || '',
+        responseBlocks: parseMarkdown(response.answer || ''),
         responseScope: response.applicable_scope || '',
         responseFreshness: response.freshness_notice || '',
         responseReason: response.reason || '',
@@ -534,6 +539,20 @@ Page({
     }
 
     return this.applyAssistantFailure(result.state, question, result.error)
+  },
+
+  presentMarkdown(value) { return parseMarkdown(value) },
+
+  openMarkdownLink(event) {
+    const href = validHttpsUrl(event && event.currentTarget && event.currentTarget.dataset.href)
+    if (!href || typeof wx.setClipboardData !== 'function') return
+    wx.setClipboardData({ data: href, success: () => wx.showToast({ title: '安全链接已复制', icon: 'none' }) })
+  },
+
+  openMarkdownLink(event) {
+    const href = validHttpsUrl(event && event.currentTarget && event.currentTarget.dataset.href)
+    if (!href || typeof wx.setClipboardData !== 'function') return
+    wx.setClipboardData({ data: href, success: () => wx.showToast({ title: '安全链接已复制', icon: 'none' }) })
   },
 
   presentCitations(citations) {
@@ -557,6 +576,7 @@ Page({
         key: `turn-${index / 2 + 1}`,
         question: normalized[index].content,
         answer: response.content,
+        blocks: parseMarkdown(response.content || ''),
         refused: response.refused,
         scope: response.applicable_scope
       })
@@ -566,6 +586,14 @@ Page({
 
   applyAssistantFailure(state, question, error) {
     const safeQuestion = boundedQuestion(question)
+    this.setData({
+      responseAnswer: '',
+      responseBlocks: parseMarkdown(''),
+      responseScope: '',
+      responseFreshness: '',
+      responseReason: '',
+      responseCitations: []
+    })
     if (state === 'invalid-question') {
       this.setData({
         previewState: '',
@@ -669,9 +697,9 @@ Page({
       recoveryCopy: '',
       showRecoveryActions: false,
       draft: this.data.lastQuestion,
-      canSend: Boolean(this.data.lastQuestion)
+      canSend: Boolean(this.data.lastQuestion),
+      statusMessage: '登录成功，请再次点击发送按钮继续提问。'
     })
-    wx.showToast({ title: '登录成功，请再次发送', icon: 'success' })
     return true
   },
 
@@ -785,6 +813,7 @@ Page({
       roundLabel: `${rounds}/${MAX_ROUNDS}`,
       roundLimitReached: rounds >= MAX_ROUNDS,
       responseAnswer: exchange ? exchange.response.content : '',
+      responseBlocks: parseMarkdown(exchange ? exchange.response.content : ''),
       responseScope: exchange ? exchange.response.applicable_scope : '',
       responseFreshness: exchange ? exchange.response.freshness_notice : '',
       responseReason: exchange ? exchange.response.reason : '',
@@ -1002,6 +1031,7 @@ Page({
       roundLabel: `0/${MAX_ROUNDS}`,
       roundLimitReached: false,
       responseAnswer: '',
+      responseBlocks: parseMarkdown(''),
       responseScope: '',
       responseFreshness: '',
       responseReason: '',
@@ -1024,10 +1054,6 @@ Page({
 
   startNewTopic() {
     if (this._isUnloaded) return
-    if (this.data.buildingMode) {
-      wx.showToast({ title: 'AI问答正在建设中', icon: 'none' })
-      return
-    }
     const previousState = this.data.previewState === 'refusal'
       ? 'refusal'
       : this.data.answerMode ? 'answer' : 'network-error'
@@ -1069,6 +1095,7 @@ Page({
       roundLimitReached: false,
       inputError: '',
       responseAnswer: '',
+      responseBlocks: parseMarkdown(''),
       responseScope: '',
       responseFreshness: '',
       responseReason: '',
@@ -1102,8 +1129,33 @@ Page({
     })
   },
 
-  regenerateAnswer() {
-    wx.showToast({ title: 'AI问答正在建设中', icon: 'none' })
+  async regenerateAnswer() {
+    if (this._isUnloaded || this.data.requestPending || this.data.previewMode) return false
+    const question = boundedQuestion(this.data.lastQuestion)
+    if (!question) return false
+    const messages = normalizeCompletedMessages(this.data.messages)
+    const previousMessages = messages.length >= 2 ? messages.slice(0, -2) : []
+    const rounds = completedRounds(previousMessages)
+    this.setData({
+      messages: previousMessages,
+      completedRoundCount: rounds,
+      roundLabel: `${rounds}/${MAX_ROUNDS}`,
+      roundLimitReached: false,
+      draft: question,
+      canSend: true,
+      previewState: '',
+      assistantState: 'idle',
+      answerMode: false,
+      showRecoveryActions: false,
+      responseAnswer: '',
+      responseBlocks: parseMarkdown(''),
+      responseScope: '',
+      responseFreshness: '',
+      responseReason: '',
+      responseCitations: [],
+      previousTurns: this.presentPreviousTurns(previousMessages, true)
+    })
+    return this.sendQuestion()
   },
 
   rateAnswer(event) {
@@ -1117,7 +1169,7 @@ Page({
     const id = String(event && event.currentTarget && event.currentTarget.dataset.id || '')
     const source = this.data.responseCitations.find(item => item.id === id) || this.data.responseCitations[0]
     if (!source) {
-      wx.showToast({ title: '原文跳转正在建设中', icon: 'none' })
+      wx.showToast({ title: '回答中没有可打开的来源', icon: 'none' })
       return false
     }
     return this._sourceOpener.open(source, {
@@ -1219,8 +1271,26 @@ Page({
       connected = hasConnection(networkType)
     }
     if (connected) {
-      wx.showToast({ title: 'AI问答正在建设中', icon: 'none' })
-      return false
+      const messages = normalizeCompletedMessages(this.data.messages)
+      const previousMessages = messages.length >= 2 ? messages.slice(0, -2) : []
+      const rounds = completedRounds(previousMessages)
+      this.setData({
+        editingQuestion: false,
+        editingQuestionValue: '',
+        canSendEditedQuestion: false,
+        focusQuestionEditor: false,
+        messages: previousMessages,
+        completedRoundCount: rounds,
+        roundLabel: `${rounds}/${MAX_ROUNDS}`,
+        roundLimitReached: false,
+        previewState: '',
+        assistantState: 'idle',
+        answerMode: false,
+        draft: question,
+        canSend: true,
+        previousTurns: this.presentPreviousTurns(previousMessages, true)
+      })
+      return this.sendQuestion()
     }
 
     this.setData({

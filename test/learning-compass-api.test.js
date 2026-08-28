@@ -38,21 +38,35 @@ test('guide adapter maps five-category queries and reference source files', asyn
   assert.equal(detail.sources[0].file_url, 'http://127.0.0.1:3000/__local__/learning-compass/source-files/SRC-001')
 })
 
-test('production AI gate rejects before any network request', async () => {
-  let posts = 0
+test('production AI uses required authentication, numeric admission year and R2 citations', async () => {
+  const calls = []
   const api = createApi({
     get() { throw new Error('not used') },
-    post() { posts += 1; throw new Error('must not run') }
+    async post(path, body, options) {
+      calls.push({ path, body, options })
+      return {
+        refused: false,
+        answer: '生产回答',
+        citations: [{
+          id: 'SRC-003', title: '考试与成绩管理规定', file_type: 'pdf',
+          file_url: 'https://resources.nkustudy.top/guide-sources/rules.pdf'
+        }]
+      }
+    }
   }, { apiProfile: 'production' })
 
-  await assert.rejects(api.askGuideAssistant({ question: '成绩复核怎么办？' }), error => {
-    assert.equal(error.code, 'AI_PRODUCTION_NOT_ENABLED')
-    return true
+  const result = await api.askGuideAssistant({
+    question: '成绩复核怎么办？',
+    profile: { admission_year: '２０２５', major: '计算机科学与技术' }
   })
-  assert.equal(posts, 0)
+
+  assert.equal(calls[0].path, '/guide-assistant/answers')
+  assert.deepEqual(calls[0].options, { timeout: 30000, auth: 'required' })
+  assert.deepEqual(calls[0].body.profile, { admission_year: 2025, major: '计算机科学与技术' })
+  assert.equal(result.citations[0].file_url, 'https://resources.nkustudy.top/guide-sources/rules.pdf')
 })
 
-test('reference AI request is bounded, uses 30 second timeout and maps citations', async () => {
+test('reference AI request is bounded, authenticated and maps citations', async () => {
   const calls = []
   const api = createApi({
     get() { throw new Error('not used') },
@@ -79,6 +93,7 @@ test('reference AI request is bounded, uses 30 second timeout and maps citations
 
   assert.equal(calls[0].path, '/guide-assistant/answers')
   assert.equal(calls[0].options.timeout, 30000)
-  assert.deepEqual(calls[0].body.profile, { admission_year: '2025', major: '计算机科学与技术' })
+  assert.equal(calls[0].options.auth, 'required')
+  assert.deepEqual(calls[0].body.profile, { admission_year: 2025, major: '计算机科学与技术' })
   assert.equal(result.citations[0].file_url, 'http://127.0.0.1:3000/__local__/learning-compass/source-files/SRC-003')
 })

@@ -803,3 +803,58 @@
 - GitHub 抓取在普通连接、授权连接和 HTTP/1.1 重试中分别因 443 不可达或连接重置失败；因此本轮只可确认合并了 2026-08-25 已缓存的远端引用，不能断言 2026-08-27 远端没有更新。
 - 自动化 `PASS`：完整 `npm test` 各阶段合计 166/166；小程序静态门禁 17 页面/5 Tab；23 个 WXML 文件零错误；只读生产 `/api/v1/home` 预检与 `/visit-api/stats` 检查均通过。
 - 微信开发者工具、真机、大字体验、体验版、正式生产 AI 联调、远端推送与 PR 本轮未执行。
+
+## 四十五、2026-08-25 学习指南针生产回交与客户端正式接线
+
+后端负责人通过`LEARNING_COMPASS_PRODUCTION_HANDOFF.md`回交生产事实：A批普通指南与B批AI接口均已部署；AI真实调用仍等待管理页配置DashScope Key。该回交修正第十三节“正式生产契约尚未完成”的旧状态。
+
+### 已由客户端独立只读验证
+
+- 生产`GET /guides`返回18篇，五分类数量为3/3/4/5/3。
+- 转专业指南包含29个学院variant；抽查两个学院正文哈希不同。
+- 生产`GET /search-index`含18个顶层指南项，转专业恰好一次。
+- 抽查R2 PDF与DOCX来源HEAD均返回200，Content-Type分别正确。
+- AI无Token请求返回401 `AUTH_REQUIRED`，未触发模型调用。
+
+### 客户端本轮完成
+
+- production与reference均通过feature-local adapter调用正式`POST /guide-assistant/answers`；请求要求统一Bearer Token和30秒超时。
+- `profile.admission_year`由本机字符串规范化为后端契约要求的四位整数；history保持最多9个已完成轮次。
+- 指南首页、AI页面、发送、新话题、编辑重问和重新生成已移除production建设中门禁。
+- 正式回答引用继续只接受R2白名单；401登录恢复不静默重发原问题。
+- 自动化最终结果：`npm.cmd test` 135/135通过，静态检查17页面/5 Tab通过，生产`/home`发布预检通过，秘密模式扫描0命中。
+
+### 仍需外部权限完成
+
+- [ ] 后端管理页安全配置DashScope Key，并明确选择`qwen3.7-plus`。
+- [ ] 后端“测试连接”通过并完成30题真实模型评测。
+- [ ] 微信公众平台确认request与downloadFile合法域名。
+- [ ] 微信开发者工具、真机、大字体、体验版和生产登录问答验收。
+- [x] 本轮客户端修改已整理为第二次提交并推送当前功能分支。
+- [ ] PR创建、非作者审核、合并与正式发版。
+- [ ] `教通字〔2026〕18号`原件后续补入；不阻塞首期功能上线，但阻止宣称材料零缺口。
+
+## 四十六、2026-08-26 学习指南针客户端质量闭环
+
+- 本轮仅核对并完善客户端 Markdown、AI `responseBlocks`、指南正文结构化渲染、章节导航、内联反馈和五分类展示；未更改 API 契约、生产配置或后端状态。
+- AI 正常回答、业务拒答、历史恢复/选择、重新生成、编辑重问、新话题、删除会话和传输失败均不会复用旧 `responseBlocks`；回答、拒答和历史答案都通过结构化块渲染。
+- 指南及学院 variant 正文保持原始 `body` 兼容字段，同时由 `blocks`、`previewBlocks`、`visibleBlocks` 控制渲染；章节锚点稳定唯一，切换、展开和 variant 更新会重新测量。
+- 同页反馈仅调用现有 `feedback-api/submit`，只提交 `title`、`content`、`type`、`resourceRef`；内容附带指南、当前章节与可用来源上下文，不离开当前页。
+- 自动化证据：新增 Markdown、AI blocks、章节/导航、反馈与图标布局回归；`npm.cmd test`、`npm.cmd run check:miniprogram` 和 `node scripts/release-preflight.js` 均通过。人工微信验收按本轮范围未执行。
+- 30题生产评测候选继续保持未批准、未读取、未运行，且本轮没有生产 AI 调用或 Token 读取。`project.config.json` 是既有用户改动，未触碰；其既有尾随空白仍使全局 `git diff --check` 失败。
+
+### 2026-08-26 补充：反馈弹窗与回答评价图标
+
+- 指南详情的“反馈本指南问题”改为固定遮罩居中弹窗；点击遮罩或关闭按钮可关闭，弹窗内容区不会误触关闭，仍复用既有反馈接口与原有提交状态。
+- AI 回答的点赞、点踩由 CSS 手绘形状替换为本地 SVG 资源，保留未选中和选中两种状态，避免不同渲染环境下图形变形。
+- 自动化证据：`node --test test/guide-pages.test.js` 22/22、`npm.cmd test` 141/141、`npm.cmd run check:miniprogram` 和 `node scripts/release-preflight.js` 均通过。
+- 未运行微信开发者工具、真机与大字体人工验收；未调用生产 AI、未读取 Token。`project.config.json` 与三份 30 题候选文件继续排除在本轮提交之外。
+
+### 2026-08-27 独立评价 Tab 课程/教师模糊搜索
+
+- 已完成独立“评价”Tab 的公开评价分组本地课程名/教师名搜索；结果仍是一张“课程＋教师”分组卡，并只用稳定 `group_key` 编码进入原有评价详情。
+- 复用 `search-utils` 的 NFKC、80 字上限、token 与散字匹配；评价页小型纯函数 adapter 先逐字段确定候选，再用 Fuse 作确定性稳定排序。通用高亮/HTML 转义已抽至 `utils/search-highlight`，主搜索页继续通过原有 presentation 导出使用，回归测试保持通过。
+- 修改范围仅限评价 Tab 搜索、共享高亮 owner、专项测试与测试脚本；课程统计改为按 `course_id` 去重，无 id 时以安全归一化课程名后备，评价总数仍汇总当前分组。
+- 自动化证据：专项评价搜索测试、`test:search-guide`、`test:pages`、`check:miniprogram` 与完整 `npm test` 均已在隔离工作树执行；微信开发者工具、真机、体验版未运行。
+- 未修改公开 API、生产数据或部署状态；未调用 `/search-index`，未改服务端、评价详情、提交或审核逻辑。
+- 验收收尾：输入框保留用户原始（最多 80 字）内容，归一化查询仅作为内部状态；评价详情导航严格只接受并编码 API 的 `group_key`。`project.config.json` 为人工验收期间的既有开发者工具改动，已保留并排除在本任务范围外。

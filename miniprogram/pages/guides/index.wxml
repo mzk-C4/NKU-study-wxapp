@@ -47,6 +47,35 @@
       </button>
     </view>
 
+    <view class="pdf-section-head">
+      <view>
+        <view class="pdf-section-title">PDF 学生资料</view>
+        <view class="pdf-section-note">学生整理内容仅供参考，重要事项以学校最新通知为准</view>
+      </view>
+      <view class="pdf-section-count">{{pdfDocuments.length}} 份</view>
+    </view>
+    <view class="pdf-document-list" aria-label="PDF 学生资料">
+      <button
+        wx:for="{{pdfDocuments}}"
+        wx:key="id"
+        class="pdf-document-card"
+        hover-class="pdf-document-card--pressed"
+        data-id="{{item.id}}"
+        bindtap="openPdfDocument"
+        loading="{{openingDocumentId === item.id}}"
+        disabled="{{openingDocumentId && openingDocumentId !== item.id}}"
+        aria-label="打开 PDF：{{item.title}}"
+      >
+        <view class="pdf-document-icon"><text>PDF</text></view>
+        <view class="pdf-document-main">
+          <view class="pdf-document-title">{{item.title}}</view>
+          <view class="pdf-document-description">{{item.description}}</view>
+          <view class="pdf-document-meta">{{openingDocumentId === item.id ? '正在打开…' : item.meta}}</view>
+        </view>
+        <view class="pdf-document-action">打开 <text>›</text></view>
+      </button>
+    </view>
+
     <view class="guide-section-head">
       <view class="guide-section-title">近期更新 <text class="new-mark" wx:if="{{guides.length}}">NEW</text></view>
       <button class="view-all" hover-class="control--pressed" bindtap="openAllGuides">查看全部 <text>›</text></button>

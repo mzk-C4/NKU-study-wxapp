@@ -1,8 +1,8 @@
 const publicApi = require('../../features/learning-compass/api')
-const config = require('../../config')
 const navigation = require('../../utils/navigation')
 const { CATEGORY_ORDER, getCategoryInfo } = require('../../utils/learning-compass')
 const learningProfile = require('../../utils/learning-profile')
+const { createSourceOpener } = require('../../utils/source-opener')
 
 const PAGE_SIZE = 20
 const CATEGORY_CONFIG = Object.freeze(CATEGORY_ORDER.map(value => ({ value, label: value })))
@@ -21,27 +21,64 @@ const HOME_CATEGORIES = Object.freeze(CATEGORY_ORDER.map(value => {
   const info = getCategoryInfo(value)
   return { value, label: value, symbol: info.symbol, tone: info.tone }
 }))
-const GUIDE_PRESENTATION = Object.freeze({
-  '选课与修读': { symbol: '▥', tone: 'purple' },
-  '考试与成绩': { symbol: '★', tone: 'gold' },
-  '学籍与毕业': { symbol: '学', tone: 'green' },
-  '学业拓展': { symbol: '◆', tone: 'blue' },
-  '规范与权益': { symbol: '⚖', tone: 'red' },
-  'course-selection': { symbol: '▦', tone: 'purple' },
-  'add-drop': { symbol: '↺', tone: 'purple' },
-  'exam-grade': { symbol: '≡', tone: 'gold' },
-  'training-program': { symbol: '●', tone: 'green' }
-})
-const ASSISTANT_PREVIEW_QUESTION = '我对一门课程的成绩有异议，应该怎么申请复核？'
-
-function isDevelopRuntime() {
-  try {
-    return typeof wx.getAccountInfoSync === 'function' && wx.getAccountInfoSync()?.miniProgram?.envVersion === 'develop'
-  } catch (_) {
-    return false
-  }
-}
-
+const PDF_DOCUMENTS = Object.freeze([
+  Object.freeze({
+    id: 'nku-healthy-crawling-guide',
+    title: '在 NKU 健康地爬行指南',
+    description: '由南开学生共同整理的校园学习与生活经验，完整版共 81 页。',
+    meta: '学生共建 · PDF · 81 页',
+    file_type: 'pdf',
+    file_url: 'https://resources.nkustudy.top/guide-sources/nku-healthy-crawling-guide.pdf'
+  }),
+  Object.freeze({
+    id: 'nankai-course-selection-tutorial',
+    title: '南开大学选课教程',
+    description: '梳理课程分类、选课阶段、教务系统与常见操作，具体安排以当学期通知为准。',
+    meta: '学生整理 · PDF · 5 页',
+    file_type: 'pdf',
+    file_url: 'https://resources.nkustudy.top/guide-sources/nankai-course-selection-tutorial.pdf'
+  }),
+  Object.freeze({
+    id: 'nku-course-selection-and-general-courses',
+    title: '选课、公共课与体育',
+    description: '从课程类别、选课阶段到公共课、体育课与 E 课安排的学生经验汇总。',
+    meta: '学生共建 · PDF · 3 页',
+    file_type: 'pdf',
+    file_url: 'https://resources.nkustudy.top/guide-sources/nku-course-selection-and-general-courses.pdf'
+  }),
+  Object.freeze({
+    id: 'nku-college-courses-and-major-placement',
+    title: '三学院课程与专业分流',
+    description: '梳理计算机、软件、人工智能方向的课程地图与分流判断框架。',
+    meta: '学生共建 · PDF · 3 页',
+    file_type: 'pdf',
+    file_url: 'https://resources.nkustudy.top/guide-sources/nku-college-courses-and-major-placement.pdf'
+  }),
+  Object.freeze({
+    id: 'nku-ai-tools-and-research-starter',
+    title: 'AI 工具与科研入门',
+    description: '安全使用 AI、建立学习工作流，并完成从方向探索到联系课题组的第一步。',
+    meta: '学生共建 · PDF · 3 页',
+    file_type: 'pdf',
+    file_url: 'https://resources.nkustudy.top/guide-sources/nku-ai-tools-and-research-starter.pdf'
+  }),
+  Object.freeze({
+    id: 'nku-minor-competitions-and-postgraduate-recommendation',
+    title: '辅修、竞赛与推免准备',
+    description: '用长期目标筛选辅修和竞赛投入，按年级规划推免资格与申请材料。',
+    meta: '学生共建 · PDF · 3 页',
+    file_type: 'pdf',
+    file_url: 'https://resources.nkustudy.top/guide-sources/nku-minor-competitions-and-postgraduate-recommendation.pdf'
+  }),
+  Object.freeze({
+    id: 'nku-postgraduate-entrance-exam-roadmap',
+    title: '计算机考研备考路线',
+    description: '以真实上岸经验为样本，整理数学一、英语一、408、政治和复试节奏。',
+    meta: '学生共建 · PDF · 3 页',
+    file_type: 'pdf',
+    file_url: 'https://resources.nkustudy.top/guide-sources/nku-postgraduate-entrance-exam-roadmap.pdf'
+  })
+])
 function categoryOptions(facets = [], resolved = false) {
   const available = new Set(Array.isArray(facets) ? facets : [])
   return [
@@ -51,7 +88,7 @@ function categoryOptions(facets = [], resolved = false) {
 }
 
 function presentGuide(guide) {
-  const presentation = GUIDE_PRESENTATION[guide.category] || { symbol: '◇', tone: 'blue' }
+  const presentation = getCategoryInfo(guide.category)
   const dateMatch = String(guide.updated_at || '').match(/^\d{4}-\d{2}-\d{2}/)
   return {
     ...guide,
@@ -95,6 +132,8 @@ Page({
     category: '',
     categories: categoryOptions(),
     homeCategories: HOME_CATEGORIES,
+    pdfDocuments: PDF_DOCUMENTS,
+    openingDocumentId: '',
     activeHomeCategory: HOME_CATEGORIES[0].value,
     guideContextLabel: learningProfile.formatLabel(learningProfile.emptyProfile()),
     dataUpdatedAt: ''
@@ -159,30 +198,19 @@ Page({
     this.setData({ activeHomeCategory: category.value }, () => navigation.openGuideCategory(category.value))
   },
   openAssistant() {
-    if (config.apiProfile === 'reference') {
-      navigation.openGuideAssistant()
-      return
+    navigation.openGuideAssistant()
+  },
+
+  async openPdfDocument(event) {
+    const id = String(event && event.currentTarget && event.currentTarget.dataset.id || '').trim()
+    const document = PDF_DOCUMENTS.find(item => item.id === id)
+    if (!document || this.data.openingDocumentId) return false
+    this.setData({ openingDocumentId: id })
+    try {
+      return await createSourceOpener().open(document, { failureTitle: 'PDF 暂时无法打开，请稍后重试' })
+    } finally {
+      if (!this._isUnloaded) this.setData({ openingDocumentId: '' })
     }
-    if (isDevelopRuntime()) {
-      navigation.openGuideAssistant(ASSISTANT_PREVIEW_QUESTION, { previewAnswer: true })
-      return
-    }
-    if (typeof wx.getNetworkType !== 'function') {
-      wx.showToast({ title: 'AI问答正在建设中', icon: 'none' })
-      return
-    }
-    wx.getNetworkType({
-      success(result) {
-        if (result && result.networkType === 'none') {
-          navigation.openGuideAssistant()
-          return
-        }
-        wx.showToast({ title: 'AI问答正在建设中', icon: 'none' })
-      },
-      fail() {
-        wx.showToast({ title: '暂时无法检查网络', icon: 'none' })
-      }
-    })
   },
 
   async loadGuides(options = {}) {

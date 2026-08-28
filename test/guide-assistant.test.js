@@ -84,7 +84,15 @@ test('AI assistant offline page is registered and matches the approved recovery 
   assert.match(template, /今天想了解什么/)
   assert.match(template, /bindtap="chooseExampleQuestion"/)
   assert.match(template, /disabled="{{requestPending \|\| roundLimitReached/)
+  assert.match(template, /class="new-topic-logo"/)
+  assert.match(template, /class="new-topic-logo-face"/)
+  assert.match(template, /class="composer-notice" wx:if="{{statusMessage}}" aria-live="polite"/)
   assert.match(styles, /generating-card/)
+  assert.match(styles, /@keyframes generating-dot-wave/)
+  assert.match(styles, /\.generating-dot:nth-child\(10\)[^}]*animation-delay:\s*1\.08s/s)
+  assert.match(styles, /@media \(prefers-reduced-motion:\s*reduce\)/)
+  assert.match(styles, /\.new-topic-profile\s*\{[^}]*width:\s*100%\s*!important[^}]*min-width:\s*100%[^}]*max-width:\s*100%/s)
+  assert.match(styles, /\.new-topic-profile > text:nth-child\(2\)\s*\{[^}]*white-space:\s*nowrap[^}]*text-overflow:\s*ellipsis/s)
   assert.match(styles, /refusal-card/)
   assert.match(styles, /new-topic-example/)
   assert.match(template, /bindtap="openConversationHistory"/)
@@ -499,7 +507,7 @@ test('answer actions copy the approved response while source stays a future navi
   assert.match(copied[0], /下一学期开学3周内/)
   assert.equal(copied.length, 1)
   assert.equal(page.data.answerFeedback, 'helpful')
-  assert.deepEqual(toasts, ['回答已复制', '原文跳转正在建设中', '感谢反馈'])
+  assert.deepEqual(toasts, ['回答已复制', '回答中没有可打开的来源', '感谢反馈'])
 })
 
 test('inline question editing can cancel or send in the approved offline preview', async t => {
@@ -579,44 +587,20 @@ test('manual retry only leaves the offline state after a confirmed connection', 
   assert.deepEqual(toasts.map(item => item.title), ['网络已恢复，请再次发送'])
 })
 
-test('guide AI entry stays honest online and opens the approved fallback offline', t => {
-  const routes = []
-  const toasts = []
-  const originalOpenAssistant = navigation.openGuideAssistant
-  navigation.openGuideAssistant = (question = '') => routes.push(question)
-  t.after(() => { navigation.openGuideAssistant = originalOpenAssistant })
-  let networkType = 'wifi'
-  installWx(t, {
-    getNetworkType(options) { options.success({ networkType }) },
-    showToast(options) { toasts.push(options) }
-  })
-  const page = createPage(guidesDefinition)
-
-  page.openAssistant()
-  networkType = 'none'
-  page.openAssistant()
-
-  assert.deepEqual(toasts.map(item => item.title), ['AI问答正在建设中'])
-  assert.deepEqual(routes, [''])
-})
-
-test('develop opens the approved answer preview without changing trial or release behavior', t => {
+test('guide AI entry opens the real assistant without probing network or runtime profile', t => {
   const calls = []
   const originalOpenAssistant = navigation.openGuideAssistant
   navigation.openGuideAssistant = (question, options) => calls.push({ question, options })
   t.after(() => { navigation.openGuideAssistant = originalOpenAssistant })
   installWx(t, {
-    getAccountInfoSync() { return { miniProgram: { envVersion: 'develop' } } },
-    getNetworkType() { assert.fail('develop visual preview must not depend on live network state') }
+    getAccountInfoSync() { return { miniProgram: { envVersion: 'release' } } },
+    getNetworkType() { assert.fail('guide entry must not probe network before opening the assistant') }
   })
   const page = createPage(guidesDefinition)
 
   page.openAssistant()
 
-  assert.deepEqual(calls, [{
-    question: '我对一门课程的成绩有异议，应该怎么申请复核？',
-    options: { previewAnswer: true }
-  }])
+  assert.deepEqual(calls, [{ question: undefined, options: undefined }])
 })
 
 test('network-error preview renders the approved state even while the developer machine is online', async t => {
@@ -689,7 +673,6 @@ test('reference page waits for the controller, renders real data, and restores o
   ]
   const page = createPage(assistantDefinition, {
     newTopicMode: true,
-    buildingMode: false,
     draft: '第一轮问题',
     canSend: true
   })
@@ -731,8 +714,8 @@ test('reference page waits for the controller, renders real data, and restores o
 })
 
 test('401 recovery logs in once and leaves the original question for manual retry', async t => {
-  const toasts = []
-  installWx(t, { showToast(options) { toasts.push(options.title) } })
+  let toastCalls = 0
+  installWx(t, { showToast() { toastCalls += 1 } })
   let submitCalls = 0
   let loginCalls = 0
   const page = createPage(assistantDefinition, {
@@ -750,7 +733,8 @@ test('401 recovery logs in once and leaves the original question for manual retr
   assert.equal(submitCalls, 0)
   assert.equal(page.data.draft, '原问题')
   assert.equal(page.data.canSend, true)
-  assert.deepEqual(toasts, ['登录成功，请再次发送'])
+  assert.equal(page.data.statusMessage, '登录成功，请再次点击发送按钮继续提问。')
+  assert.equal(toastCalls, 0)
 })
 
 test('a failed follow-up keeps every previously completed message visible', t => {
@@ -778,4 +762,53 @@ test('a failed follow-up keeps every previously completed message visible', t =>
   assert.equal(page.data.previousTurns[0].question, '第一轮问题')
   assert.equal(page.data.previousTurns[0].answer, '第一轮回答')
   assert.equal(page.data.recoveryTitle, 'AI服务暂时不可用')
+})
+
+test('AI response blocks are rebuilt for answers, refusals, restored history and every reset path', async t => {
+  const responses = [
+    { refused: false, answer: '# 成绩复核\n| 材料 | 时限 |\n| --- | --- |\n| **申请** | `3周` |\n<script>alert(1)</script>', applicable_scope: '', freshness_notice: '', citations: [] },
+    { refused: true, reason: 'INSUFFICIENT_EVIDENCE', answer: '暂无**足够依据**', applicable_scope: '', freshness_notice: '', citations: [] },
+    { refused: false, answer: '重新生成的回答', applicable_scope: '', freshness_notice: '', citations: [] },
+    { refused: false, answer: '编辑后的回答', applicable_scope: '', freshness_notice: '', citations: [] }
+  ]
+  installWx(t)
+  const page = createPage(assistantDefinition, { newTopicMode: true, draft: '成绩复核怎么申请？', canSend: true })
+  page._assistantController = createGuideAssistantController({ api: { async askGuideAssistant() { return responses.shift() } } })
+
+  await page.sendQuestion()
+  assert.equal(page.data.responseAnswer.includes('成绩复核'), true)
+  assert.equal(page.data.responseBlocks.some(block => block.type === 'table'), true)
+  assert.equal(page.data.responseBlocks.length > 0, true)
+  assert.equal(page.data.responseBlocks.at(-1).runs[0].html.includes('&lt;script&gt;'), true)
+
+  page.inputQuestion({ detail: { value: '没有文件依据的问题' } })
+  await page.sendQuestion()
+  assert.equal(page.data.previewState, 'refusal')
+  assert.equal(page.data.responseBlocks.length > 0, true)
+  const conversationKey = page.data.history[0].question
+  page.startNewTopic()
+  assert.deepEqual(page.data.responseBlocks, [])
+  page.selectHistory({ currentTarget: { dataset: { question: conversationKey } } })
+  assert.equal(page.data.responseBlocks.length > 0, true)
+  assert.equal(page.data.responseAnswer, '暂无**足够依据**')
+  assert.match(page.data.responseBlocks[0].runs.map(run => run.html || '').join(''), /<b>足够依据<\/b>/)
+
+  await page.regenerateAnswer()
+  assert.equal(page.data.responseAnswer, '重新生成的回答')
+  assert.equal(page.data.responseBlocks[0].runs[0].html, '重新生成的回答')
+  page.editQuestion()
+  page.inputEditedQuestion({ detail: { value: '编辑后的提问' } })
+  await page.submitEditedQuestion()
+  assert.equal(page.data.responseAnswer, '编辑后的回答')
+  assert.equal(page.data.responseBlocks[0].runs[0].html, '编辑后的回答')
+  page.applyAssistantFailure('service-error', '断网后重试', new Error('hidden'))
+  assert.equal(page.data.responseAnswer, '')
+  assert.deepEqual(page.data.responseBlocks, [])
+  page.startNewTopic()
+  page.deleteHistoryByQuestion(conversationKey)
+  assert.deepEqual(page.data.responseBlocks, [])
+
+  const template = fs.readFileSync(path.join(projectRoot, 'miniprogram/pages/guide-assistant/index.wxml'), 'utf8')
+  assert.match(template, /wx:for="\{\{responseBlocks\}\}"/)
+  assert.doesNotMatch(template, />\{\{responseAnswer\}\}</)
 })

@@ -24,30 +24,43 @@
 | GET | `/search-index` | 同一版本的课程、教师、资料和指南搜索快照 |
 | GET | `/guides` | 指南分类、列表和分页 |
 | GET | `/guides/{guideId}` | 指南详情、相关课程、来源和纠错入口 |
+| GET | `/guides/{guideId}/variants/{variantId}` | 转专业等多学院指南的学院正文与来源 |
+| POST | `/guide-assistant/answers` | 需要 Bearer Token 的学习指南针 AI 问答 |
 | GET | `/courses` | 课程列表、搜索、筛选和分页 |
 | GET | `/courses/{courseUid}` | 课程详情 |
 | GET | `/courses/{courseUid}/resources` | 课程资源与 R2 下载地址 |
 | GET | `/review-groups` | 网站评价分组；未匹配分组正常保留 |
 | GET | `/review-groups/{groupKey}` | 评价分组详情 |
-| PUT | `/reviews/{reviewId}/reaction` | 登录用户标记或取消“有帮助” |
 | POST | `/auth/wechat` | `wx.login` code 换取 30 天 Bearer Token |
 | POST | `/auth/logout` | 注销当前 Bearer Token |
 | GET | `/me` | 当前小程序用户信息 |
 | POST | `/me/profile` | 更新昵称与 HTTPS 头像地址 |
-| POST | `/me/web-password` | 设置或修改网页登录密码 |
-| POST | `/me/delete-account` | 注销账号并清除本地会话 |
 | GET | `/me/favorites` | 我的收藏课程列表 |
 | GET | `/me/reviews` | 我的评价与审核状态 |
 | GET | `/me/feedback` | 我的反馈与处理状态 |
+| POST | `/me/web-password` | 设置网站登录密码 |
+| POST | `/me/delete-account` | 注销当前账号绑定关系 |
 | POST | `/favorites` | 收藏课程 |
 | DELETE | `/favorites/{courseUid}` | 取消收藏课程 |
 | POST | `/reviews` | 匿名评价投稿，进入网站现有审核队列 |
 
 所有动态路径参数必须 URL 编码。通用业务页面通过 `miniprogram/services/public-api.js` 调用公开接口；学习指南针通过 feature-local 的 `miniprogram/features/learning-compass/api.js` 调用指南接口，两者都复用统一请求层与认证会话。
 
-### 学习指南针本地扩展（尚未成为生产契约）
+### 学习指南针生产契约
 
-本地 reference 另行提供 `GET /guides/{guideId}/variants/{variantId}` 和 `POST /guide-assistant/answers`，用于验证学院差异材料与 AI 最小闭环。production profile 当前会在发出网络请求前拒绝 AI 调用；后端负责人完成正式契约、认证、限流、真实 provider、30 秒预算与 HTTPS 来源文件后，才能启用生产 AI。
+生产已提供五分类指南、学院 variant、R2 原件和 AI 回答接口。AI 请求为：
+
+```json
+{
+  "question": "课程成绩有异议，如何申请复核？",
+  "history": [{ "role": "user", "content": "……" }],
+  "profile": { "admission_year": 2025, "major": "计算机科学与技术" }
+}
+```
+
+`question` 为 1～1000 字；`history` 最多 9 个已完成轮次；`profile` 可选，入学年份使用四位整数。客户端最多完成 10 轮，第 10 轮请求携带前 9 轮历史。请求必须使用统一 Bearer Token，会话不存在时客户端先展示登录恢复，不静默重发原问题。
+
+正常回答和业务拒答均返回 200；正式拒答原因是 `INSUFFICIENT_EVIDENCE` 或 `SOURCE_CONFLICT`。传输错误稳定映射为 `400 INVALID_AI_QUESTION`、`401 AUTH_REQUIRED`、`429 RATE_LIMITED` 和 `503 AI_UNAVAILABLE`。客户端请求预算为 30 秒，provider 重试由服务端负责。
 
 生产指南原件只接受约定的公开 HTTPS 资源地址；reference profile 的回环原件地址不得进入生产响应。
 
@@ -72,8 +85,6 @@
 
 评价只使用单一 `rating`、`body` 和 `tags`，不恢复旧多维评分。
 
-评价“有帮助”使用受保护的 `PUT /reviews/{reviewId}/reaction`。正文 `{ "reaction": "up" }` 表示标记，`{ "reaction": null }` 表示取消；响应只读取 `review_id`、`helpful_count` 和 `viewer_reaction`。登录后读取评价分组详情时，请求携带可选 Token，以便服务器返回当前用户的 `viewer_reaction`。
-
 ## 微信登录与个人数据
 
 个人主体小程序不使用手机号授权。客户端调用 `wx.login()` 获取一次性 code，再提交 `{ "code": "..." }` 到 `/auth/wechat`。服务器返回：
@@ -84,9 +95,7 @@
 
 Token 仅保存于微信本地存储，受保护请求使用 `Authorization: Bearer <token>`；过期或收到 401 时立即清除。openid 与 AppSecret 不进入响应、日志或客户端仓库。昵称最多 32 字符，头像只接受公开 HTTPS 地址。
 
-`GET /me/favorites`、`GET /me/reviews` 与 `GET /me/feedback` 使用 `page/page_size`，`page_size` 不超过 100。收藏正文为 `{ "course_id": "immutable-course-uuid" }`。已登录用户提交评价和反馈时携带可选 Token，因此公开内容仍匿名，但可在个人中心查看审核状态。
-
-`POST /me/web-password` 发送 `{ "password": "..." }`，密码按原样传输给服务器校验，不在客户端 trim。`POST /me/delete-account` 成功后必须立即清除本地 Token 和用户缓存。
+`GET /me/favorites` 与 `GET /me/reviews` 使用 `page/page_size`，`page_size` 不超过 100。收藏正文为 `{ "course_id": "immutable-course-uuid" }`。已登录用户提交评价时携带可选 Token，因此公开内容仍匿名，但可在“我的评价”查看审核状态。
 
 ## 四类搜索
 
@@ -112,14 +121,17 @@ Fuse 权重为 `name 0.30 / short_name 0.20 / aliases 0.15 / tags 0.15 / teacher
 
 `GET /guides` 只发送 `category/page/page_size`，其中 `category` 只允许：
 
-- `course-selection`
-- `training-program`
-- `add-drop`
+- `course-study`
 - `exam-grade`
+- `student-status-graduation`
+- `academic-development`
+- `rules-rights`
 
-列表字段为 `id/title/summary/category/updated_at/applicable_scope/related_course_ids`。详情额外使用 `steps`、`related_courses`、`source_title`、`source_url` 和 `correction_url`。
+列表使用稳定五分类值与 `category_label`。详情使用 `sections[{id,title,body_format,body,source_ids}]`、`sources[{id,title,document_no,publisher,published_at,file_type,file_name,file_url,official_page_url,location_label}]` 和轻量 `variants[{id,title,order,source_count}]`。
 
-来源和纠错地址必须是无账号信息的公开 HTTPS URL。纠错按钮只复制公开链接，不调用新的写接口。生产指南为 0 时必须展示真实空态，不恢复本地 seed 或硬编码正文。
+转专业概览只展示校级章节，学院正文必须通过 variant 接口按需获取，不得在学院间复用内容。旧 `steps/source_title/source_url` 已退出正式生产契约，客户端不得依赖这些字段恢复正文。
+
+生产来源 `file_url` 必须位于 `https://resources.nkustudy.top/guide-sources/`；客户端使用 `downloadFile → openDocument` 打开 PDF、DOC 和 DOCX。公共响应不得包含仓库路径、服务器路径、chunk、审核字段、提示词或检索分数。
 
 ## 资源下载
 
