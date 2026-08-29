@@ -30,6 +30,8 @@ Page({
         : await listFeedback()
       const items = ((data || {}).items || []).map(item => ({
         ...item,
+        reply: String(item.reply || ''),
+        repliedAt: item.repliedAt || '', 
         statusLabel: { open: '待处理', completed: '已完成', rejected: '不予完成', parked: '搁置' }[item.status] || item.status,
         typeLabel: { bug: 'Bug', feature: '功能改进', content: '内容问题' }[item.type] || item.type || '反馈'
       }))

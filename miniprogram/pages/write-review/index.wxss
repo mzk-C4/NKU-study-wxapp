@@ -1,2 +1,28 @@
 .selected-course { display: flex; gap: 18rpx; align-items: center; }.course-zone { max-width: 150rpx; min-height: 60rpx; padding: 8rpx 12rpx; display: flex; align-items: center; justify-content: center; border-radius: 18rpx; color: #FFFFFF; background: #4B1F6F; font-size: 18rpx; line-height: 1.2; text-align: center; font-weight: 700; box-sizing: border-box; }.selected-name { margin-bottom: 5rpx; font-size: 28rpx; font-weight: 700; }.picker { display: flex; align-items: center; justify-content: space-between; color: #211C24; }
 .rule-title { padding-left: 16rpx; border-left: 8rpx solid #D7A63C; font-size: 30rpx; font-weight: 700; }.rating-hint { margin: 18rpx 0 10rpx; color: #817A84; font-size: 20rpx; }.rating-row { display: flex; align-items: center; justify-content: space-between; gap: 20rpx; min-height: 88rpx; }.rating-stars { display: flex; align-items: center; gap: 10rpx; }.rating-star { padding: 8rpx 2rpx; color: #DED7E2; font-size: 54rpx; line-height: 1; transition: color .15s ease, transform .15s ease; }.rating-star--active { color: #D7A63C; text-shadow: 0 2rpx 0 rgba(75,31,111,.18); transform: scale(1.05); }.rating-value { min-width: 82rpx; color: #817A84; text-align: right; font-size: 22rpx; }.rating-value--selected { color: #4B1F6F; font-weight: 700; }.tag-options { display: flex; flex-wrap: wrap; gap: 14rpx; }.review-textarea { min-height: 210rpx; }.anonymous-row { display: flex; align-items: center; justify-content: space-between; margin-top: 26rpx; }.anonymous-title { font-weight: 700; }
+
+/* 课程选择器（无预选课程时） */
+.picker-list {
+  margin-top: 12rpx;
+  max-height: 56vh;
+  overflow-y: auto;
+}
+.picker-item {
+  padding: 18rpx 16rpx;
+  border-bottom: 1rpx solid rgba(0, 0, 0, 0.06);
+}
+.picker-item:active {
+  background: rgba(75, 31, 111, 0.06);
+}
+.picker-name {
+  font-size: 28rpx;
+  font-weight: 600;
+}
+.picker-sub {
+  margin-top: 4rpx;
+  font-size: 22rpx;
+  color: #6F6972;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

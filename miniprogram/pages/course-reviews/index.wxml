@@ -20,5 +20,5 @@
     </view>
     <view class="empty-space"></view>
   </view>
-  <view class="sticky-footer"><button class="button button--primary" bindtap="writeReview">{{course ? '写课程评价' : '该历史评价暂不可投稿'}}</button></view>
+  <view class="sticky-footer"><button class="button button--primary" bindtap="writeReview">写课程评价</button></view>
 </view>
