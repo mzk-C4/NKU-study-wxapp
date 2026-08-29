@@ -131,8 +131,10 @@ Page({
   },
   writeReview() {
     const courseId = this.data.course?.id || this.data.id
-    if (!courseId) return wx.showToast({ title: '历史评价未匹配当前课程，暂不能投稿', icon: 'none' })
-    wx.navigateTo({ url: `/pages/write-review/index?course_id=${encodeURIComponent(courseId)}` })
+    if (courseId) return wx.navigateTo({ url: `/pages/write-review/index?course_id=${encodeURIComponent(courseId)}` })
+    const courseTitle = this.data.standaloneGroup?.course_name || ''
+    if (courseTitle) return wx.navigateTo({ url: `/pages/write-review/index?course_title=${encodeURIComponent(courseTitle)}` })
+    wx.showToast({ title: '未能确定课程，请从评价列表进入', icon: 'none' })
   }
 })
 

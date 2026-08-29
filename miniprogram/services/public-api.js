@@ -363,6 +363,8 @@ function mapReviewGroup(rawGroup, includeItems = false) {
     course_name: toText(raw.course_name),
     teacher_name: toText(raw.teacher_name),
     matched: raw.matched === true,
+    submittable: raw.submittable !== false,
+    catalog_course_id: toText(raw.catalog_course_id),
     review_count: toCount(raw.review_count),
     rating_average: ratingAverage === null ? null : ratingAverage.toFixed(1)
   }
@@ -459,6 +461,8 @@ function mapMyFeedback(rawItem) {
     status: toText(raw.status) || 'open',
     hidden: raw.hidden === true,
     resourceRef: toText(raw.resourceRef),
+    reply: toText(raw.reply),
+    repliedAt: raw.repliedAt || '',
     createdAt: raw.createdAt || '',
     updatedAt: raw.updatedAt || ''
   }

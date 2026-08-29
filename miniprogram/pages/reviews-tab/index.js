@@ -43,6 +43,10 @@ Page({
   inputKeyword(event) { this.applyFilter(this.data.allGroups, event.detail.value) },
   clearKeyword() { this.applyFilter(this.data.allGroups, '') },
   dismissKeyboard() { if (wx.hideKeyboard) wx.hideKeyboard() },
+  writeReview() {
+    wx.navigateTo({ url: '/pages/write-review/index' })
+  },
+
   loadMore() {
     const next = this.data.page + 1
     const list = getReviewListState(this.data.filteredGroups, this.data.pageSize, next)

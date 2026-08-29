@@ -10,6 +10,11 @@
       <text class="micro" style="flex-shrink:0;color:{{item.status === 'completed' ? '#16a34a' : item.status === 'rejected' ? '#dc2626' : '#6F6972'}};">{{item.statusLabel}}</text>
     </view>
     <view class="micro" style="margin-top: 8rpx;">{{item.content}}</view>
+    <view wx:if="{{item.reply}}" style="margin-top: 12rpx;padding: 14rpx;border-radius: 12rpx;background: rgba(75, 31, 111, 0.06);">
+      <view class="micro" style="color: #4B1F6F;font-weight: 700;">管理员回复</view>
+      <view class="micro" style="margin-top: 6rpx;">{{item.reply}}</view>
+      <view wx:if="{{item.repliedAt}}" class="micro" style="margin-top: 4rpx;color: #9CA3AF;">{{item.repliedAt}}</view>
+    </view>
     <view class="micro" style="margin-top: 8rpx;color: #9CA3AF;">{{item.createdAt}}</view>
   </view>
 

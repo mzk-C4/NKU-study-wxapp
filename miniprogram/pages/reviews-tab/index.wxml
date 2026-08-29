@@ -20,4 +20,5 @@
     </view>
   </view>
   <view class="micro muted" wx:if="{{hasMore && !loading}}" style="text-align:center;padding:24rpx;" bindtap="loadMore">点击加载更多</view>
+  <view class="write-review-fab" bindtap="writeReview" aria-role="button" aria-label="写评价">✍ 写评价</view>
 </view>
