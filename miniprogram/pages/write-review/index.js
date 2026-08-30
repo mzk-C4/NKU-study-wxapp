@@ -1,6 +1,7 @@
 const { reportVisit } = require('../../utils/visit-report')
 const theme = require('../../utils/theme')
 const { publicApi } = require('../../services/public-api')
+const authSession = require('../../utils/auth-session')
 
 const PICKER_LIMIT = 30
 
@@ -62,6 +63,16 @@ function createWriteReviewPage(api = publicApi) {
     this.prepare()
   },
   async prepare() {
+    if (!authSession.getToken()) {
+      wx.showModal({
+        title: '需要先登录',
+        content: '写评价需要先登录，登录后即可提交评价。',
+        confirmText: '去登录',
+        success: () => wx.switchTab({ url: '/pages/profile/index' }),
+        fail: () => wx.navigateBack()
+      })
+      return
+    }
     this.setData({ loading: true, error: '' })
     try {
       const home = await (typeof api.getHome === 'function' ? api.getHome().catch(() => null) : Promise.resolve(null))

@@ -1,7 +1,10 @@
 const test = require('node:test')
 const assert = require('node:assert/strict')
 
-global.wx = { showToast: () => {}, showModal: () => {}, navigateBack: () => {}, navigateTo: () => {} }
+global.wx = {
+  showToast: () => {}, showModal: () => {}, navigateBack: () => {}, navigateTo: () => {}, switchTab: () => {},
+  getStorageSync: () => ({ token: 'testtokenabcdef123456', expires_at: Date.now() + 86400000, user: { id: 1 } })
+}
 global.Page = () => {}
 const { createWriteReviewPage, buildPickerEntries, filterEntries } = require('../miniprogram/pages/write-review/index.js')
 
@@ -101,4 +104,19 @@ test('course_id flow keeps original course_id submission', async () => {
   await page.submit()
   assert.equal(fakeApi.lastSubmit.course_id, 'c1')
   assert.equal(fakeApi.lastSubmit.course_title, undefined)
+})
+
+
+test('logged-out users are blocked before any submission flow', async () => {
+  const api = fakeApi()
+  const page = makePage(api)
+  global.wx.getStorageSync = () => null
+  try {
+    page.onLoad({})
+    await page.prepare()
+    assert.equal(page.data.loading, true, '未登录时不进入加载流程')
+    assert.equal(page.data.pickerMode, false)
+  } finally {
+    global.wx.getStorageSync = () => ({ token: 'testtokenabcdef123456', expires_at: Date.now() + 86400000, user: { id: 1 } })
+  }
 })
