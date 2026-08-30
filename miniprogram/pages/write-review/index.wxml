@@ -7,16 +7,17 @@
       <input class="input" placeholder="搜索课程名或教师姓名" value="{{pickerKeyword}}" bindinput="inputPickerKeyword" />
       <view class="picker-list">
         <view wx:for="{{pickerFiltered}}" wx:key="key" class="picker-item" data-index="{{index}}" bindtap="tapPickerEntry">
-          <view class="picker-name">{{item.name}}</view>
-          <view class="picker-sub">{{item.group}}{{item.teachers.length ? ' · ' + item.teachers.slice(0, 3).join('、') : ''}}</view>
+          <view class="picker-name">{{item.name}}<text class="picker-tag">{{item.type === 'group' ? '历史' : (item.type === 'catalog' ? '目录' : '')}}</text></view>
+          <view class="picker-sub">{{item.sub}}</view>
         </view>
         <view wx:if="{{!pickerFiltered.length}}" class="micro" style="padding:24rpx 0;text-align:center;">没有匹配的课程</view>
+        <view class="picker-report" bindtap="reportMissingCourse">没有想评价的课程？点此反馈缺失课程</view>
       </view>
     </view>
   </block>
   <block wx:if="{{course}}">
-    <view class="card selected-course" bindtap="reselectCourse"><view class="course-zone">{{course.group}}</view><view><view class="selected-name">{{course.name}}</view><view class="micro">点击可重新选择课程</view></view></view>
-    <view class="section field"><text class="field-label">任课教师</text><input class="input" maxlength="100" placeholder="请输入教师姓名" value="{{teacher}}" bindinput="inputTeacher"/><view class="tag-options" wx:if="{{course.teacher_groups.length}}"><view wx:for="{{course.teacher_groups}}" wx:key="teacher_name" class="chip {{teacher === item.teacher_name ? 'chip--active' : ''}}" data-teacher="{{item.teacher_name}}" bindtap="chooseTeacher">{{item.teacher_name}}</view></view></view>
+    <view class="course-inline-row"><text class="field-label">评价课程：{{course.name}}</text><text class="course-change-link" bindtap="reselectCourse">更换</text></view>
+    <view class="section field"><text class="field-label">任课教师</text><input class="input" maxlength="100" placeholder="请输入教师姓名" value="{{teacher}}" bindinput="inputTeacher"/><view class="tag-options" wx:if="{{course.teacher_groups.length}}"><view wx:for="{{teacherOptions}}" wx:key="*this" class="chip {{teacher === item.teacher_name ? 'chip--active' : ''}}" data-teacher="{{item}}" bindtap="chooseTeacher">{{item}}</view></view></view>
     <view class="card section"><view class="rule-title">总体评分</view><view class="rating-hint">点击星星评分，1 星表示很差，5 星表示很棒</view><view class="rating-row"><view class="rating-stars" role="radiogroup" aria-label="课程体验评分"><view wx:for="{{scoreOptions}}" wx:for-item="score" wx:key="*this" class="rating-star {{rating >= score ? 'rating-star--active' : ''}}" data-score="{{score}}" bindtap="setRating" role="radio" aria-checked="{{rating === score}}" aria-label="{{score}} 星">★</view></view><view class="rating-value {{rating ? 'rating-value--selected' : ''}}">{{rating ? rating + ' 分' : '请选择'}}</view></view></view>
     <view class="field section"><text class="field-label">评价内容</text><textarea class="textarea review-textarea" maxlength="800" placeholder="说说课堂节奏、考核方式和学习建议（至少 {{minLength}} 字）" value="{{body}}" bindinput="inputBody"></textarea></view>
     <view class="anonymous-row"><view><view class="anonymous-title">匿名发布</view><view class="micro">公开页面不会显示微信信息</view></view><switch color="#4B1F6F" checked="{{anonymous}}" bindchange="toggleAnonymous"></switch></view>
