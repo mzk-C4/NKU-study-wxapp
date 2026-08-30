@@ -30,7 +30,17 @@ Page({
       { value: 'rejected', label: '不予完成' }
     ]
   },
-  onLoad(options = {}) { this.setData({ mine: options.mine === '1' }); reportVisit('/mp/feedback'); this.loadFeedback() },
+  onLoad(options = {}) {
+    const prefillTitle = decodeURIComponent(String(options.prefill_title || '')).slice(0, 120)
+    const prefillContent = decodeURIComponent(String(options.prefill_content || '')).slice(0, 2000)
+    this.setData({
+      mine: options.mine === '1',
+      ...(prefillTitle ? { title: prefillTitle, type: 'content' } : {}),
+      ...(prefillContent ? { content: prefillContent } : {})
+    })
+    reportVisit('/mp/feedback')
+    this.loadFeedback()
+  },
   onShow() { theme.onPageShow() },
   onPullDownRefresh() { this.loadFeedback().finally(() => wx.stopPullDownRefresh()) },
   async loadFeedback() {

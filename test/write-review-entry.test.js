@@ -14,12 +14,16 @@ function fakeApi(overrides = {}) {
     getCourse: async (id) => ({ id, name: id === 'c1' ? '中文课程' : '课程', group: '通识选修课', teacher_groups: [{ teacher_name: '张老师' }] }),
     getReviewGroups: async () => ({
       items: [
-        { group_key: 'k1', course_name: '3D 打印及应用', teacher_name: '李老师', matched: false, submittable: true },
-        { group_key: 'k2', course_name: '3D 打印及应用', teacher_name: '王老师', matched: false, submittable: true },
-        { group_key: 'k3', course_name: '中文课程', teacher_name: '张老师', matched: true }
+        { group_key: 'k1', course_name: '3D 打印及应用', teacher_name: '李老师', review_count: 3, matched: false },
+        { group_key: 'k2', course_name: '3D 打印及应用', teacher_name: '王老师', review_count: 2, matched: false },
+        { group_key: 'k3', course_name: '中文课程', teacher_name: '张老师', review_count: 2, matched: true }
       ]
     }),
-    getCourses: async () => ({ items: [{ id: 'c1', name: '中文课程', group: '通识选修课', teacher_groups: [{ teacher_name: '张老师' }] }] }),
+    getCourses: async () => ({ items: [
+      { id: 'c1', name: '中文课程', group: '通识选修课', review_count: 2, teacher_groups: [{ teacher_name: '张老师' }, { teacher_name: '张老师' }] },
+      { id: 'c2', name: '高等数学', group: '通识必修课', review_count: 0, teacher_groups: [] }
+    ] }),
+    getCatalog: async (query) => ({ items: (String(query.q || '').includes('史') ? [{ id: 'cat-1', name: '20世纪中国史学与史家', categories: ['历史学院'], teachers: ['朱洪斌'] }] : []) }),
     submitReview: async (payload) => { fakeApi.lastSubmit = payload; return { submitted: true } },
     ...overrides
   }
@@ -32,29 +36,58 @@ function makePage(api) {
   return page
 }
 
-test('picker entries merge manifest courses and historical groups with teacher aggregation', () => {
+test('picker entries merge sources with review stats and dedup teachers', () => {
   const entries = buildPickerEntries(
     { items: [
-      { course_name: '3D 打印及应用', teacher_name: '李老师' },
-      { course_name: '3D 打印及应用', teacher_name: '王老师' },
-      { course_name: '中文课程', teacher_name: '张老师' }
+      { course_name: '3D 打印及应用', teacher_name: '李老师', review_count: 3 },
+      { course_name: '3D 打印及应用', teacher_name: '王老师', review_count: 2 },
+      { course_name: '中文课程', teacher_name: '张老师', review_count: 2 }
     ] },
-    { items: [{ id: 'c1', name: '中文课程', group: '通识选修课', teacher_groups: [{ teacher_name: '张老师' }] }] }
+    { items: [
+      { id: 'c1', name: '中文课程', group: '通识选修课', review_count: 2, teacher_groups: [{ teacher_name: '张老师' }, { teacher_name: '张老师' }] },
+      { id: 'c2', name: '高等数学', group: '通识必修课', review_count: 0, teacher_groups: [] }
+    ] },
+    { items: [{ id: 'cat-1', name: '20世纪中国史学与史家', categories: ['历史学院'], teachers: ['朱洪斌'] }] }
   )
-  assert.equal(entries.length, 2, 'manifest 课程去重后 1 门 + 历史组 1 门')
+  assert.equal(entries.length, 4, 'manifest 2 门 + 历史组 1 门 + 目录 1 门')
   const groupEntry = entries.find(entry => entry.type === 'group')
-  assert.equal(groupEntry.name, '3D 打印及应用')
-  assert.deepEqual(groupEntry.teachers, ['李老师', '王老师'])
-  const courseEntry = entries.find(entry => entry.type === 'course')
-  assert.equal(courseEntry.id, 'c1')
+  assert.equal(groupEntry.sub, '共5条评价，已有老师：李老师、王老师')
+  const courseEntry = entries.find(entry => entry.type === 'course' && entry.id === 'c1')
+  assert.deepEqual(courseEntry.teachers, ['张老师'], '重复教师已去重')
+  assert.equal(courseEntry.sub, '共2条评价，已有老师：张老师')
+  const emptyEntry = entries.find(entry => entry.name === '高等数学')
+  assert.equal(emptyEntry.sub, '暂时没有评价')
+  const catalogEntry = entries.find(entry => entry.type === 'catalog')
+  assert.equal(catalogEntry.catalogCourseId, 'cat-1')
+  assert.equal(catalogEntry.sub, '暂时没有评价')
+})
+
+test('catalog keyword merges server-side results and submits via catalog_course_id', async () => {
+  const api = fakeApi()
+  const page = makePage(api)
+  page.onLoad({})
+  await page.prepare()
+  page.setData({ pickerKeyword: '史学' })
+  await page.inputPickerKeyword({ detail: { value: '史学' } })
+  await new Promise(resolve => setTimeout(resolve, 450))
+  const catalogEntry = page.data.pickerFiltered.find(entry => entry.type === 'catalog')
+  assert.ok(catalogEntry, '目录搜索结果已合并')
+  page.setData({ pickerFiltered: [catalogEntry] })
+  page.tapPickerEntry({ currentTarget: { dataset: { index: 0 } } })
+  assert.equal(page.data.isCatalogMode, true)
+  page.setData({ teacher: '朱洪斌', rating: 5, body: '讲得非常出色，推荐选择' })
+  await page.submit()
+  assert.equal(fakeApi.lastSubmit.catalog_course_id, 'cat-1')
+  assert.equal(fakeApi.lastSubmit.course_id, undefined)
 })
 
 test('filterEntries matches name and teacher keyword', () => {
   const entries = [
-    { key: 'a', type: 'course', name: '高等数学', group: '通识', teachers: ['张三'] },
-    { key: 'b', type: 'group', name: '3D 打印', group: '历史评价', teachers: ['李四'] }
+    { key: 'a', type: 'course', name: '高等数学', group: '通识', teachers: ['张三'], sub: '共2条评价，已有老师：张三' },
+    { key: 'b', type: 'group', name: '3D 打印', group: '历史评价', teachers: ['李四'], sub: '暂时没有评价' }
   ]
   assert.equal(filterEntries(entries, '李四').length, 1)
+  assert.equal(filterEntries(entries, '共2条评价').length, 1, 'sub 行可被搜索')
   assert.equal(filterEntries(entries, '数学').length, 1)
   assert.equal(filterEntries(entries, '').length, 2)
 })

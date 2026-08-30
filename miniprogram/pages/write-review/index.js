@@ -5,28 +5,75 @@ const authSession = require('../../utils/auth-session')
 
 const PICKER_LIMIT = 30
 
-function buildPickerEntries(groupsResult, coursesResult) {
-  const courses = Array.isArray(coursesResult && coursesResult.items) ? coursesResult.items : []
-  const groups = Array.isArray(groupsResult && groupsResult.items) ? groupsResult.items : []
-  const courseEntries = courses.filter(course => course && course.id).map(course => ({
-    key: `course-${course.id}`,
-    type: 'course',
-    id: course.id,
-    name: course.name || '',
-    group: course.group || '',
-    teachers: (course.teacher_groups || []).map(item => item && item.teacher_name).filter(Boolean)
-  }))
-  const courseNames = new Set(courseEntries.map(entry => entry.name.trim()))
-  const groupMap = new Map()
+function aggregateReviewStats(groups) {
+  const map = new Map()
   for (const group of groups) {
     const name = String(group && group.course_name || '').trim()
-    if (!name || courseNames.has(name)) continue
-    if (!groupMap.has(name)) groupMap.set(name, { key: `group-${name}`, type: 'group', name, group: '历史评价', teachers: [] })
-    const entry = groupMap.get(name)
+    if (!name) continue
+    const count = Number(group.review_count) || 0
+    const entry = map.get(name) || { total: 0, teachers: new Map() }
+    entry.total += count
     const teacher = String(group.teacher_name || '').trim()
-    if (teacher && !entry.teachers.includes(teacher)) entry.teachers.push(teacher)
+    if (teacher) entry.teachers.set(teacher, (entry.teachers.get(teacher) || 0) + count)
+    map.set(name, entry)
   }
-  return [...courseEntries, ...groupMap.values()]
+  return map
+}
+
+function statsSubLine(stats, fallbackCount = 0) {
+  const total = stats ? stats.total : (fallbackCount || 0)
+  if (!total) return '暂时没有评价'
+  const teachers = stats
+    ? [...stats.teachers.entries()].sort((a, b) => b[1] - a[1]).map(([name]) => name)
+    : []
+  if (!teachers.length) return `共${total}条评价`
+  const shown = teachers.slice(0, 3).join('、')
+  const more = teachers.length > 3 ? '等' : ''
+  return `共${total}条评价，已有老师：${shown}${more}`
+}
+
+function buildPickerEntries(groupsResult, coursesResult, catalogResult) {
+  const groups = Array.isArray(groupsResult && groupsResult.items) ? groupsResult.items : []
+  const courses = Array.isArray(coursesResult && coursesResult.items) ? coursesResult.items : []
+  const catalog = Array.isArray(catalogResult && catalogResult.items) ? catalogResult.items : []
+  const stats = aggregateReviewStats(groups)
+  const seen = new Set()
+  const entries = []
+  for (const course of courses) {
+    if (!course || !course.id) continue
+    const name = String(course.name || '').trim()
+    if (!name || seen.has(name)) continue
+    seen.add(name)
+    const courseStats = stats.get(name)
+    const teachers = [...new Set((course.teacher_groups || []).map(item => item && item.teacher_name).filter(Boolean))]
+    entries.push({
+      key: `course-${course.id}`, type: 'course', id: course.id, name,
+      group: course.group || '', teachers,
+      sub: statsSubLine(courseStats, course.review_count)
+    })
+  }
+  for (const item of catalog) {
+    if (!item || !item.id) continue
+    const name = String(item.name || '').trim()
+    if (!name || seen.has(name)) continue
+    seen.add(name)
+    const catalogStats = stats.get(name)
+    entries.push({
+      key: `catalog-${item.id}`, type: 'catalog', catalogCourseId: item.id, name,
+      group: (item.categories || [])[0] || '课程目录', teachers: [...new Set(item.teachers || [])],
+      sub: statsSubLine(catalogStats, 0)
+    })
+  }
+  for (const [name, courseStats] of stats.entries()) {
+    if (seen.has(name)) continue
+    seen.add(name)
+    const teachers = [...courseStats.teachers.keys()]
+    entries.push({
+      key: `group-${name}`, type: 'group', name, group: '历史评价', teachers,
+      sub: statsSubLine(courseStats, 0, [])
+    })
+  }
+  return entries
 }
 
 function filterEntries(entries, keyword) {
@@ -37,6 +84,7 @@ function filterEntries(entries, keyword) {
       entry.name.toLowerCase().includes(query)
       || entry.group.toLowerCase().includes(query)
       || entry.teachers.some(teacher => teacher.toLowerCase().includes(query))
+      || String(entry.sub || '').toLowerCase().includes(query)
     ))
     .slice(0, PICKER_LIMIT)
 }
@@ -51,7 +99,7 @@ function createWriteReviewPage(api = publicApi) {
     body: '', anonymous: true,
     minLength: 12, moderationRequired: true,
     pickerMode: false, pickerKeyword: '', pickerEntries: [], pickerFiltered: [],
-    isGroupMode: false, groupCourseTitle: ''
+    isGroupMode: false, isCatalogMode: false, groupCourseTitle: '', catalogCourseId: '', teacherOptions: []
   },
   onLoad(options) {
     reportVisit('/mp/write-review')
@@ -83,7 +131,8 @@ function createWriteReviewPage(api = publicApi) {
       }
       if (this.data.courseId) {
         const course = await api.getCourse(this.data.courseId)
-        this.setData({ course, pickerMode: false, isGroupMode: false, loading: false, error: '', ...rules })
+        const teacherOptions = [...new Set((course.teacher_groups || []).map(item => item && item.teacher_name).filter(Boolean))]
+        this.setData({ course, teacherOptions, pickerMode: false, isGroupMode: false, isCatalogMode: false, loading: false, error: '', ...rules })
       } else if (this.data.groupCourseTitle) {
         // 从历史评价组进入：course_title 精确命中已有评价组
         const groupsResult = await api.getReviewGroups().catch(() => ({ items: [] }))
@@ -94,15 +143,19 @@ function createWriteReviewPage(api = publicApi) {
         const uniqueTeachers = [...new Set(teachers)]
         this.setData({
           course: { id: '', name: this.data.groupCourseTitle, group: '历史评价', teacher_groups: uniqueTeachers.map(teacher => ({ teacher_name: teacher })) },
-          isGroupMode: true, pickerMode: false, loading: false, error: '', ...rules
+          teacherOptions: uniqueTeachers,
+          isGroupMode: true, isCatalogMode: false, pickerMode: false, loading: false, error: '', ...rules
         })
       } else {
+        this.setData({ pickerMode: true, course: null, loading: false, error: '', ...rules })
         const [groupsResult, coursesResult] = await Promise.all([
           api.getReviewGroups().catch(() => ({ items: [] })),
           api.getCourses({ page: 1, page_size: 100 }).catch(() => ({ items: [] }))
         ])
-        const entries = buildPickerEntries(groupsResult, coursesResult)
-        this.setData({ pickerMode: true, pickerEntries: entries, pickerFiltered: filterEntries(entries, ''), course: null, loading: false, error: '', ...rules })
+        this._pickerGroups = groupsResult.items || []
+        this._pickerCourses = coursesResult.items || []
+        const entries = buildPickerEntries(groupsResult, coursesResult, { items: [] })
+        this.setData({ pickerEntries: entries, pickerFiltered: filterEntries(entries, '') })
       }
     } catch (error) {
       this.setData({ loading: false, error: error.message || '暂时无法加载评价页面' })
@@ -111,21 +164,58 @@ function createWriteReviewPage(api = publicApi) {
   inputPickerKeyword(event) {
     const keyword = event.detail.value
     this.setData({ pickerKeyword: keyword, pickerFiltered: filterEntries(this.data.pickerEntries, keyword) })
+    if (this._catalogTimer) clearTimeout(this._catalogTimer)
+    const trimmed = String(keyword || '').trim()
+    if (!trimmed || typeof api.getCatalog !== 'function') return
+    this._catalogTimer = setTimeout(async () => {
+      try {
+        const catalogResult = await api.getCatalog({ q: trimmed, page_size: 30 })
+        if (String(this.data.pickerKeyword || '').trim() !== trimmed) return
+        const entries = buildPickerEntries({ items: this._pickerGroups || [] }, { items: this._pickerCourses || [] }, catalogResult)
+        this.setData({ pickerEntries: entries, pickerFiltered: filterEntries(entries, trimmed) })
+      } catch {}
+    }, 350)
   },
   tapPickerEntry(event) {
     const index = Number(event.currentTarget.dataset.index)
     const entry = this.data.pickerFiltered[index]
     if (!entry) return
     if (entry.type === 'course') {
-      this.setData({ courseId: entry.id, groupCourseTitle: '', pickerMode: false, teacher: '', rating: 0, body: '' })
-    } else {
-      this.setData({ groupCourseTitle: entry.name, courseId: '', pickerMode: false, teacher: '', rating: 0, body: '' })
+      this.setData({ courseId: entry.id, groupCourseTitle: '', catalogCourseId: '', pickerMode: false, teacher: '', rating: 0, body: '' })
+      this.prepare()
+      return
     }
+    if (entry.type === 'catalog') {
+      const teachers = [...new Set(entry.teachers || [])]
+      this.setData({
+        catalogCourseId: entry.catalogCourseId,
+        courseId: '',
+        groupCourseTitle: '',
+        pickerMode: false,
+        teacher: '',
+        rating: 0,
+        body: '',
+        course: { id: '', name: entry.name, group: entry.group || '课程目录', teacher_groups: teachers.map(teacher => ({ teacher_name: teacher })) },
+        teacherOptions: teachers,
+        isGroupMode: false,
+        isCatalogMode: true
+      })
+      return
+    }
+    this.setData({ groupCourseTitle: entry.name, courseId: '', catalogCourseId: '', pickerMode: false, teacher: '', rating: 0, body: '' })
     this.prepare()
   },
   reselectCourse() {
-    this.setData({ courseId: '', groupCourseTitle: '', course: null, pickerMode: true })
+    this.setData({ courseId: '', groupCourseTitle: '', catalogCourseId: '', course: null, pickerMode: true })
     this.prepare()
+  },
+  reportMissingCourse() {
+    const keyword = String(this.data.pickerKeyword || '').trim()
+    const title = keyword ? `课程缺失：${keyword}` : '课程缺失反馈'
+    const content = keyword
+      ? `我想评价的课程「${keyword}」在列表中找不到，请补充收录。课程信息（学院/教师/学期）：`
+      : '我想评价的课程在列表中找不到，请补充收录。课程名称与信息：'
+    wx.navigateTo({ url: `/pages/feedback/index?prefill_title=${encodeURIComponent(title)}&prefill_content=${encodeURIComponent(content)}` })
   },
   inputTeacher(event) { this.setData({ teacher: event.detail.value }) },
   chooseTeacher(event) { this.setData({ teacher: event.currentTarget.dataset.teacher }) },
@@ -140,9 +230,12 @@ function createWriteReviewPage(api = publicApi) {
     }
     this.setData({ submitting: true })
     try {
-      const payload = isGroupMode
-        ? { course_title: groupCourseTitle, teacher: teacher.trim(), rating, body: body.trim(), anonymous }
-        : { course_id: course.id, teacher: teacher.trim(), rating, body: body.trim(), anonymous }
+      const base = { teacher: teacher.trim(), rating, body: body.trim(), anonymous }
+      const payload = this.data.isCatalogMode && this.data.catalogCourseId
+        ? { catalog_course_id: this.data.catalogCourseId, ...base }
+        : isGroupMode
+          ? { course_title: groupCourseTitle, ...base }
+          : { course_id: course.id, ...base }
       await api.submitReview(payload)
       const content = this.data.moderationRequired
         ? '评价已进入审核，通过后将公开展示，公开页面保持匿名。'
@@ -159,4 +252,4 @@ function createWriteReviewPage(api = publicApi) {
 
 Page(createWriteReviewPage())
 
-module.exports = { createWriteReviewPage, buildPickerEntries, filterEntries }
+module.exports = { createWriteReviewPage, buildPickerEntries, filterEntries, aggregateReviewStats, statsSubLine }

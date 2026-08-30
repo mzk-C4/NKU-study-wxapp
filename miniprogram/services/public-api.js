@@ -530,6 +530,24 @@ function createPublicApi(client = request, options = {}) {
     async getGuide(guideId) {
       return mapGuide(await client.get(`/guides/${encodePathSegment(guideId)}`))
     },
+    async getCatalog(query = {}) {
+      if (isReference) return { items: [], total: 0 }
+      const params = []
+      const keyword = String(query.q || '').trim()
+      if (keyword) params.push(`q=${encodeURIComponent(keyword)}`)
+      params.push(`page_size=${Math.min(100, Math.max(1, Number(query.page_size) || 30))}`)
+      const data = await client.get(`/catalog?${params.join('&')}`)
+      const raw = data && typeof data === 'object' ? data : {}
+      return {
+        items: (Array.isArray(raw.items) ? raw.items : []).map(item => ({
+          id: toText(item.id),
+          name: toText(item.name),
+          categories: toTextArray(item.categories),
+          teachers: toTextArray(item.teachers)
+        })),
+        total: toCount(raw.total)
+      }
+    },
     async getCourses(query) {
       return mapCourseList(await client.get('/courses', courseQuery(query)))
     },
