@@ -17,6 +17,11 @@ test('only the latest request token may update a page', () => {
 test('write-review load failure has an in-page retry that can recover', async () => {
   const originalPage = global.Page
   global.Page = () => {}
+  const previousWx = global.wx
+  global.wx = {
+    showModal: () => {}, switchTab: () => {},
+    getStorageSync: () => ({ token: 'testtokenabcdef123456', expires_at: Date.now() + 86400000, user: { id: 1 } })
+  }
   const modulePath = require.resolve('../miniprogram/pages/write-review/index.js')
   delete require.cache[modulePath]
   const { createWriteReviewPage } = require(modulePath)
@@ -44,6 +49,8 @@ test('write-review load failure has an in-page retry that can recover', async ()
   assert.equal(page.data.loading, false)
   assert.equal(page.data.error, '')
   assert.deepEqual(page.data.course, { id: 'course-1' })
+  delete global.wx
+  if (previousWx !== undefined) global.wx = previousWx
 })
 
 test('profile restores a valid session and renders server favorites and review states', async () => {

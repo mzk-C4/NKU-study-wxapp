@@ -6,7 +6,7 @@ const { publicApi } = require('../../services/public-api')
 Page({
   data: {
     loading: true, error: '', submitting: false,
-    feedbacks: [], title: '', content: '', contact: '', mine: false,
+    feedbacks: [], visibleFeedbacks: [], searchKeyword: '', title: '', content: '', contact: '', mine: false,
     type: 'bug', typeOptions: [
       { value: 'bug', label: 'Bug' },
       { value: 'feature', label: '功能改进' },
@@ -36,13 +36,26 @@ Page({
         typeLabel: { bug: 'Bug', feature: '功能改进', content: '内容问题' }[item.type] || item.type || '反馈'
       }))
       this.setData({ feedbacks: items, loading: false })
+      this.applyFilters()
     } catch (error) { this.setData({ loading: false, error: error.message || '加载失败' }) }
+  },
+  inputSearchKeyword(e) { this.setData({ searchKeyword: e.detail.value }); this.applyFilters() },
+  clearSearchKeyword() { this.setData({ searchKeyword: '' }); this.applyFilters() },
+  applyFilters() {
+    const keyword = String(this.data.searchKeyword || '').trim().toLowerCase()
+    const status = this.data.filterStatus
+    const list = (this.data.feedbacks || []).filter(item => {
+      if (status !== 'all' && item.status !== status) return false
+      if (!keyword) return true
+      return [item.title, item.content, item.typeLabel, item.reply].filter(Boolean).join(String.fromCharCode(10)).toLowerCase().includes(keyword)
+    })
+    this.setData({ visibleFeedbacks: list })
   },
   inputTitle(e) { this.setData({ title: e.detail.value }) },
   inputContent(e) { this.setData({ content: e.detail.value }) },
   inputContact(e) { this.setData({ contact: e.detail.value }) },
   chooseType(e) { this.setData({ type: e.currentTarget.dataset.value }) },
-  chooseStatus(e) { this.setData({ filterStatus: e.currentTarget.dataset.value }) },
+  chooseStatus(e) { this.setData({ filterStatus: e.currentTarget.dataset.value }); this.applyFilters() },
   async submit() {
     const { title, content, contact, type, submitting } = this.data
     if (!title.trim() || !content.trim()) {
