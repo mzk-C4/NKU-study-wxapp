@@ -3,6 +3,17 @@ const theme = require('../../utils/theme')
 const { listFeedback, submitFeedback } = require('../../utils/feedback-api')
 const { publicApi } = require('../../services/public-api')
 
+// 后端存 UTC ISO（带 Z）：转成北京时间（UTC+8）并只保留年月日
+function beijingDateLabel(value) {
+  const date = new Date(value || '')
+  if (!value || Number.isNaN(date.getTime())) return ''
+  const shifted = new Date(date.getTime() + 8 * 60 * 60 * 1000)
+  const year = shifted.getUTCFullYear()
+  const month = String(shifted.getUTCMonth() + 1).padStart(2, '0')
+  const day = String(shifted.getUTCDate()).padStart(2, '0')
+  return year + '-' + month + '-' + day
+}
+
 Page({
   data: {
     loading: true, error: '', submitting: false,
@@ -31,7 +42,9 @@ Page({
       const items = ((data || {}).items || []).map(item => ({
         ...item,
         reply: String(item.reply || ''),
-        repliedAt: item.repliedAt || '', 
+        repliedAt: item.repliedAt || '',
+        createdAtLabel: beijingDateLabel(item.createdAt),
+        repliedAtLabel: beijingDateLabel(item.repliedAt), 
         statusLabel: { open: '待处理', completed: '已完成', rejected: '不予完成', parked: '搁置' }[item.status] || item.status,
         typeLabel: { bug: 'Bug', feature: '功能改进', content: '内容问题' }[item.type] || item.type || '反馈'
       }))
@@ -75,3 +88,5 @@ Page({
     }
   }
 })
+
+module.exports = { beijingDateLabel }

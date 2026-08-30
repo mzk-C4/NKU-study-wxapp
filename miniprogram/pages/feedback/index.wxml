@@ -36,7 +36,7 @@
       <view class="micro" style="margin-top: 6rpx;">{{item.reply}}</view>
       <view wx:if="{{item.repliedAt}}" class="micro" style="margin-top: 4rpx;color: #9CA3AF;">{{item.repliedAt}}</view>
     </view>
-    <view class="micro" style="margin-top: 8rpx;color: #9CA3AF;">{{item.createdAt}}</view>
+    <view class="micro" style="margin-top: 8rpx;color: #9CA3AF;">{{item.createdAtLabel}}</view>
   </view>
 
   <view class="micro" wx:if="{{!loading && !error && searchKeyword && !visibleFeedbacks.length}}" style="text-align:center;padding:32rpx;color:#9CA3AF;">没有匹配「{{searchKeyword}}」的反馈</view>
