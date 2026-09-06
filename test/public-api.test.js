@@ -67,7 +67,7 @@ test('course, resource and review DTOs use explicit public-field whitelists', ()
     download_url: 'https://resources.nkustudy.top/resources/file.pdf', path: 'internal/file.pdf', r2Bucket: 'hidden'
   })
   const reviewGroup = publicApi.mapReviewGroup({
-    group_key: 'group-id', course_id: 'course-id', course_name: '课程', teacher_name: '张老师', matched: true,
+    group_key: 'group-id', course_id: '', catalog_course_id: 'cat-course', course_name: '课程', teacher_name: '张老师', matched: false, submittable: true,
     review_count: 1, rating_average: 5, revision: 'hidden',
     items: [{ id: 'review-id', teacher_name: '张老师', rating: 5, tags: ['清晰'], body: '内容', helpful_count: 1, created_at: '2026-08-15', ipHash: 'hidden', userAgent: 'hidden' }]
   }, true)
@@ -75,6 +75,8 @@ test('course, resource and review DTOs use explicit public-field whitelists', ()
   assert.deepEqual(forbiddenKeys(course, forbidden), [])
   assert.deepEqual(forbiddenKeys(resource, forbidden), [])
   assert.deepEqual(forbiddenKeys(reviewGroup, forbidden), [])
+  assert.equal(reviewGroup.catalog_course_id, 'cat-course')
+  assert.equal(reviewGroup.submittable, true)
   assert.deepEqual(Object.keys(course).sort(), [
     'aliases', 'assessment', 'category_name', 'description', 'group', 'id', 'name', 'offering_count', 'ratings',
     'resource_count', 'review_count', 'short_name', 'summary', 'tags', 'teacher_groups', 'teachers', 'term', 'updated'

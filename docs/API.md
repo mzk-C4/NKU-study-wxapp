@@ -42,7 +42,7 @@
 | POST | `/me/delete-account` | 注销当前账号绑定关系 |
 | POST | `/favorites` | 收藏课程 |
 | DELETE | `/favorites/{courseUid}` | 取消收藏课程 |
-| POST | `/reviews` | 匿名评价投稿，进入网站现有审核队列 |
+| POST | `/reviews` | 按课程 ID、目录课程 ID 或历史课程名匿名投稿，进入现有审核队列 |
 
 所有动态路径参数必须 URL 编码。通用业务页面通过 `miniprogram/services/public-api.js` 调用公开接口；学习指南针通过 feature-local 的 `miniprogram/features/learning-compass/api.js` 调用指南接口，两者都复用统一请求层与认证会话。
 
@@ -70,11 +70,13 @@
 
 课程 `id` 是服务器不可变 UUID。简称和别名分别来自 `short_name` 与 `aliases`，客户端不自行猜测。页面使用服务端 `teacher_groups`，不建立第二套教师或开课安排模型。
 
-评价提交正文：
+评价提交正文使用三种课程标识之一：正式课程使用 `course_id`，目录课程使用 `catalog_course_id`，已有历史评价组使用精确 `course_title`。客户端不会同时设置多个有效课程标识。完整字段示例：
 
 ```json
 {
   "course_id": "immutable-course-uuid",
+  "catalog_course_id": "",
+  "course_title": "",
   "teacher": "教师姓名",
   "rating": 5,
   "tags": ["网站已有评价标签"],
@@ -82,6 +84,8 @@
   "anonymous": true
 }
 ```
+
+目录课程投稿将 `catalog_course_id` 设为服务器目录 ID，并把另外两个课程标识置空；历史评价组投稿将 `course_title` 设为服务器返回的精确课程名，并把两个 ID 置空。页面不得自行猜测目录 ID 或改写历史课程名。
 
 评价只使用单一 `rating`、`body` 和 `tags`，不恢复旧多维评分。
 

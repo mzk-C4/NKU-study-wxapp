@@ -663,6 +663,8 @@ function createPublicApi(client = request, options = {}) {
       }
       return client.post('/reviews', {
         course_id: toText(input.course_id),
+        catalog_course_id: toText(input.catalog_course_id),
+        course_title: toText(input.course_title),
         teacher: toText(input.teacher),
         rating: toCount(input.rating),
         tags: toTextArray(input.tags),

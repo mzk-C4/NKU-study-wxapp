@@ -69,7 +69,13 @@ test('reviews use group endpoints and the one-rating submission body', async () 
   const groups = await api.getCourseReviewGroups(course)
   assert.equal(groups[0].items[0].rating, 5)
   await api.submitReview({ course_id: course.id, teacher: '张老师', rating: 5, tags: ['讲解清晰'], body: '正文', anonymous: true, difficulty: 1 })
-  assert.deepEqual(transport.calls.at(-1), { method: 'POST', path: '/reviews', data: { course_id: course.id, teacher: '张老师', rating: 5, tags: ['讲解清晰'], body: '正文', anonymous: true }, options: { auth: 'optional' } })
+  assert.deepEqual(transport.calls.at(-1), { method: 'POST', path: '/reviews', data: { course_id: course.id, catalog_course_id: '', course_title: '', teacher: '张老师', rating: 5, tags: ['讲解清晰'], body: '正文', anonymous: true }, options: { auth: 'optional' } })
+
+  await api.submitReview({ catalog_course_id: 'cat-e-course', teacher: '高老师', rating: 5, body: 'E 课正文', anonymous: true })
+  assert.deepEqual(transport.calls.at(-1), { method: 'POST', path: '/reviews', data: { course_id: '', catalog_course_id: 'cat-e-course', course_title: '', teacher: '高老师', rating: 5, tags: [], body: 'E 课正文', anonymous: true }, options: { auth: 'optional' } })
+
+  await api.submitReview({ course_title: '3D 打印及应用', teacher: '李老师', rating: 4, body: '历史课程正文', anonymous: true })
+  assert.deepEqual(transport.calls.at(-1), { method: 'POST', path: '/reviews', data: { course_id: '', catalog_course_id: '', course_title: '3D 打印及应用', teacher: '李老师', rating: 4, tags: [], body: '历史课程正文', anonymous: true }, options: { auth: 'optional' } })
 })
 
 test('helpful reactions use the protected PUT contract and support cancellation', async () => {
