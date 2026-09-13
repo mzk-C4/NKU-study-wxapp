@@ -98,10 +98,14 @@ test('filterEntries ranks substring above subsequence abbreviation matches', () 
     { key: 'c', type: 'course', name: '数学文化与数学史', teachers: [], sub: '' }
   ]
   const byName = (list) => list.map(entry => entry.name)
-  // 连续子串命中时，子序列命中不参与显示
+  // 连续子串命中优先展示，但按序缩写命中不截断（排序合并）
   assert.deepEqual(byName(filterEntries(entries, '数学文化')), ['数学文化与数学史'])
-  // 无连续命中时，按序取字缩写（高数）命中并按原顺序展示
   assert.deepEqual(byName(filterEntries(entries, '高数')), ['高等数学B（上）', '高等数学A（上）'])
+  const mixed = [
+    { key: 'x', type: 'course', name: '中国文化概论', teachers: [], sub: '' },
+    { key: 'y', type: 'course', name: '化学概论', teachers: [], sub: '' }
+  ]
+  assert.deepEqual(byName(filterEntries(mixed, '化概')), ['中国文化概论', '化学概论'], '连续命中在前，缩写命中紧随其后')
   // 单字查询退化为包含匹配
   assert.equal(filterEntries(entries, '高').length, 2)
   assert.equal(filterEntries(entries, '').length, 3)
