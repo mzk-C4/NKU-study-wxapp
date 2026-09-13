@@ -76,32 +76,33 @@ function buildPickerEntries(groupsResult, coursesResult, catalogResult) {
 }
 
 // 课程搜索仅匹配课程名，分级：0=前缀连续 1=中间连续 2=按序全字(子序列，覆盖"高数/马原"式缩写)
-// 3=部分按序(命中≥2字且≥2/3)，仅当无更优结果时兜底且封顶20条；评价组条目额外支持老师连续子串。
-function matchRank(name, query) {
-  if (!query) return 0
+// 3=部分字符(命中≥2字且≥2/3)兜底且封顶20条；评价组条目额外支持老师连续子串。
+// 级内再按 start(命中起点越靠前越优)、span(跨度越小越紧凑)排序，缩写目标排在松散命中前。
+function entryRank(entry, query) {
+  if (!query) return { rank: 0, start: 0, span: 0 }
+  const name = entry.name.toLowerCase()
   const at = name.indexOf(query)
-  if (at === 0) return 0
-  if (at > 0) return 1
+  if (at >= 0) return { rank: at === 0 ? 0 : 1, start: at, span: query.length }
   if (query.length >= 2) {
     let ki = 0
+    let first = -1
+    let last = -1
     for (let i = 0; i < name.length && ki < query.length; i += 1) {
-      if (name[i] === query[ki]) ki += 1
+      if (name[i] === query[ki]) {
+        if (first < 0) first = i
+        last = i
+        ki += 1
+      }
     }
-    if (ki === query.length) return 2
+    if (ki === query.length) return { rank: 2, start: first, span: last - first }
     let present = 0
-    for (const ch of new Set(query)) {
+    const unique = new Set(query)
+    for (const ch of unique) {
       if (name.includes(ch)) present += 1
     }
-    if (present >= 2 && present * 3 >= new Set(query).size * 2) return 3
+    if (present >= 2 && present * 3 >= unique.size * 2) return { rank: 3, start: 0, span: 0 }
   }
-  return null
-}
-
-function entryRank(entry, query) {
-  if (!query) return 0
-  const rank = matchRank(entry.name.toLowerCase(), query)
-  if (rank !== null) return rank
-  if (entry.type === 'group' && entry.teachers.some(teacher => teacher.toLowerCase().includes(query))) return 1
+  if (entry.type === 'group' && entry.teachers.some(teacher => teacher.toLowerCase().includes(query))) return { rank: 1, start: 0, span: 0 }
   return null
 }
 
@@ -109,12 +110,12 @@ function filterEntries(entries, keyword) {
   const query = String(keyword || '').trim().toLowerCase()
   if (!query) return entries.slice(0, PICKER_LIMIT)
   const ranked = entries
-    .map((entry, index) => ({ entry, index, rank: entryRank(entry, query) }))
-    .filter(item => item.rank !== null)
+    .map((entry, index) => ({ entry, index, score: entryRank(entry, query) }))
+    .filter(item => item.score !== null)
   let partialShown = 0
   return ranked
-    .filter(item => item.rank < 3 || partialShown++ < 20)
-    .sort((a, b) => a.rank - b.rank || a.index - b.index)
+    .filter(item => item.score.rank < 3 || partialShown++ < 20)
+    .sort((a, b) => a.score.rank - b.score.rank || a.score.start - b.score.start || a.score.span - b.score.span || a.index - b.index)
     .map(item => item.entry)
     .slice(0, PICKER_LIMIT)
 }
