@@ -111,11 +111,9 @@ function filterEntries(entries, keyword) {
   const ranked = entries
     .map((entry, index) => ({ entry, index, rank: entryRank(entry, query) }))
     .filter(item => item.rank !== null)
-  if (!ranked.length) return []
-  const best = ranked.reduce((min, item) => Math.min(min, item.rank), 4)
   let partialShown = 0
   return ranked
-    .filter(item => item.rank <= best && (item.rank < 3 || partialShown++ < 20))
+    .filter(item => item.rank < 3 || partialShown++ < 20)
     .sort((a, b) => a.rank - b.rank || a.index - b.index)
     .map(item => item.entry)
     .slice(0, PICKER_LIMIT)
