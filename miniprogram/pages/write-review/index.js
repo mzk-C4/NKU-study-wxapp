@@ -45,10 +45,9 @@ function buildPickerEntries(groupsResult, coursesResult, catalogResult) {
     if (!name || seen.has(name)) continue
     seen.add(name)
     const courseStats = stats.get(name)
-    const teachers = [...new Set((course.teacher_groups || []).map(item => item && item.teacher_name).filter(Boolean))]
     entries.push({
       key: `course-${course.id}`, type: 'course', id: course.id, name,
-      group: course.group || '', teachers,
+      group: course.group || '课程库', teachers: courseStats ? [...courseStats.teachers.keys()] : [],
       sub: statsSubLine(courseStats, course.review_count)
     })
   }
@@ -60,7 +59,7 @@ function buildPickerEntries(groupsResult, coursesResult, catalogResult) {
     const catalogStats = stats.get(name)
     entries.push({
       key: `catalog-${item.id}`, type: 'catalog', catalogCourseId: item.id, name,
-      group: (item.categories || [])[0] || '课程目录', teachers: [...new Set(item.teachers || [])],
+      group: '课程目录', teachers: [...new Set(item.teachers || [])],
       sub: statsSubLine(catalogStats, 0)
     })
   }
@@ -76,17 +75,63 @@ function buildPickerEntries(groupsResult, coursesResult, catalogResult) {
   return entries
 }
 
+// 课程搜索仅匹配课程名，分级：0=前缀连续 1=中间连续 2=按序全字(子序列，覆盖"高数/马原"式缩写)
+// 3=部分按序(命中≥2字且≥2/3)，仅当无更优结果时兜底且封顶20条；评价组条目额外支持老师连续子串。
+function matchRank(name, query) {
+  if (!query) return 0
+  const at = name.indexOf(query)
+  if (at === 0) return 0
+  if (at > 0) return 1
+  if (query.length >= 2) {
+    let ki = 0
+    for (let i = 0; i < name.length && ki < query.length; i += 1) {
+      if (name[i] === query[ki]) ki += 1
+    }
+    if (ki === query.length) return 2
+    let present = 0
+    for (const ch of new Set(query)) {
+      if (name.includes(ch)) present += 1
+    }
+    if (present >= 2 && present * 3 >= new Set(query).size * 2) return 3
+  }
+  return null
+}
+
+function entryRank(entry, query) {
+  if (!query) return 0
+  const rank = matchRank(entry.name.toLowerCase(), query)
+  if (rank !== null) return rank
+  if (entry.type === 'group' && entry.teachers.some(teacher => teacher.toLowerCase().includes(query))) return 1
+  return null
+}
+
 function filterEntries(entries, keyword) {
   const query = String(keyword || '').trim().toLowerCase()
   if (!query) return entries.slice(0, PICKER_LIMIT)
-  return entries
-    .filter(entry => (
-      entry.name.toLowerCase().includes(query)
-      || entry.group.toLowerCase().includes(query)
-      || entry.teachers.some(teacher => teacher.toLowerCase().includes(query))
-      || String(entry.sub || '').toLowerCase().includes(query)
-    ))
+  const ranked = entries
+    .map((entry, index) => ({ entry, index, rank: entryRank(entry, query) }))
+    .filter(item => item.rank !== null)
+  if (!ranked.length) return []
+  const best = ranked.reduce((min, item) => Math.min(min, item.rank), 4)
+  let partialShown = 0
+  return ranked
+    .filter(item => item.rank <= best && (item.rank < 3 || partialShown++ < 20))
+    .sort((a, b) => a.rank - b.rank || a.index - b.index)
+    .map(item => item.entry)
     .slice(0, PICKER_LIMIT)
+}
+
+// searchData 体积约百KB(gzip后)，按 api 实例缓存 10 分钟：同会话重复打开选课器零请求
+const searchDataCache = new WeakMap()
+const SEARCH_DATA_TTL = 10 * 60 * 1000
+
+async function loadSearchData(api) {
+  if (typeof api.getSearchData !== 'function') return { courses: [], catalog: [] }
+  const cached = searchDataCache.get(api)
+  if (cached && Date.now() - cached.at < SEARCH_DATA_TTL) return cached.data
+  const data = await api.getSearchData().catch(() => ({ courses: [], catalog: [] }))
+  searchDataCache.set(api, { at: Date.now(), data })
+  return data
 }
 
 function createWriteReviewPage(api = publicApi) {
@@ -148,13 +193,12 @@ function createWriteReviewPage(api = publicApi) {
         })
       } else {
         this.setData({ pickerMode: true, course: null, loading: false, error: '', ...rules })
-        const [groupsResult, coursesResult] = await Promise.all([
+        const [groupsResult, searchData] = await Promise.all([
           api.getReviewGroups().catch(() => ({ items: [] })),
-          api.getCourses({ page: 1, page_size: 100 }).catch(() => ({ items: [] }))
+          loadSearchData(api)
         ])
         this._pickerGroups = groupsResult.items || []
-        this._pickerCourses = coursesResult.items || []
-        const entries = buildPickerEntries(groupsResult, coursesResult, { items: [] })
+        const entries = buildPickerEntries(groupsResult, { items: searchData.courses }, { items: searchData.catalog })
         this.setData({ pickerEntries: entries, pickerFiltered: filterEntries(entries, '') })
       }
     } catch (error) {
@@ -164,17 +208,6 @@ function createWriteReviewPage(api = publicApi) {
   inputPickerKeyword(event) {
     const keyword = event.detail.value
     this.setData({ pickerKeyword: keyword, pickerFiltered: filterEntries(this.data.pickerEntries, keyword) })
-    if (this._catalogTimer) clearTimeout(this._catalogTimer)
-    const trimmed = String(keyword || '').trim()
-    if (!trimmed || typeof api.getCatalog !== 'function') return
-    this._catalogTimer = setTimeout(async () => {
-      try {
-        const catalogResult = await api.getCatalog({ q: trimmed, page_size: 30 })
-        if (String(this.data.pickerKeyword || '').trim() !== trimmed) return
-        const entries = buildPickerEntries({ items: this._pickerGroups || [] }, { items: this._pickerCourses || [] }, catalogResult)
-        this.setData({ pickerEntries: entries, pickerFiltered: filterEntries(entries, trimmed) })
-      } catch {}
-    }, 350)
   },
   tapPickerEntry(event) {
     const index = Number(event.currentTarget.dataset.index)
