@@ -577,6 +577,24 @@ function createPublicApi(client = request, options = {}) {
         mapReviewGroup(await client.get(`/review-groups/${encodePathSegment(group.group_key)}`, undefined, { auth: 'optional' }), true)
       )))
     },
+    async getSearchData() {
+      if (isReference) return { courses: [], catalog: [], groups: [] }
+      const data = await client.get('/search-data')
+      const raw = data && typeof data === 'object' ? data : {}
+      const toSlimList = (value) => (Array.isArray(value) ? value : []).map(item => ({
+        id: toText(item && item.id),
+        name: toText(item && item.name),
+        teachers: toTextArray(item && item.teachers)
+      }))
+      return {
+        courses: toSlimList(raw.courses),
+        catalog: toSlimList(raw.catalog),
+        groups: (Array.isArray(raw.groups) ? raw.groups : []).map(item => ({
+          name: toText(item && item.name),
+          teacher: toText(item && item.teacher)
+        }))
+      }
+    },
     async setReviewReaction(reviewId, reaction) {
       if (isReference) return authenticatedFeatureUnavailable()
       const normalized = reaction === 'up' ? 'up' : null

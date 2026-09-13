@@ -19,11 +19,18 @@ function fakeApi(overrides = {}) {
         { group_key: 'k3', course_name: '中文课程', teacher_name: '张老师', review_count: 2, matched: true }
       ]
     }),
-    getCourses: async () => ({ items: [
-      { id: 'c1', name: '中文课程', group: '通识选修课', review_count: 2, teacher_groups: [{ teacher_name: '张老师' }, { teacher_name: '张老师' }] },
-      { id: 'c2', name: '高等数学', group: '通识必修课', review_count: 0, teacher_groups: [] }
-    ] }),
-    getCatalog: async (query) => ({ items: (String(query.q || '').includes('史') ? [{ id: 'cat-1', name: '20世纪中国史学与史家', categories: ['历史学院'], teachers: ['朱洪斌'] }] : []) }),
+    getSearchData: async () => ({
+      courses: [
+        { id: 'c1', name: '中文课程' },
+        { id: 'c2', name: '高等数学' }
+      ],
+      catalog: [
+        { id: 'cat-1', name: '20世纪中国史学与史家', teachers: ['朱洪斌'] },
+        { id: 'cat-2', name: '中国近现代史纲要', teachers: ['朱洪斌'] },
+        { id: 'cat-3', name: '定量化学分析', teachers: ['邱晓航'] }
+      ],
+      groups: []
+    }),
     submitReview: async (payload) => { fakeApi.lastSubmit = payload; return { submitted: true } },
     ...overrides
   }
@@ -36,7 +43,7 @@ function makePage(api) {
   return page
 }
 
-test('picker entries merge sources with review stats and dedup teachers', () => {
+test('picker entries merge sources with review stats and derive course teachers from groups', () => {
   const entries = buildPickerEntries(
     { items: [
       { course_name: '3D 打印及应用', teacher_name: '李老师', review_count: 3 },
@@ -44,16 +51,16 @@ test('picker entries merge sources with review stats and dedup teachers', () => 
       { course_name: '中文课程', teacher_name: '张老师', review_count: 2 }
     ] },
     { items: [
-      { id: 'c1', name: '中文课程', group: '通识选修课', review_count: 2, teacher_groups: [{ teacher_name: '张老师' }, { teacher_name: '张老师' }] },
-      { id: 'c2', name: '高等数学', group: '通识必修课', review_count: 0, teacher_groups: [] }
+      { id: 'c1', name: '中文课程', group: '通识选修课', review_count: 2 },
+      { id: 'c2', name: '高等数学', group: '通识必修课', review_count: 0 }
     ] },
-    { items: [{ id: 'cat-1', name: '20世纪中国史学与史家', categories: ['历史学院'], teachers: ['朱洪斌'] }] }
+    { items: [{ id: 'cat-1', name: '20世纪中国史学与史家', teachers: ['朱洪斌'] }] }
   )
   assert.equal(entries.length, 4, 'manifest 2 门 + 历史组 1 门 + 目录 1 门')
   const groupEntry = entries.find(entry => entry.type === 'group')
   assert.equal(groupEntry.sub, '共5条评价，已有老师：李老师、王老师')
   const courseEntry = entries.find(entry => entry.type === 'course' && entry.id === 'c1')
-  assert.deepEqual(courseEntry.teachers, ['张老师'], '重复教师已去重')
+  assert.deepEqual(courseEntry.teachers, ['张老师'], '课程条目老师由评价组统计派生')
   assert.equal(courseEntry.sub, '共2条评价，已有老师：张老师')
   const emptyEntry = entries.find(entry => entry.name === '高等数学')
   assert.equal(emptyEntry.sub, '暂时没有评价')
@@ -62,16 +69,19 @@ test('picker entries merge sources with review stats and dedup teachers', () => 
   assert.equal(catalogEntry.sub, '暂时没有评价')
 })
 
-test('catalog keyword merges server-side results and submits via catalog_course_id', async () => {
+test('picker loads full search data once and filters locally without server search', async () => {
   const api = fakeApi()
+  let catalogCalls = 0
+  api.getCatalog = async () => { catalogCalls += 1; return { items: [] } }
   const page = makePage(api)
   page.onLoad({})
   await page.prepare()
-  page.setData({ pickerKeyword: '史学' })
+  assert.equal(page.data.pickerMode, true)
+  assert.ok(page.data.pickerEntries.length >= 5, '课程库+目录池+历史组全部本地化')
   await page.inputPickerKeyword({ detail: { value: '史学' } })
-  await new Promise(resolve => setTimeout(resolve, 450))
+  assert.ok(page.data.pickerFiltered.some(entry => entry.type === 'catalog' && entry.name === '20世纪中国史学与史家'))
+  assert.equal(catalogCalls, 0, '不再向服务器发起目录搜索')
   const catalogEntry = page.data.pickerFiltered.find(entry => entry.type === 'catalog')
-  assert.ok(catalogEntry, '目录搜索结果已合并')
   page.setData({ pickerFiltered: [catalogEntry] })
   page.tapPickerEntry({ currentTarget: { dataset: { index: 0 } } })
   assert.equal(page.data.isCatalogMode, true)
@@ -81,15 +91,39 @@ test('catalog keyword merges server-side results and submits via catalog_course_
   assert.equal(fakeApi.lastSubmit.course_id, undefined)
 })
 
-test('filterEntries matches name and teacher keyword', () => {
+test('filterEntries ranks substring above subsequence abbreviation matches', () => {
   const entries = [
-    { key: 'a', type: 'course', name: '高等数学', group: '通识', teachers: ['张三'], sub: '共2条评价，已有老师：张三' },
-    { key: 'b', type: 'group', name: '3D 打印', group: '历史评价', teachers: ['李四'], sub: '暂时没有评价' }
+    { key: 'a', type: 'course', name: '高等数学B（上）', teachers: [], sub: '' },
+    { key: 'b', type: 'course', name: '高等数学A（上）', teachers: [], sub: '' },
+    { key: 'c', type: 'course', name: '数学文化与数学史', teachers: [], sub: '' }
   ]
-  assert.equal(filterEntries(entries, '李四').length, 1)
-  assert.equal(filterEntries(entries, '共2条评价').length, 1, 'sub 行可被搜索')
-  assert.equal(filterEntries(entries, '数学').length, 1)
-  assert.equal(filterEntries(entries, '').length, 2)
+  const byName = (list) => list.map(entry => entry.name)
+  // 连续子串命中时，子序列命中不参与显示
+  assert.deepEqual(byName(filterEntries(entries, '数学文化')), ['数学文化与数学史'])
+  // 无连续命中时，按序取字缩写（高数）命中并按原顺序展示
+  assert.deepEqual(byName(filterEntries(entries, '高数')), ['高等数学B（上）', '高等数学A（上）'])
+  // 单字查询退化为包含匹配
+  assert.equal(filterEntries(entries, '高').length, 2)
+  assert.equal(filterEntries(entries, '').length, 3)
+})
+
+test('filterEntries supports abbreviation, partial and teacher matching', () => {
+  const entries = [
+    { key: 'a', type: 'catalog', name: '中国近现代史纲要', teachers: ['朱洪斌'] },
+    { key: 'b', type: 'catalog', name: '定量化学分析', teachers: ['邱晓航'] },
+    { key: 'c', type: 'group', name: '3D 打印及应用', teachers: ['李四', '王五'] },
+    { key: 'd', type: 'course', name: '大学语文', teachers: [] }
+  ]
+  // 缩写按序取字：史纲 -> 中国近现代史纲要
+  assert.deepEqual(filterEntries(entries, '史纲').map(e => e.name), ['中国近现代史纲要'])
+  // 老师仅对评价组条目生效（连续子串）
+  assert.deepEqual(filterEntries(entries, '王五').map(e => e.name), ['3D 打印及应用'])
+  // 部分按序兜底：定划分 -> 定量化学分析（3字命中2字）
+  assert.deepEqual(filterEntries(entries, '定划分').map(e => e.name), ['定量化学分析'])
+  // 老师不再匹配非评价组条目（课程/目录仅名称）
+  assert.equal(filterEntries(entries, '邱晓航').length, 0)
+  // 拼音/乱码无结果
+  assert.equal(filterEntries(entries, 'xyz').length, 0)
 })
 
 test('no course_id opens picker mode and submits via course_title for groups', async () => {
