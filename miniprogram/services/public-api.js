@@ -577,6 +577,16 @@ function createPublicApi(client = request, options = {}) {
         mapReviewGroup(await client.get(`/review-groups/${encodePathSegment(group.group_key)}`, undefined, { auth: 'optional' }), true)
       )))
     },
+    async getAbout() {
+      if (isReference) return { title: '关于', content: '' }
+      const data = await client.get('/about')
+      const raw = data && typeof data === 'object' ? data : {}
+      return {
+        title: toText(raw.title) || '关于',
+        content: toText(raw.content),
+        updated: toText(raw.updated)
+      }
+    },
     async getSearchData() {
       if (isReference) return { courses: [], catalog: [], groups: [] }
       const data = await client.get('/search-data')

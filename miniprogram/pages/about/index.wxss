@@ -1,0 +1,25 @@
+.about-card { padding: 28rpx 30rpx; }
+
+.about-heading { font-weight: 800; color: #2A232E; margin: 26rpx 0 12rpx; }
+.about-heading--1 { font-size: 38rpx; }
+.about-heading--2 { font-size: 33rpx; }
+.about-heading--3 { font-size: 30rpx; }
+.about-heading:first-child { margin-top: 0; }
+
+.about-paragraph { font-size: 28rpx; line-height: 1.75; color: #4B4550; margin: 0 0 14rpx; }
+
+.about-list-item { display: flex; gap: 12rpx; margin: 0 0 10rpx; }
+.about-marker { flex-shrink: 0; color: #4B1F6F; font-weight: 700; font-size: 28rpx; }
+.about-list-body { flex: 1; font-size: 28rpx; line-height: 1.7; color: #4B4550; }
+
+.about-quote { border-left: 6rpx solid #4B1F6F; background: rgba(75, 31, 111, 0.05); padding: 14rpx 18rpx; border-radius: 10rpx; font-size: 27rpx; color: #6F6972; margin: 0 0 14rpx; }
+
+.about-link { color: #4B1F6F; text-decoration: underline; }
+
+.about-table-scroll { width: 100%; margin-bottom: 14rpx; }
+.about-table { display: inline-block; border: 1rpx solid #DED5E2; border-radius: 10rpx; overflow: hidden; }
+.about-table-row { display: flex; }
+.about-table-row--head { background: rgba(75, 31, 111, 0.06); font-weight: 700; }
+.about-table-cell { flex-shrink: 0; min-width: 160rpx; padding: 10rpx 16rpx; font-size: 25rpx; border-right: 1rpx solid #DED5E2; border-bottom: 1rpx solid #DED5E2; }
+
+.about-foot { text-align: center; color: #9CA3AF; font-size: 24rpx; padding: 8rpx 0 40rpx; }

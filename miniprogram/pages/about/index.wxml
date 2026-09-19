@@ -1,0 +1,15 @@
+<view class="page">
+  <state-view loading="{{loading}}" error="{{error}}" empty="{{!loading && !error && !blocks.length}}" empty-text="暂无内容" bindretry="loadAbout"></state-view>
+
+  <view class="card about-card" wx:if="{{!loading && !error}}">
+    <block wx:for="{{blocks}}" wx:key="id" wx:for-item="block">
+      <view wx:if="{{block.type === 'heading'}}" class="about-heading about-heading--{{block.level}}"><block wx:for="{{block.runs}}" wx:key="id" wx:for-item="run"><rich-text wx:if="{{run.kind !== 'link'}}" nodes="{{run.html}}"></rich-text><text wx:else class="about-link" data-href="{{run.href}}" bindtap="openMarkdownLink">{{run.text}}</text></block></view>
+      <view wx:elif="{{block.type === 'list-item'}}" class="about-list-item"><text class="about-marker">{{block.marker}}</text><view class="about-list-body"><block wx:for="{{block.runs}}" wx:key="id" wx:for-item="run"><rich-text wx:if="{{run.kind !== 'link'}}" nodes="{{run.html}}"></rich-text><text wx:else class="about-link" data-href="{{run.href}}" bindtap="openMarkdownLink">{{run.text}}</text></block></view></view>
+      <view wx:elif="{{block.type === 'blockquote'}}" class="about-quote"><block wx:for="{{block.runs}}" wx:key="id" wx:for-item="run"><rich-text wx:if="{{run.kind !== 'link'}}" nodes="{{run.html}}"></rich-text><text wx:else class="about-link" data-href="{{run.href}}" bindtap="openMarkdownLink">{{run.text}}</text></block></view>
+      <scroll-view wx:elif="{{block.type === 'table'}}" scroll-x class="about-table-scroll"><view class="about-table"><view class="about-table-row about-table-row--head"><view wx:for="{{block.headers}}" wx:key="id" class="about-table-cell"><block wx:for="{{item.runs}}" wx:key="id" wx:for-item="run"><rich-text nodes="{{run.html}}"></rich-text></block></view></view><view wx:for="{{block.rows}}" wx:key="id" class="about-table-row"><view wx:for="{{item.cells}}" wx:key="id" class="about-table-cell"><block wx:for="{{item.runs}}" wx:key="id" wx:for-item="run"><rich-text nodes="{{run.html}}"></rich-text></block></view></view></view></scroll-view>
+      <view wx:else class="about-paragraph"><block wx:for="{{block.runs}}" wx:key="id" wx:for-item="run"><rich-text wx:if="{{run.kind !== 'link'}}" nodes="{{run.html}}"></rich-text><text wx:else class="about-link" data-href="{{run.href}}" bindtap="openMarkdownLink">{{run.text}}</text></block></view>
+    </block>
+  </view>
+
+  <view class="about-foot" wx:if="{{!loading && !error}}">学生共建 · 非南开大学官方平台</view>
+</view>

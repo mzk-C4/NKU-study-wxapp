@@ -1,0 +1,10 @@
+.history-name { font-weight: 700; font-size: 28rpx; color: #2A232E; }
+.micro { font-size: 22rpx; color: #9CA3AF; margin-top: 6rpx; }
+.record-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16rpx; padding: 22rpx 26rpx; margin-bottom: 16rpx; }
+.record-main { flex: 1; min-width: 0; }
+.record-body { font-size: 26rpx; color: #4B4550; line-height: 1.6; margin-top: 10rpx; }
+.empty-record { text-align: center; color: #9CA3AF; padding: 60rpx 0; }
+.status { flex-shrink: 0; font-size: 22rpx; font-weight: 700; padding: 4rpx 14rpx; border-radius: 999rpx; border: 1rpx solid #DED5E2; color: #6F6972; }
+.status--approved { color: #16a34a; border-color: #bbf7d0; }
+.status--pending, .status--needs_changes { color: #a16207; border-color: #fde68a; }
+.status--rejected, .status--hidden { color: #dc2626; border-color: #fecaca; }

@@ -1,0 +1,10 @@
+<view class="page">
+  <view class="card empty-record" wx:if="{{!loading && !error && !favorites.length}}">登录后收藏的课程会显示在这里</view>
+  <view class="card record-row" wx:for="{{favorites}}" wx:key="course_id" data-id="{{item.course_id}}" bindtap="openFavorite">
+    <view class="record-main">
+      <view class="history-name">{{item.name}}</view>
+      <view class="micro">{{item.group || '分类待补充'}} · {{item.term || '学期待补充'}} · {{item.resource_count}} 份资料{{item.favorited_date ? ' · 收藏于 ' + item.favorited_date : ''}}</view>
+    </view>
+    <text>›</text>
+  </view>
+</view>

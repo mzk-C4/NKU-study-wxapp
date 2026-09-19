@@ -1,6 +1,6 @@
 const { reportVisit } = require('../../utils/visit-report')
 const theme = require('../../utils/theme')
-const { listFeedback, submitFeedback } = require('../../utils/feedback-api')
+const feedbackApi = require('../../utils/feedback-api')
 const { publicApi } = require('../../services/public-api')
 
 // 后端存 UTC ISO（带 Z）：转成北京时间（UTC+8）并只保留年月日
@@ -16,8 +16,8 @@ function beijingDateLabel(value) {
 
 Page({
   data: {
-    loading: true, error: '', submitting: false,
-    feedbacks: [], visibleFeedbacks: [], searchKeyword: '', title: '', content: '', contact: '', mine: false,
+    loading: true, error: '', submitting: false, loggedIn: false,
+    feedbacks: [], visibleFeedbacks: [], myFeedbacks: [], searchKeyword: '', title: '', content: '', contact: '',
     type: 'bug', typeOptions: [
       { value: 'bug', label: 'Bug' },
       { value: 'feature', label: '功能改进' },
@@ -34,7 +34,6 @@ Page({
     const prefillTitle = decodeURIComponent(String(options.prefill_title || '')).slice(0, 120)
     const prefillContent = decodeURIComponent(String(options.prefill_content || '')).slice(0, 2000)
     this.setData({
-      mine: options.mine === '1',
       ...(prefillTitle ? { title: prefillTitle, type: 'content' } : {}),
       ...(prefillContent ? { content: prefillContent } : {})
     })
@@ -46,19 +45,24 @@ Page({
   async loadFeedback() {
     this.setData({ loading: true, error: '' })
     try {
-      const data = this.data.mine
-        ? await publicApi.getMyFeedback({ page: 1, page_size: 100 })
-        : await listFeedback()
-      const items = ((data || {}).items || []).map(item => ({
+      // 已登录时并行拉公开反馈与本人反馈；未登录只拉公开
+      const tasks = [feedbackApi.listFeedback()]
+      const loggedIn = Boolean(require('../../utils/auth-session').readSession())
+      if (loggedIn) tasks.push(publicApi.getMyFeedback({ page: 1, page_size: 100 }).catch(() => ({ items: [] })))
+      const [publicResult, myResult] = await Promise.all(tasks)
+      const present = item => ({
+        ...item,
         ...item,
         reply: String(item.reply || ''),
         repliedAt: item.repliedAt || '',
         createdAtLabel: beijingDateLabel(item.createdAt),
-        repliedAtLabel: beijingDateLabel(item.repliedAt), 
+        repliedAtLabel: beijingDateLabel(item.repliedAt),
         statusLabel: { open: '待处理', completed: '已完成', rejected: '不予完成', parked: '搁置' }[item.status] || item.status,
         typeLabel: { bug: 'Bug', feature: '功能改进', content: '内容问题' }[item.type] || item.type || '反馈'
-      }))
-      this.setData({ feedbacks: items, loading: false })
+      })
+      const feedbacks = ((publicResult || {}).items || []).map(present)
+      const myFeedbacks = loggedIn ? ((myResult || {}).items || []).map(present) : []
+      this.setData({ feedbacks, myFeedbacks, loggedIn, loading: false })
       this.applyFilters()
     } catch (error) { this.setData({ loading: false, error: error.message || '加载失败' }) }
   },
@@ -87,7 +91,7 @@ Page({
     if (submitting) return
     this.setData({ submitting: true })
     try {
-      const res = await submitFeedback({ title: title.trim(), content: content.trim(), type, contact: contact.trim() })
+      const res = await feedbackApi.submitFeedback({ title: title.trim(), content: content.trim(), type, contact: contact.trim() })
       if (res.statusCode >= 400) throw new Error(res.data?.error || '提交失败')
       wx.showToast({ title: '已提交', icon: 'success' })
       this.setData({ title: '', content: '', contact: '', submitting: false })
