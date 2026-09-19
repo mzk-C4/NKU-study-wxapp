@@ -13,10 +13,13 @@
     "pages/guide-category/index",
     "pages/submit-resource/index",
     "pages/write-review/index",
-    "pages/feedback-web/index",
     "pages/feedback/index",
     "pages/participate-web/index",
-    "pages/reviews-tab/index"
+    "pages/reviews-tab/index",
+    "pages/favorites/index",
+    "pages/history/index",
+    "pages/my-reviews/index",
+    "pages/about/index"
   ],
   "window": {
     "navigationBarTitleText": "NKUStudy",
@@ -39,7 +42,7 @@
       },
       {
         "pagePath": "pages/courses/index",
-        "text": "课程",
+        "text": "资料",
         "iconPath": "assets/tab/courses.png",
         "selectedIconPath": "assets/tab/courses-active.png"
       },

@@ -1,6 +1,5 @@
 const { reportVisit } = require('../../utils/visit-report')
 const theme = require('../../utils/theme')
-const navigation = require('../../utils/navigation')
 const { publicApi } = require('../../services/public-api')
 const authSession = require('../../utils/auth-session')
 const learningProfile = require('../../utils/learning-profile')
@@ -63,17 +62,9 @@ function createProfilePage(api = publicApi, sessionStore = authSession) {
       favoriteLabel: '登录后查看',
       submissionLabel: '网站投稿',
       reviewLabel: '登录后查看',
-      favoritesVisible: false,
-      reviewsVisible: false,
       editingProfile: false,
       nicknameDraft: '',
       profileSaving: false,
-      aboutVisible: false,
-      passwordModalVisible: false,
-      passwordInput1: '',
-      passwordInput2: '',
-      passwordSaving: false,
-      hasWebPassword: false,
       ...learningProfileView(learningProfile.emptyProfile()),
       editingLearningProfile: false,
       admissionYearInput: '',
@@ -207,7 +198,6 @@ function createProfilePage(api = publicApi, sessionStore = authSession) {
         reviewLabel: '登录后查看',
         favoritesVisible: false,
         reviewsVisible: false,
-        hasWebPassword: false
       })
     },
 
@@ -225,8 +215,7 @@ function createProfilePage(api = publicApi, sessionStore = authSession) {
         isLoggedIn: true,
         history,
         contentLoading: true,
-        contentError: '',
-        hasWebPassword: storedUser.has_web_password === true
+        contentError: ''
       })
       try {
         const [user, favoriteResult, reviewResult] = await Promise.all([
@@ -244,7 +233,6 @@ function createProfilePage(api = publicApi, sessionStore = authSession) {
           reviewTotal: reviewResult.total,
           favoriteLabel: `${favoriteResult.total} 门`,
           reviewLabel: `${reviewResult.total} 条`,
-          hasWebPassword: user.has_web_password === true,
           contentLoading: false
         })
       } catch (error) {
@@ -298,14 +286,18 @@ function createProfilePage(api = publicApi, sessionStore = authSession) {
       return false
     },
 
-    toggleFavorites() {
+    openFavorites() {
       if (!this.ensureLoggedIn()) return
-      this.setData({ favoritesVisible: !this.data.favoritesVisible })
+      wx.navigateTo({ url: '/pages/favorites/index' })
     },
 
-    toggleReviews() {
+    openHistoryPage() {
+      wx.navigateTo({ url: '/pages/history/index' })
+    },
+
+    openMyReviews() {
       if (!this.ensureLoggedIn()) return
-      this.setData({ reviewsVisible: !this.data.reviewsVisible })
+      wx.navigateTo({ url: '/pages/my-reviews/index' })
     },
 
     startEditProfile() {
@@ -332,37 +324,10 @@ function createProfilePage(api = publicApi, sessionStore = authSession) {
       }
     },
 
-    openHistory(event) { navigation.openCourse(event.currentTarget.dataset.id) },
-    openFavorite(event) { navigation.openCourse(event.currentTarget.dataset.id) },
     openSubmit() { wx.navigateTo({ url: '/pages/participate-web/index' }) },
-    about() { this.setData({ aboutVisible: true, passwordModalVisible: false }) },
-    closeAbout() { this.setData({ aboutVisible: false }) },
-    noop() {},
-    openMyFeedback() { wx.navigateTo({ url: '/pages/feedback/index?mine=1' }) },
     openFeedback() { wx.navigateTo({ url: '/pages/feedback/index' }) },
-    setWebPassword() {
-      this.setData({ aboutVisible: false, passwordModalVisible: true, passwordInput1: '', passwordInput2: '' })
-    },
-    closePasswordModal() {
-      this.setData({ passwordModalVisible: false })
-    },
-    inputPassword1(e) { this.setData({ passwordInput1: e.detail.value }) },
-    inputPassword2(e) { this.setData({ passwordInput2: e.detail.value }) },
-    async saveWebPassword() {
-      const pw1 = this.data.passwordInput1
-      const pw2 = this.data.passwordInput2
-      if (pw1.length < 8) { wx.showToast({ title: '密码至少 8 位', icon: 'none' }); return }
-      if (pw1 !== pw2) { wx.showToast({ title: '两次密码不一致', icon: 'none' }); return }
-      this.setData({ passwordSaving: true })
-      try {
-        await api.setWebPassword(pw1)
-        wx.showToast({ title: '密码已设置', icon: 'success' })
-        this.setData({ passwordModalVisible: false, passwordSaving: false, hasWebPassword: true })
-      } catch (error) {
-        wx.showToast({ title: error.message || '设置失败', icon: 'none' })
-        this.setData({ passwordSaving: false })
-      }
-    },
+    openAbout() { wx.navigateTo({ url: '/pages/about/index' }) },
+    noop() {},
     confirmDeleteAccount() {
       const that = this
       wx.showModal({

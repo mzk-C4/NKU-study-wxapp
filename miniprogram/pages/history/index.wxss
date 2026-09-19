@@ -1,0 +1,7 @@
+.history-toolbar { display: flex; justify-content: space-between; align-items: center; padding: 0 4rpx 16rpx; }
+.history-clear { color: #dc2626; font-size: 26rpx; font-weight: 600; padding: 6rpx 16rpx; }
+.history-name { font-weight: 700; font-size: 28rpx; color: #2A232E; }
+.micro { font-size: 22rpx; color: #9CA3AF; margin-top: 6rpx; }
+.record-row { display: flex; align-items: center; justify-content: space-between; gap: 16rpx; padding: 22rpx 26rpx; margin-bottom: 16rpx; color: #9CA3AF; }
+.record-main { flex: 1; min-width: 0; }
+.empty-record { text-align: center; color: #9CA3AF; padding: 60rpx 0; }

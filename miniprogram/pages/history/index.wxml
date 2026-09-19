@@ -1,0 +1,14 @@
+<view class="page">
+  <view class="history-toolbar" wx:if="{{history.length}}">
+    <text class="micro">最近浏览保存在本机，最多 20 条</text>
+    <view class="history-clear" bindtap="clearHistory">清空</view>
+  </view>
+  <view class="card empty-record" wx:if="{{!history.length}}">还没有浏览记录，去资料页看看吧</view>
+  <view class="card record-row" wx:for="{{history}}" wx:key="id" data-id="{{item.id}}" bindtap="openHistory">
+    <view class="record-main">
+      <view class="history-name">{{item.name}}</view>
+      <view class="micro">{{item.group || '分类待补充'}} · {{item.term || '学期待补充'}}</view>
+    </view>
+    <text>›</text>
+  </view>
+</view>

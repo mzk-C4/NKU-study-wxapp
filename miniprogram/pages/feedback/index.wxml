@@ -12,6 +12,26 @@
     <button class="button button--primary" loading="{{submitting}}" disabled="{{submitting}}" bindtap="submit">提交反馈</button>
   </view>
 
+  <view class="feedback-mine-head" wx:if="{{loggedIn}}">我的反馈</view>
+  <view class="card" wx:if="{{loggedIn}}" wx:for="{{myFeedbacks}}" wx:key="id" style="margin-bottom: 16rpx;">
+    <view style="display:flex;justify-content:space-between;align-items:center;">
+      <view style="display:flex;align-items:center;gap:10rpx;min-width:0;">
+        <text class="micro" style="flex-shrink:0;padding:2rpx 12rpx;border:1rpx solid #DED5E2;border-radius:999rpx;color:#6F6972;">{{item.typeLabel}}</text>
+        <text style="font-weight:700;font-size:28rpx;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{item.title}}</text>
+      </view>
+      <text class="micro" style="flex-shrink:0;color:{{item.status === 'completed' ? '#16a34a' : item.status === 'rejected' ? '#dc2626' : '#6F6972'}};">{{item.statusLabel}}</text>
+    </view>
+    <view class="micro" style="margin-top: 8rpx;">{{item.content}}</view>
+    <view wx:if="{{item.reply}}" style="margin-top: 12rpx;padding: 14rpx;border-radius: 12rpx;background: rgba(75, 31, 111, 0.06);">
+      <view class="micro" style="color: #4B1F6F;font-weight: 700;">管理员回复</view>
+      <view class="micro" style="margin-top: 6rpx;">{{item.reply}}</view>
+      <view wx:if="{{item.repliedAt}}" class="micro" style="margin-top: 4rpx;color: #9CA3AF;">{{item.repliedAt}}</view>
+    </view>
+    <view class="micro" style="margin-top: 8rpx;color: #9CA3AF;">{{item.createdAtLabel}}</view>
+  </view>
+  <view class="card" wx:if="{{loggedIn && !loading && !myFeedbacks.length}}" style="text-align:center;color:#9CA3AF;padding: 28rpx 0;">你还没有提交过反馈</view>
+
+  <view class="feedback-mine-head">其他反馈</view>
   <view class="card" style="padding: 20rpx 24rpx;">
     <view style="display:flex;gap:14rpx;align-items:center;">
       <input class="input" style="flex:1;margin-bottom:0;" placeholder="搜索反馈标题、内容或回复" value="{{searchKeyword}}" bindinput="inputSearchKeyword" />

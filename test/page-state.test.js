@@ -83,7 +83,6 @@ test('profile restores a valid session and renders server favorites and review s
   assert.equal(page.data.isLoggedIn, true)
   assert.equal(page.data.userInitial, '小')
   assert.equal(page.data.favoriteTotal, 1)
-  assert.equal(page.data.hasWebPassword, true)
   assert.equal(page.data.reviews[0].status_label, '审核中')
   assert.deepEqual(page.data.history, [{ id: 'history-1' }])
   global.wx = originalWx

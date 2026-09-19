@@ -272,3 +272,16 @@ test('production profile stays formal even when the caller is running in develop
   assert.equal(groups.available, true)
   assert.deepEqual(calls.slice(1).map(call => call.path), ['/review-groups', '/review-groups/group'])
 })
+
+test('getAbout maps the about endpoint payload', async () => {
+  const calls = []
+  const { createPublicApi } = require('../miniprogram/services/public-api')
+  const api = createPublicApi({
+    get: async (path) => { calls.push(path); return { title: '关于 NKUStudy', content: '# 简介', updated: '2026-09-19' } }
+  })
+  const data = await api.getAbout()
+  assert.deepEqual(calls, ['/about'])
+  assert.equal(data.title, '关于 NKUStudy')
+  assert.equal(data.content, '# 简介')
+  assert.equal(data.updated, '2026-09-19')
+})
