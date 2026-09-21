@@ -46,6 +46,8 @@ Page({
     }
   },
 
+  noop() {},
+
   exit() {
     wx.navigateBack({ fail: () => wx.switchTab({ url: '/pages/profile/index' }) })
   },

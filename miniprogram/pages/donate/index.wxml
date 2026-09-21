@@ -16,7 +16,7 @@
   </view>
 
   <view class="donate-mask" wx:if="{{pickerVisible}}" bindtap="closePicker">
-    <view class="donate-sheet" catchtap="">
+    <view class="donate-sheet" catchtap="noop">
       <view class="donate-sheet-head">
         <view class="donate-sheet-title">选择捐助金额</view>
         <view class="donate-sheet-close" bindtap="closePicker">×</view>
