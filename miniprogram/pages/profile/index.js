@@ -326,6 +326,7 @@ function createProfilePage(api = publicApi, sessionStore = authSession) {
 
     openSubmit() { wx.navigateTo({ url: '/pages/participate-web/index' }) },
     openFeedback() { wx.navigateTo({ url: '/pages/feedback/index' }) },
+    openDonate() { wx.navigateTo({ url: '/pages/donate/index' }) },
     openAbout() { wx.navigateTo({ url: '/pages/about/index' }) },
     noop() {},
     confirmDeleteAccount() {

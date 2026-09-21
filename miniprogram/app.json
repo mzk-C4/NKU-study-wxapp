@@ -19,7 +19,8 @@
     "pages/favorites/index",
     "pages/history/index",
     "pages/my-reviews/index",
-    "pages/about/index"
+    "pages/about/index",
+    "pages/donate/index"
   ],
   "window": {
     "navigationBarTitleText": "NKUStudy",
