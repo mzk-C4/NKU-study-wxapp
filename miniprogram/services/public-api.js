@@ -577,6 +577,25 @@ function createPublicApi(client = request, options = {}) {
         mapReviewGroup(await client.get(`/review-groups/${encodePathSegment(group.group_key)}`, undefined, { auth: 'optional' }), true)
       )))
     },
+    async getDonate() {
+      if (isReference) return { title: '捐助支持', content: '', amounts: [5, 10, 15], pay_enabled: false }
+      const data = await client.get('/donate')
+      const raw = data && typeof data === 'object' ? data : {}
+      return {
+        title: toText(raw.title) || '捐助支持',
+        content: toText(raw.content),
+        amounts: (Array.isArray(raw.amounts) ? raw.amounts : []).map((item) => Number(item)).filter((item) => Number.isFinite(item) && item > 0),
+        pay_enabled: raw.pay_enabled === true
+      }
+    },
+    async createDonateOrder({ amount } = {}) {
+      if (isReference) {
+        const error = new Error('本地参考环境不支持支付。')
+        error.code = 'REFERENCE_MOCK_UNAVAILABLE'
+        throw error
+      }
+      return client.post('/donate/pay', { amount: Number(amount) || 0 }, { auth: 'required' })
+    },
     async getAbout() {
       if (isReference) return { title: '关于', content: '' }
       const data = await client.get('/about')

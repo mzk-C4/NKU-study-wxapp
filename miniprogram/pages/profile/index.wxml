@@ -85,6 +85,7 @@
 
     <view class="card menu section">
       <view class="menu-row" bindtap="openFeedback"><text>意见反馈</text><text>›</text></view>
+      <view class="menu-row" bindtap="openDonate"><text>捐助支持</text><text>›</text></view>
       <view class="menu-row" bindtap="openAbout"><text>关于 NKUStudy</text><text>›</text></view>
     </view>
     <view class="section" wx:if="{{isLoggedIn}}" style="margin-top:16rpx;">

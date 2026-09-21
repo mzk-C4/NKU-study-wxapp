@@ -1,0 +1,34 @@
+.donate-card { padding: 28rpx 30rpx; }
+
+.donate-heading { font-weight: 800; color: #2A232E; margin: 26rpx 0 12rpx; }
+.donate-heading--1 { font-size: 38rpx; }
+.donate-heading--2 { font-size: 33rpx; }
+.donate-heading--3 { font-size: 30rpx; }
+.donate-heading:first-child { margin-top: 0; }
+
+.donate-paragraph { font-size: 28rpx; line-height: 1.75; color: #4B4550; margin: 0 0 14rpx; }
+.donate-list-item { display: flex; gap: 12rpx; margin: 0 0 10rpx; }
+.donate-marker { flex-shrink: 0; color: #4B1F6F; font-weight: 700; font-size: 28rpx; }
+.donate-list-body { flex: 1; font-size: 28rpx; line-height: 1.7; color: #4B4550; }
+.donate-quote { border-left: 6rpx solid #4B1F6F; background: rgba(75, 31, 111, 0.05); padding: 14rpx 18rpx; border-radius: 10rpx; font-size: 27rpx; color: #6F6972; margin: 0 0 14rpx; }
+.donate-link { color: #4B1F6F; text-decoration: underline; }
+
+.donate-actions { display: flex; gap: 20rpx; padding: 8rpx 4rpx 40rpx; }
+.donate-exit { flex: 1; }
+.donate-confirm { flex: 2; }
+
+.donate-mask { position: fixed; inset: 0; background: rgba(20, 14, 26, 0.55); display: flex; align-items: flex-end; z-index: 60; }
+.donate-sheet { width: 100%; background: #FFFDF8; border-radius: 28rpx 28rpx 0 0; padding: 28rpx 30rpx calc(28rpx + env(safe-area-inset-bottom)); }
+.donate-sheet-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22rpx; }
+.donate-sheet-title { font-size: 32rpx; font-weight: 800; color: #2A232E; }
+.donate-sheet-close { font-size: 40rpx; color: #9CA3AF; padding: 4rpx 12rpx; }
+
+.donate-amount-row { display: flex; gap: 16rpx; margin-bottom: 22rpx; }
+.donate-amount-chip { flex: 1; text-align: center; padding: 20rpx 0; border: 2rpx solid #DED5E2; border-radius: 16rpx; font-size: 30rpx; font-weight: 700; color: #4B4550; }
+.donate-amount-chip--active { border-color: #4B1F6F; color: #4B1F6F; background: #F4EEF7; }
+
+.donate-custom { margin-bottom: 26rpx; }
+.donate-custom-label { display: block; font-size: 24rpx; color: #6F6972; margin-bottom: 10rpx; }
+.donate-custom-input { border: 2rpx solid #DED5E2; border-radius: 14rpx; padding: 16rpx 20rpx; font-size: 30rpx; }
+
+.donate-sheet-note { text-align: center; font-size: 22rpx; color: #9CA3AF; margin-top: 18rpx; }

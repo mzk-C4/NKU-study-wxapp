@@ -1,0 +1,35 @@
+<view class="page">
+  <state-view loading="{{loading}}" error="{{error}}" empty="{{!loading && !error && !blocks.length}}" empty-text="暂无内容" bindretry="loadDonate"></state-view>
+
+  <view class="card donate-card" wx:if="{{!loading && !error}}">
+    <block wx:for="{{blocks}}" wx:key="id" wx:for-item="block">
+      <view wx:if="{{block.type === 'heading'}}" class="donate-heading donate-heading--{{block.level}}"><block wx:for="{{block.runs}}" wx:key="id" wx:for-item="run"><rich-text wx:if="{{run.kind !== 'link'}}" nodes="{{run.html}}"></rich-text><text wx:else class="donate-link">{{run.text}}</text></block></view>
+      <view wx:elif="{{block.type === 'list-item'}}" class="donate-list-item"><text class="donate-marker">{{block.marker}}</text><view class="donate-list-body"><block wx:for="{{block.runs}}" wx:key="id" wx:for-item="run"><rich-text wx:if="{{run.kind !== 'link'}}" nodes="{{run.html}}"></rich-text><text wx:else class="donate-link">{{run.text}}</text></block></view></view>
+      <view wx:elif="{{block.type === 'blockquote'}}" class="donate-quote"><block wx:for="{{block.runs}}" wx:key="id" wx:for-item="run"><rich-text wx:if="{{run.kind !== 'link'}}" nodes="{{run.html}}"></rich-text></block></view>
+      <view wx:else class="donate-paragraph"><block wx:for="{{block.runs}}" wx:key="id" wx:for-item="run"><rich-text wx:if="{{run.kind !== 'link'}}" nodes="{{run.html}}"></rich-text><text wx:else class="donate-link">{{run.text}}</text></block></view>
+    </block>
+  </view>
+
+  <view class="donate-actions" wx:if="{{!loading && !error}}">
+    <button class="button button--quiet donate-exit" bindtap="exit">退出</button>
+    <button class="button button--primary donate-confirm" bindtap="confirmDonate">确定</button>
+  </view>
+
+  <view class="donate-mask" wx:if="{{pickerVisible}}" bindtap="closePicker">
+    <view class="donate-sheet" catchtap="">
+      <view class="donate-sheet-head">
+        <view class="donate-sheet-title">选择捐助金额</view>
+        <view class="donate-sheet-close" bindtap="closePicker">×</view>
+      </view>
+      <view class="donate-amount-row">
+        <view wx:for="{{amounts}}" wx:key="*this" class="donate-amount-chip {{selectedAmount === item ? 'donate-amount-chip--active' : ''}}" data-value="{{item}}" bindtap="chooseAmount">{{item}} 元</view>
+      </view>
+      <view class="donate-custom">
+        <text class="donate-custom-label">自定义金额（元）</text>
+        <input class="donate-custom-input" type="digit" value="{{customAmount}}" placeholder="输入金额" bindinput="inputCustomAmount" />
+      </view>
+      <button class="button button--primary" loading="{{paying}}" disabled="{{paying}}" bindtap="pay">捐助 {{selectedAmount > 0 ? selectedAmount + ' 元' : (customAmount ? customAmount + ' 元' : '')}}</button>
+      <view class="donate-sheet-note">所有捐助均为自愿行为，感谢你对 NKUStudy 的支持</view>
+    </view>
+  </view>
+</view>

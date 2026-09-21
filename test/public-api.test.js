@@ -285,3 +285,27 @@ test('getAbout maps the about endpoint payload', async () => {
   assert.equal(data.content, '# 简介')
   assert.equal(data.updated, '2026-09-19')
 })
+
+test('getDonate maps donate payload and createDonateOrder posts with auth', async () => {
+  const calls = []
+  const { createPublicApi } = require('../miniprogram/services/public-api')
+  const api = createPublicApi({
+    get: async (path) => {
+      calls.push(['get', path])
+      return { title: '捐助支持', content: '## 运营费用', amounts: [5, 10, 15], pay_enabled: false }
+    },
+    post: async (path, data, options) => {
+      calls.push(['post', path, data, options])
+      return { timeStamp: '1', nonceStr: 'n', package: 'prepay_id=x', signType: 'RSA', paySign: 's' }
+    }
+  })
+  const data = await api.getDonate()
+  assert.deepEqual(calls[0], ['get', '/donate'])
+  assert.equal(data.title, '捐助支持')
+  assert.deepEqual(data.amounts, [5, 10, 15])
+  assert.equal(data.pay_enabled, false)
+
+  const order = await api.createDonateOrder({ amount: 5 })
+  assert.deepEqual(calls[1], ['post', '/donate/pay', { amount: 5 }, { auth: 'required' }])
+  assert.equal(order.package, 'prepay_id=x')
+})
