@@ -21,8 +21,12 @@ Page({
     type: 'bug', typeOptions: [
       { value: 'bug', label: 'Bug' },
       { value: 'feature', label: '功能改进' },
-      { value: 'content', label: '内容问题' }
+      { value: 'content', label: '内容问题' },
+      { value: 'report', label: '违法有害信息举报' },
+      { value: 'complaint', label: '内容投诉' }
     ],
+    reportUrl: '',
+    reportTarget: '',
     filterStatus: 'all', statusOptions: [
       { value: 'all', label: '全部' },
       { value: 'open', label: '待处理' },
@@ -58,7 +62,7 @@ Page({
         createdAtLabel: beijingDateLabel(item.createdAt),
         repliedAtLabel: beijingDateLabel(item.repliedAt),
         statusLabel: { open: '待处理', completed: '已完成', rejected: '不予完成', parked: '搁置' }[item.status] || item.status,
-        typeLabel: { bug: 'Bug', feature: '功能改进', content: '内容问题' }[item.type] || item.type || '反馈'
+        typeLabel: { bug: 'Bug', feature: '功能改进', content: '内容问题', report: '违法举报', complaint: '内容投诉' }[item.type] || item.type || '反馈'
       })
       const feedbacks = ((publicResult || {}).items || []).map(present)
       const myFeedbacks = loggedIn ? ((myResult || {}).items || []).map(present) : []
@@ -79,6 +83,8 @@ Page({
     this.setData({ visibleFeedbacks: list })
   },
   inputTitle(e) { this.setData({ title: e.detail.value }) },
+  inputReportUrl(e) { this.setData({ reportUrl: e.detail.value }) },
+  inputReportTarget(e) { this.setData({ reportTarget: e.detail.value }) },
   inputContent(e) { this.setData({ content: e.detail.value }) },
   inputContact(e) { this.setData({ contact: e.detail.value }) },
   chooseType(e) { this.setData({ type: e.currentTarget.dataset.value }) },
@@ -91,7 +97,8 @@ Page({
     if (submitting) return
     this.setData({ submitting: true })
     try {
-      const res = await feedbackApi.submitFeedback({ title: title.trim(), content: content.trim(), type, contact: contact.trim() })
+      const extra = (type === 'report' || type === 'complaint') ? { reportUrl: this.data.reportUrl.trim(), reportTarget: this.data.reportTarget.trim() } : {}
+      const res = await feedbackApi.submitFeedback({ title: title.trim(), content: content.trim(), type, contact: contact.trim(), ...extra })
       if (res.statusCode >= 400) throw new Error(res.data?.error || '提交失败')
       wx.showToast({ title: '已提交', icon: 'success' })
       this.setData({ title: '', content: '', contact: '', submitting: false })

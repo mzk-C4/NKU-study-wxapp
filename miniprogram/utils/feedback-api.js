@@ -23,8 +23,8 @@ async function listFeedback() {
   return response.data || {}
 }
 
-function submitFeedback({ title, content, type = 'bug', contact = '', resourceRef = '' }) {
-  return request('/submit', { method: 'POST', data: { title, content, type, contact, resourceRef } })
+function submitFeedback({ title, content, type = 'bug', contact = '', resourceRef = '', reportUrl = '', reportTarget = '' }) {
+  return request('/submit', { method: 'POST', data: { title, content, type, contact, resourceRef, reportUrl, reportTarget } })
 }
 
 module.exports = { listFeedback, submitFeedback, BASE }

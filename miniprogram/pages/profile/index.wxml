@@ -83,6 +83,15 @@
       <view class="menu-row" bindtap="openSubmit"><text>资料投稿</text><text class="muted">{{submissionLabel}} ›</text></view>
     </view>
 
+    <view class="card menu section" wx:if="{{isLoggedIn}}">
+      <view class="menu-row">
+        <text>手机号验证</text>
+        <text wx:if="{{phoneVerified}}" class="muted">已验证 ›</text>
+        <button wx:else class="phone-verify-button" open-type="getPhoneNumber" bindgetphonenumber="onGetPhoneNumber">去验证</button>
+      </view>
+      <view class="menu-row" style="padding-top:0;"><text class="muted" style="font-size:0.8em;">发布评价与反馈前需完成手机号验证（安全合规要求）</text></view>
+    </view>
+
     <view class="card menu section">
       <view class="menu-row" bindtap="openFeedback"><text>意见反馈</text><text>›</text></view>
       <view class="menu-row" bindtap="openDonate"><text>捐助支持</text><text>›</text></view>

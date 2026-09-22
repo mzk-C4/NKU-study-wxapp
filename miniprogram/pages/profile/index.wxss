@@ -85,3 +85,5 @@
 .learning-secondary-button { color: #4B4550; background: #F1EDF3; }
 .learning-clear-button { color: #B42318; background: #FFF2F0; border: 1rpx solid #E7B7B1; }
 .learning-button--pressed { opacity: .74; }
+
+.phone-verify-button { margin: 0; padding: 6rpx 24rpx; font-size: 0.8em; line-height: 1.6; background: #4B1F6F; color: #fff; border-radius: 999rpx; }

@@ -577,6 +577,14 @@ function createPublicApi(client = request, options = {}) {
         mapReviewGroup(await client.get(`/review-groups/${encodePathSegment(group.group_key)}`, undefined, { auth: 'optional' }), true)
       )))
     },
+    async verifyPhone(code) {
+      if (isReference) {
+        const error = new Error('本地参考环境不支持手机号验证。')
+        error.code = 'REFERENCE_MOCK_UNAVAILABLE'
+        throw error
+      }
+      return client.post('/auth/phone-verify', { code: String(code || '') }, { auth: 'required' })
+    },
     async getDonate() {
       if (isReference) return { title: '捐助支持', content: '', amounts: [5, 10, 15], pay_enabled: false }
       const data = await client.get('/donate')
