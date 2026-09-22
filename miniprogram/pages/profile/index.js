@@ -52,6 +52,7 @@ function createProfilePage(api = publicApi, sessionStore = authSession) {
       userInitial: 'N',
       isLoggedIn: false,
       history: [],
+      phoneVerified: false,
       favorites: [],
       reviews: [],
       favoriteTotal: 0,
@@ -187,7 +188,7 @@ function createProfilePage(api = publicApi, sessionStore = authSession) {
         user: null,
         userInitial: 'N',
         isLoggedIn: false,
-        history,
+        history, phoneVerified: false,
         favorites: [],
         reviews: [],
         favoriteTotal: 0,
@@ -231,6 +232,7 @@ function createProfilePage(api = publicApi, sessionStore = authSession) {
           reviews: reviewResult.items.map(presentReview),
           favoriteTotal: favoriteResult.total,
           reviewTotal: reviewResult.total,
+          phoneVerified: user.phone_verified === true,
           favoriteLabel: `${favoriteResult.total} 门`,
           reviewLabel: `${reviewResult.total} 条`,
           contentLoading: false
@@ -325,6 +327,21 @@ function createProfilePage(api = publicApi, sessionStore = authSession) {
     },
 
     openSubmit() { wx.navigateTo({ url: '/pages/participate-web/index' }) },
+    async onGetPhoneNumber(event) {
+      const code = event.detail && event.detail.code
+      if (!code) {
+        wx.showToast({ title: '未获取到授权，请重试', icon: 'none' })
+        return
+      }
+      try {
+        const result = await api.verifyPhone(code)
+        this.setData({ phoneVerified: true })
+        wx.showToast({ title: `已验证 ${result.phone_masked || ''}`, icon: 'none' })
+      } catch (error) {
+        wx.showToast({ title: error.message || '验证失败，请重试', icon: 'none' })
+      }
+    },
+
     openFeedback() { wx.navigateTo({ url: '/pages/feedback/index' }) },
     openDonate() { wx.navigateTo({ url: '/pages/donate/index' }) },
     openAbout() { wx.navigateTo({ url: '/pages/about/index' }) },
