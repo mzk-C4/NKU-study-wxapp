@@ -32,3 +32,11 @@
 .donate-custom-input { border: 2rpx solid #DED5E2; border-radius: 14rpx; padding: 16rpx 20rpx; font-size: 30rpx; }
 
 .donate-sheet-note { text-align: center; font-size: 22rpx; color: #9CA3AF; margin-top: 18rpx; }
+
+.donate-records { margin-top: 20rpx; padding: 24rpx 26rpx; }
+.donate-records-title { font-size: 30rpx; font-weight: 800; color: #2A232E; margin-bottom: 16rpx; }
+.donate-records-empty { font-size: 24rpx; color: #9CA3AF; }
+.donate-records-row { display: flex; gap: 12rpx; padding: 12rpx 8rpx; border-bottom: 1rpx solid #EFE9F2; font-size: 24rpx; color: #4B4550; }
+.donate-records-row--head { font-weight: 700; color: #6F6972; border-bottom: 2rpx solid #DED5E2; }
+.donate-records-row text { flex: 1; }
+.donate-records-row text:first-child { flex: 0 0 170rpx; }

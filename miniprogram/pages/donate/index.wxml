@@ -10,6 +10,13 @@
     </block>
   </view>
 
+  <view class="card donate-records" wx:if="{{!loading && !error}}">
+    <view class="donate-records-title">捐赠记录与资金去向</view>
+    <view class="donate-records-empty" wx:if="{{!records.length}}">暂无捐赠记录，成为第一位支持者吧。</view>
+    <view wx:else class="donate-records-row donate-records-row--head"><text>时间</text><text>昵称</text><text>去向</text></view>
+    <view wx:for="{{records}}" wx:key="index" class="donate-records-row"><text>{{item.date}}</text><text>{{item.nickname}}</text><text>{{item.usage}}</text></view>
+  </view>
+
   <view class="donate-actions" wx:if="{{!loading && !error}}">
     <button class="button button--quiet donate-exit" bindtap="exit">退出</button>
     <button class="button button--primary donate-confirm" bindtap="confirmDonate">确定</button>
@@ -27,6 +34,14 @@
       <view class="donate-custom">
         <text class="donate-custom-label">自定义金额（元）</text>
         <input class="donate-custom-input" type="digit" value="{{customAmount}}" placeholder="输入金额" bindinput="inputCustomAmount" />
+      </view>
+      <view class="donate-custom">
+        <text class="donate-custom-label">昵称（选填，记录中展示，留空显示"好心人"）</text>
+        <input class="donate-custom-input" type="nickname" maxlength="32" value="{{nickname}}" placeholder="你的昵称" bindinput="inputNickname" />
+      </view>
+      <view class="donate-custom">
+        <text class="donate-custom-label">备注（选填，仅管理员可见）</text>
+        <input class="donate-custom-input" maxlength="200" value="{{remark}}" placeholder="想说的话（选填）" bindinput="inputRemark" />
       </view>
       <button class="button button--primary" loading="{{paying}}" disabled="{{paying}}" bindtap="pay">捐助 {{selectedAmount > 0 ? selectedAmount + ' 元' : (customAmount ? customAmount + ' 元' : '')}}</button>
       <view class="donate-sheet-note">所有捐助均为自愿行为，感谢你对 NKUStudy 的支持</view>
