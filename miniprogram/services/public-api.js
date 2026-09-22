@@ -585,16 +585,26 @@ function createPublicApi(client = request, options = {}) {
         title: toText(raw.title) || '捐助支持',
         content: toText(raw.content),
         amounts: (Array.isArray(raw.amounts) ? raw.amounts : []).map((item) => Number(item)).filter((item) => Number.isFinite(item) && item > 0),
+        records: (Array.isArray(raw.records) ? raw.records : []).map((row) => ({
+          date: toText(row && row.date).slice(0, 10),
+          nickname: toText(row && row.nickname) || '好心人',
+          usage: toText(row && row.usage) || '待定'
+        })),
         pay_enabled: raw.pay_enabled === true
       }
     },
-    async createDonateOrder({ amount } = {}) {
+    async createDonateOrder({ amount, nickname, remark } = {}) {
       if (isReference) {
         const error = new Error('本地参考环境不支持支付。')
         error.code = 'REFERENCE_MOCK_UNAVAILABLE'
         throw error
       }
-      return client.post('/donate/pay', { amount: Number(amount) || 0 }, { auth: 'required' })
+      const payload = { amount: Number(amount) || 0 }
+      const nick = String(nickname || '').trim().slice(0, 32)
+      const note = String(remark || '').trim().slice(0, 200)
+      if (nick) payload.nickname = nick
+      if (note) payload.remark = note
+      return client.post('/donate/pay', payload, { auth: 'required' })
     },
     async getAbout() {
       if (isReference) return { title: '关于', content: '' }

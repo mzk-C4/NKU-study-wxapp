@@ -13,7 +13,10 @@ Page({
     title: '捐助支持',
     blocks: [],
     amounts: [],
+    records: [],
     payEnabled: false,
+    nickname: '',
+    remark: '',
     pickerVisible: false,
     selectedAmount: 0,
     customAmount: '',
@@ -38,6 +41,7 @@ Page({
         title: data.title || '捐助支持',
         blocks: parseMarkdown(String(data.content || '')),
         amounts: Array.isArray(data.amounts) ? data.amounts : [],
+        records: Array.isArray(data.records) ? data.records.slice().reverse() : [],
         payEnabled: data.pay_enabled === true
       })
       wx.setNavigationBarTitle({ title: data.title || '捐助支持' })
@@ -66,6 +70,14 @@ Page({
 
   chooseAmount(event) {
     this.setData({ selectedAmount: Number(event.currentTarget.dataset.value) || 0, customAmount: '' })
+  },
+
+  inputNickname(event) {
+    this.setData({ nickname: String(event.detail.value || '').slice(0, 32) })
+  },
+
+  inputRemark(event) {
+    this.setData({ remark: String(event.detail.value || '').slice(0, 200) })
   },
 
   inputCustomAmount(event) {
@@ -101,7 +113,7 @@ Page({
     }
     this.setData({ paying: true })
     try {
-      const order = await publicApi.createDonateOrder({ amount })
+      const order = await publicApi.createDonateOrder({ amount, nickname: this.data.nickname, remark: this.data.remark })
       await new Promise((resolve, reject) => {
         wx.requestPayment({
           timeStamp: order.timeStamp,
