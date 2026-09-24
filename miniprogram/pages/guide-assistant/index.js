@@ -231,6 +231,7 @@ Page({
     showRecoveryActions: false,
     learningProfileLabel: learningProfile.formatLabel(learningProfile.emptyProfile()),
     exampleQuestions: NEW_TOPIC_EXAMPLES,
+    followUpQuestions: ['请列出具体步骤和需要准备的材料', '哪些要求会因年级、专业不同而变化？', '哪些信息确定，哪些还需要向学校确认？'],
     generatingDots: GENERATING_DOTS,
     newTopicMode: false,
     history: [],
@@ -262,7 +263,7 @@ Page({
       ? requestedPreview
       : ''
     const previewMode = Boolean(previewState)
-    const storedConversation = normalizeHistory(stored.history).find(item => (
+    const storedConversation = !optionQuestion && normalizeHistory(stored.history).find(item => (
       item.question === boundedQuestion(stored.lastQuestion) ||
       item.latestQuestion === boundedQuestion(stored.lastQuestion)
     ))
@@ -275,10 +276,10 @@ Page({
       : previewState === 'refusal'
         ? optionQuestion || REFUSAL_PREVIEW_QUESTION
         : ''
-    const lastQuestion = previewState === 'new-topic'
+    const lastQuestion = previewState === 'new-topic' || (optionQuestion && !previewMode)
       ? ''
       : optionQuestion || visualQuestion || (previewState === 'answer' ? ANSWER_PREVIEW_QUESTION : storedExchange ? storedExchange.question : stored.lastQuestion || '')
-    const draft = optionQuestion || previewMode ? '' : stored.draft || ''
+    const draft = optionQuestion && !previewMode ? optionQuestion : previewMode ? '' : stored.draft || ''
     const history = ['answer', 'network-error'].includes(previewState) && lastQuestion
       ? addHistoryEntry(stored.history, lastQuestion, previewState)
       : normalizeHistory(stored.history)
@@ -397,7 +398,7 @@ Page({
   },
 
   chooseExampleQuestion(event) {
-    if (this._isUnloaded || ['generating', 'refusal'].includes(this.data.previewState)) return
+    if (this._isUnloaded || this.data.requestPending || this.data.roundLimitReached || this.data.previewState === 'generating') return
     const draft = boundedQuestion(event && event.currentTarget && event.currentTarget.dataset.question)
     if (!draft) return
     this.setData({ draft, canSend: true, focusInput: true })
@@ -415,8 +416,8 @@ Page({
   },
 
   async sendQuestion() {
-    if (this._isUnloaded || this.data.requestPending || this.data.roundLimitReached) return false
-    if (['generating', 'refusal'].includes(this.data.previewState) && !this.data.previewMode) return false
+    if (this._isUnloaded || this._checkingNetwork || this.data.requestPending || this.data.roundLimitReached || this.data.assistantState === 'rate-limited') return false
+    if (this.data.previewState === 'generating' && !this.data.previewMode) return false
     const question = boundedQuestion(this.data.draft)
     if (!question) {
       this.setData({ inputError: '请输入问题后再发送。' })
@@ -444,8 +445,13 @@ Page({
       return false
     }
     if (this.data.statusMessage) this.setData({ statusMessage: '' })
-    const networkType = await getNetworkType()
-    if (this._isUnloaded) return false
+    this._checkingNetwork = true
+    const currentController = this._assistantController
+    let networkType
+    try { networkType = await getNetworkType() } finally {
+      if (currentController === this._assistantController) this._checkingNetwork = false
+    }
+    if (this._isUnloaded || currentController !== this._assistantController) return false
     const connected = hasConnection(networkType)
     if (!connected) {
       const conversationQuestion = this.data.activeConversationQuestion || question
@@ -500,12 +506,13 @@ Page({
       previousTurns: this.presentPreviousTurns(this.data.messages, true)
     })
     if (!this._assistantController) this._assistantController = assistantRuntime.createController()
-    const result = await this._assistantController.submit({
+    const submittingController = this._assistantController
+    const result = await submittingController.submit({
       question,
       messages: this.data.messages,
       profile: learningProfile.read()
     })
-    if (this._isUnloaded || !result || result.stale) return false
+    if (this._isUnloaded || submittingController !== this._assistantController || !result || result.stale) return false
     this.setData({ requestPending: false })
     if (result.accepted && (result.state === 'answer' || result.state === 'refusal')) {
       const response = result.response || {}
@@ -790,6 +797,7 @@ Page({
     const history = normalizeHistory(this.data.history)
     const item = history.find(entry => entry.question === question)
     if (!item) return
+    this.resetAssistantRequest()
     const answerMode = item.state === 'answer'
     const exchange = lastCompletedExchange(item.messages)
     const rounds = completedRounds(item.messages)
@@ -1052,8 +1060,16 @@ Page({
 
   stopPropagation() {},
 
+  resetAssistantRequest() {
+    if (this._assistantController && typeof this._assistantController.cancel === 'function') this._assistantController.cancel()
+    this._assistantController = assistantRuntime.createController()
+    this._checkingNetwork = false
+    this.setData({ requestPending: false })
+  },
+
   startNewTopic() {
     if (this._isUnloaded) return
+    this.resetAssistantRequest()
     const previousState = this.data.previewState === 'refusal'
       ? 'refusal'
       : this.data.answerMode ? 'answer' : 'network-error'
@@ -1323,7 +1339,7 @@ Page({
   },
 
   openSearch() {
-    navigation.openSearch(
+    navigation.openGuideSearch(
       boundedQuestion(this.data.editingQuestionValue) || this.data.lastQuestion || this.data.draft || ''
     )
   },

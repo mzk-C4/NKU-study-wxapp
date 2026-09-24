@@ -1,5 +1,6 @@
 const MAX_ROUNDS = 10
 const MAX_QUESTION_LENGTH = 1000
+const MAX_ANSWER_LENGTH = 12000
 const REFUSAL_REASONS = new Set(['INSUFFICIENT_EVIDENCE', 'SOURCE_CONFLICT', 'OUT_OF_SCOPE'])
 
 function normalizeText(value, maximum = MAX_QUESTION_LENGTH) {
@@ -22,14 +23,16 @@ function normalizeCitation(value) {
     publisher: normalizeText(raw.publisher, 200),
     file_type: normalizeText(raw.file_type, 12).toLowerCase(),
     file_url: normalizeText(raw.file_url, 2000),
-    official_page_url: normalizeText(raw.official_page_url, 2000)
+    official_page_url: normalizeText(raw.official_page_url, 2000),
+    location_label: normalizeText(raw.location_label, 300),
+    published_at: normalizeText(raw.published_at, 80)
   }
 }
 
 function normalizeAssistantMessage(value) {
   const raw = value && typeof value === 'object' ? value : {}
   const role = raw.role === 'assistant' ? 'assistant' : raw.role === 'user' ? 'user' : ''
-  const content = normalizeText(raw.content)
+  const content = normalizeText(raw.content, role === 'assistant' ? MAX_ANSWER_LENGTH : MAX_QUESTION_LENGTH)
   if (!role || !content) return null
   if (role === 'user') return { role, content }
   const reason = normalizeText(raw.reason, 80)
@@ -60,7 +63,21 @@ function completedRounds(messages) {
 }
 
 function buildHistory(messages) {
-  return normalizeCompletedMessages(messages).map(message => ({ role: message.role, content: message.content }))
+  return normalizeCompletedMessages(messages).slice(-18).map(message => {
+    const source = message.content
+    if (message.role === 'user') return { role: message.role, content: source }
+    // Preserve the conclusion AND the ending caveats within the existing 1000-character API budget.
+    const context = [
+      message.refused ? '上轮资料不足，用户可继续补充条件。' : '',
+      message.applicable_scope ? '适用范围：' + message.applicable_scope : ''
+    ].filter(Boolean).join('\n').slice(0, 180)
+    const budget = MAX_QUESTION_LENGTH - Array.from(context).length - (context ? 1 : 0)
+    const chars = Array.from(source)
+    const body = chars.length > budget
+      ? chars.slice(0, budget - 260).join('') + '\n[…中段省略…]\n' + chars.slice(-245).join('')
+      : source
+    return { role: message.role, content: normalizeText([context, body].filter(Boolean).join('\n')) }
+  })
 }
 
 function appendCompletedRound(messages, question, response) {
@@ -68,7 +85,7 @@ function appendCompletedRound(messages, question, response) {
   if (history.length >= MAX_ROUNDS * 2) return history
   const normalizedQuestion = normalizeText(question)
   const raw = response && typeof response === 'object' ? response : {}
-  const answer = normalizeText(raw.answer)
+  const answer = normalizeText(raw.answer, MAX_ANSWER_LENGTH)
   if (!normalizedQuestion || !answer) return history
   const reason = normalizeText(raw.reason, 80)
   return [
@@ -134,6 +151,9 @@ function createGuideAssistantController(options = {}) {
           profile: input.profile
         })
         if (destroyed || requestId !== currentRequestId) return { accepted: true, stale: true }
+        if (!response || !normalizeText(response.answer, MAX_ANSWER_LENGTH)) {
+          return { accepted: true, stale: false, state: 'service-error' }
+        }
         const nextMessages = appendCompletedRound(messages, question, response)
         return {
           accepted: true,

@@ -1,2 +1,3 @@
 const { createCatalogPage } = require('../../features/learning-compass/catalog-page')
-Page(createCatalogPage('category'))
+Page(createCatalogPage('documents'))
+

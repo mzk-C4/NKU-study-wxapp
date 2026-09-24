@@ -1,0 +1,40 @@
+<view class="catalog-page">
+  <view class="catalog-hero">
+    <view class="catalog-eyebrow">NKUSTUDY · 校园指南</view>
+    <view class="catalog-title">{{title}}</view>
+    <view class="catalog-description">{{description}}</view>
+  </view>
+  <view class="catalog-search">
+    <text class="catalog-search-mark">⌕</text>
+    <input value="{{query}}" maxlength="80" confirm-type="search" placeholder="搜索选课、保研、住宿等问题" aria-label="搜索指南和PDF资料" bindinput="inputSearch" bindconfirm="confirmSearch" />
+    <button wx:if="{{query}}" class="catalog-clear" aria-label="清空搜索" bindtap="clearSearch">×</button>
+  </view>
+  <view class="catalog-suggestions" wx:if="{{!query}}">
+    <button wx:for="{{suggestions}}" wx:key="*this" data-query="{{item}}" bindtap="chooseSuggestion">{{item}}</button>
+  </view>
+  <view class="catalog-tabs" wx:if="{{mode !== 'documents'}}">
+    <button class="{{!topic ? 'selected' : ''}}" data-category="" bindtap="chooseCategory">全部</button>
+    <button wx:for="{{topics}}" wx:key="value" class="{{topic === item.value ? 'selected' : ''}}" data-category="{{item.value}}" bindtap="chooseCategory">{{item.label}}</button>
+  </view>
+  <view class="catalog-kinds" wx:if="{{mode !== 'documents'}}">
+    <button wx:for="{{kinds}}" wx:key="value" class="{{kind === item.value ? 'selected' : ''}}" data-kind="{{item.value}}" bindtap="chooseKind">{{item.label}}</button>
+  </view>
+  <view class="catalog-warning" wx:if="{{warning}}"><text>{{warning}}</text><button bindtap="retry">重试</button></view>
+  <state-view loading="{{loading}}" error="{{error}}" empty="{{isEmpty}}" empty-text="没有找到匹配内容，试试更短的关键词或其他分类。" bindretry="retry"></state-view>
+  <view class="catalog-count" wx:if="{{!loading}}">{{warning ? '当前可用内容' : '找到'}} {{total}} 项 · 支持近义词与组合关键词</view>
+  <view class="catalog-list" wx:if="{{!loading}}">
+    <button class="catalog-row" wx:for="{{results}}" wx:key="key" data-key="{{item.key}}" bindtap="openItem" loading="{{openingDocumentId === item.id}}" disabled="{{openingDocumentId && openingDocumentId !== item.id}}">
+      <view class="catalog-badge {{item.kind === 'pdf' ? 'catalog-badge--pdf' : ''}}">{{item.kind === 'pdf' ? 'PDF' : '指南'}}</view>
+      <view class="catalog-main">
+        <rich-text class="catalog-item-title" nodes="{{item.titleHtml}}"></rich-text>
+        <rich-text class="catalog-summary" nodes="{{item.summaryHtml}}"></rich-text>
+        <view class="catalog-meta">{{item.sourceLabel}}{{item.meta ? ' · ' + item.meta : ''}}</view>
+      </view>
+      <text class="catalog-arrow">›</text>
+    </button>
+  </view>
+  <button class="catalog-more" wx:if="{{hasMore}}" bindtap="onReachBottom">加载更多</button>
+  <button class="catalog-ask" wx:if="{{query && !loading}}" bindtap="askAssistant">带着这个问题，问问学习和生活指南针 ›</button>
+  <view class="catalog-footnote">搜索范围为指南标题、摘要和 PDF 介绍，不包含 PDF 全文。学生经验不代表学校规定。</view>
+</view>
+

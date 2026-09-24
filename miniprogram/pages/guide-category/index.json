@@ -1,5 +1,5 @@
 {
-  "navigationStyle": "custom",
+  "navigationStyle": "default",
   "navigationBarTitleText": "学习指南针",
   "backgroundColor": "#FFFEFC",
   "backgroundTextStyle": "dark"

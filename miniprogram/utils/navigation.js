@@ -23,6 +23,14 @@ function openGuideCategory(category = '') {
   wx.navigateTo({ url: `/pages/guide-category/index${suffix}` })
 }
 
+function openGuideSearch(query = '') {
+  wx.navigateTo({ url: '/pages/guide-search/index?q=' + encodeURIComponent(String(query).slice(0, 80)) })
+}
+
+function openGuideDocuments() {
+  wx.navigateTo({ url: '/pages/guide-documents/index' })
+}
+
 function openGuideAssistant(question = '', options = {}) {
   const normalized = String(question == null ? '' : question).trim().slice(0, 1000)
   const params = []
@@ -39,5 +47,7 @@ module.exports = {
   openCourseResources,
   openGuide,
   openGuideCategory,
-  openGuideAssistant
+  openGuideAssistant,
+  openGuideSearch,
+  openGuideDocuments
 }

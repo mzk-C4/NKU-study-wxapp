@@ -60,6 +60,8 @@
 
 `question` 为 1～1000 字；`history` 最多 9 个已完成轮次；`profile` 可选，入学年份使用四位整数。客户端最多完成 10 轮，第 10 轮请求携带前 9 轮历史。请求必须使用统一 Bearer Token，会话不存在时客户端先展示登录恢复，不静默重发原问题。
 
+2026-09-24 客户端兼容说明：AI 展示标题改为“学习和生活指南针”，不改变路由、认证、请求字段或服务端知识库范围。本机会话中的助手回答最多保留 12000 字；发往 API 的每条 history 仍限制 1000 字，优先保留回答开头、末尾条件及适用范围，最多发送最近 9 轮。资料不足后允许用户补充条件继续提问；空回答按服务不可用处理，不消耗完成轮次。搜索入口带入的问题仅作为新话题草稿，不混入上次会话。
+
 正常回答和业务拒答均返回 200；正式拒答原因是 `INSUFFICIENT_EVIDENCE` 或 `SOURCE_CONFLICT`。传输错误稳定映射为 `400 INVALID_AI_QUESTION`、`401 AUTH_REQUIRED`、`429 RATE_LIMITED` 和 `503 AI_UNAVAILABLE`。客户端请求预算为 30 秒，provider 重试由服务端负责。
 
 生产指南原件只接受约定的公开 HTTPS 资源地址；reference profile 的回环原件地址不得进入生产响应。
@@ -132,6 +134,12 @@ Fuse 权重为 `name 0.30 / short_name 0.20 / aliases 0.15 / tags 0.15 / teacher
 - `rules-rights`
 
 列表使用稳定五分类值与 `category_label`。详情使用 `sections[{id,title,body_format,body,source_ids}]`、`sources[{id,title,document_no,publisher,published_at,file_type,file_name,file_url,official_page_url,location_label}]` 和轻量 `variants[{id,title,order,source_count}]`。
+
+2026-09-24 展示分组：指南首页改为“新生入学 / 学海无涯 / 在校生活 / 学长焚决”，这是客户端导航分组，不是新增的 API category 枚举。旧分类深链接仍可访问：前四个旧分类归入“学海无涯”，“规范与权益”归入“在校生活”；标题、摘要可补充新生或生活标签；已收录 PDF 同时进入“学长焚决”，明确标注学生经验。
+
+指南专用搜索及分类页通过现有 `GET /guides?page=…&page_size=100` 加载完整目录，按稳定 ID 去重；不发送新分组值，不新增端点。与本机已收录 PDF 目录合并后，按标题、摘要、PDF 介绍、展示分组进行本地相关性排序、近义词扩展与组合词筛选，每次展示 20 条。搜索不包含 PDF 全文。读取失败时明确告知学校指南未加载，并允许搜索本机 PDF 目录和重试，不冒充完整结果。PDF 子页目录无需网络，打开原件仍需下载。
+
+本次无数据库迁移，不改变正式指南正文、来源和校级/学院 variant 边界；未向 AI 知识库自动注入学生 PDF。
 
 转专业概览只展示校级章节，学院正文必须通过 variant 接口按需获取，不得在学院间复用内容。旧 `steps/source_title/source_url` 已退出正式生产契约，客户端不得依赖这些字段恢复正文。
 

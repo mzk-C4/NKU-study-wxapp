@@ -4,6 +4,79 @@ const path = require('node:path')
 
 const projectRoot = path.resolve(__dirname, '..')
 
+test('a real refusal allows a clarifying follow-up with its original context', async t => {
+  installWx(t)
+  const prior = completedExchange('宿舍问题', '资料不足，请补充校区')
+  prior[1].refused = true
+  const page = createPage(capturePage(), { previewState: 'refusal', assistantState: 'refusal', messages: prior })
+  let input
+  page._assistantController = { async submit(value) {
+    input = value
+    return { accepted: true, state: 'answer', response: { answer: '补充条件后的回答' },
+      messages: [...prior, ...completedExchange(value.question, '补充条件后的回答')] }
+  } }
+  page.inputQuestion({ detail: { value: '我是津南校区的新生' } })
+  assert.equal(await page.sendQuestion(), true)
+  assert.equal(input.question, '我是津南校区的新生')
+  assert.equal(input.messages[1].refused, true)
+  assert.equal(page.data.completedRoundCount, 2)
+})
+
+test('duplicate send taps during network detection submit only once', async t => {
+  let network
+  installWx(t, { getNetworkType(options) { network = options } })
+  const page = createPage(capturePage(), { draft: '选课怎么操作？' })
+  let calls = 0
+  page._assistantController = { async submit(input) {
+    calls++
+    return { accepted: true, state: 'answer', response: { answer: '回答' }, messages: completedExchange(input.question, '回答') }
+  } }
+  const first = page.sendQuestion()
+  assert.equal(await page.sendQuestion(), false)
+  network.success({ networkType: 'wifi' })
+  assert.equal(await first, true)
+  assert.equal(calls, 1)
+})
+
+test('starting a new topic ignores the previous in-flight response', async t => {
+  installWx(t)
+  const page = createPage(capturePage(), { draft: '旧问题' })
+  let resolve, cancelled = false
+  page._assistantController = {
+    cancel() { cancelled = true },
+    submit() { return new Promise(done => { resolve = done }) }
+  }
+  const pending = page.sendQuestion()
+  await new Promise(done => setImmediate(done))
+  assert.equal(page.data.requestPending, true)
+  page.startNewTopic()
+  resolve({ accepted: true, state: 'answer', response: { answer: '旧回答' }, messages: completedExchange('旧问题', '旧回答') })
+  assert.equal(await pending, false)
+  assert.equal(cancelled, true)
+  assert.equal(page.data.newTopicMode, true)
+  assert.equal(page.data.requestPending, false)
+  assert.equal(page.data.responseAnswer, '')
+  assert.deepEqual(page.data.messages, [])
+})
+
+test('an incoming search question starts a clean draft and keeps previous conversations', async t => {
+  const messages = completedExchange('旧问题', '旧回答')
+  installWx(t, { getStorageSync(key) {
+    if (key !== 'nkustudy_guide_assistant_local_state') return null
+    return { updatedAt: Date.now(), lastQuestion: '旧问题', draft: '', history: [
+      { question: '旧问题', state: 'answer', updatedAt: Date.now(), messages }
+    ] }
+  } })
+  const page = createPage(capturePage())
+  await page.onLoad({ question: encodeURIComponent('新问题') })
+  assert.equal(page.data.draft, '新问题')
+  assert.equal(page.data.lastQuestion, '')
+  assert.deepEqual(page.data.messages, [])
+  assert.equal(page.data.history[0].question, '旧问题')
+  page.onUnload()
+})
+
+
 function installWx(t, overrides = {}) {
   const previous = global.wx
   global.wx = {

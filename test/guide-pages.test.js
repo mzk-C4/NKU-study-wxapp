@@ -101,392 +101,199 @@ function guideList(items, options = {}) {
 
 const guidesDefinition = capturePage('miniprogram/pages/guides/index.js')
 const categoryDefinition = capturePage('miniprogram/pages/guide-category/index.js')
+const searchDefinition = capturePage('miniprogram/pages/guide-search/index.js')
+const documentsDefinition = capturePage('miniprogram/pages/guide-documents/index.js')
+const catalog = require('../miniprogram/features/learning-compass/catalog')
 const detailDefinition = capturePage('miniprogram/pages/guide-detail/index.js')
 
 test('guide list exposes loading, true empty, safe error and retry recovery states', async t => {
-  const pending = deferred()
   let attempts = 0
-  replaceMethod(t, publicApi, 'getGuides', () => {
-    attempts += 1
-    if (attempts === 1) return pending.promise
-    if (attempts === 2) {
-      const error = new Error('provider https://private.example/token=secret')
-      error.code = 'INTERNAL_ERROR'
-      return Promise.reject(error)
-    }
-    return Promise.resolve(guideList([guide('recovered')]))
+  replaceMethod(t, publicApi, 'getGuides', async () => {
+    if (++attempts === 1) return guideList([])
+    if (attempts === 2) throw Error('token=private provider')
+    return guideList([guide('recovered')])
   })
-  const page = createPage(guidesDefinition)
-
-  const initialRequest = page.loadGuides()
-  assert.equal(page.data.loading, true)
-  assert.deepEqual(page.data.guides, [])
-  pending.resolve(guideList([]))
-  await initialRequest
-  assert.equal(page.data.loading, false)
-  assert.equal(page.data.error, '')
-  assert.equal(page.data.isEmpty, true)
-  assert.deepEqual(page.data.guides, [])
-
+  const page = createPage(searchDefinition, { kind: 'guide' })
   await page.loadGuides()
-  assert.equal(page.data.error, '暂时无法加载指南，请稍后重试。')
-  assert.equal(page.data.isEmpty, false)
-  assert.doesNotMatch(page.data.error, /provider|https?:|token/i)
-
+  assert.equal(page.data.loading, false); assert.equal(page.data.isEmpty, true)
+  await page.loadGuides()
+  assert.match(page.data.warning, /加载失败/)
+  assert.doesNotMatch(page.data.warning, /provider|token/)
   await page.retry()
-  assert.deepEqual(page.data.guides.map(item => item.id), ['recovered'])
-  assert.equal(page.data.error, '')
-
-  const template = fs.readFileSync(path.join(projectRoot, 'miniprogram/pages/guides/index.wxml'), 'utf8')
-  assert.match(template, /loading="\{\{loading\}\}"/)
-  assert.match(template, /error="\{\{error\}\}"/)
-  assert.match(template, /empty="\{\{isEmpty\}\}"/)
-  assert.match(template, /bindretry="retry"/)
+  assert.equal(page.data.warning, '')
+  assert.deepEqual(page.data.results.map(x => x.id), ['recovered'])
+  const template = fs.readFileSync(path.join(projectRoot, 'miniprogram/features/learning-compass/catalog.wxml'), 'utf8')
+  for (const binding of ['loading="{{loading}}"', 'empty="{{isEmpty}}"', 'bindretry="retry"']) assert.ok(template.includes(binding))
 })
 
 test('guide list keeps network failures, malformed empty pages and tab returns out of the true-empty state', async t => {
-  const calls = []
-  replaceMethod(t, publicApi, 'getGuides', query => {
-    calls.push(query)
-    if (calls.length === 1) {
-      const error = new Error('https://private.example/?token=secret')
-      error.code = 'NETWORK_ERROR'
-      return Promise.reject(error)
-    }
-    if (calls.length === 2) return Promise.resolve(guideList([], { total: 2 }))
-    return Promise.resolve(guideList([]))
+  let attempts = 0
+  replaceMethod(t, publicApi, 'getGuides', async () => {
+    if (++attempts === 1) throw Object.assign(Error('private'), {code:'NETWORK_ERROR'})
+    return guideList([], {total: 3})
   })
-  const page = createPage(guidesDefinition)
-
+  const page = createPage(searchDefinition)
   await page.loadGuides()
-  assert.equal(page.data.loading, false)
-  assert.equal(page.data.error, '网络连接失败，请检查网络后重试。')
-  assert.equal(page.data.isEmpty, false)
-  assert.doesNotMatch(page.data.error, /private|token|https?:/i)
-  const callsBeforeErrorReturn = calls.length
-  page.onHide()
-  page.onShow()
-  assert.equal(calls.length, callsBeforeErrorReturn)
-  assert.equal(page.data.error, '网络连接失败，请检查网络后重试。')
-
+  assert.equal(page.data.isEmpty, false); assert.match(page.data.warning, /仅显示/)
   await page.retry()
-  assert.equal(page.data.error, '暂时无法加载指南，请稍后重试。')
-  assert.equal(page.data.isEmpty, false)
-
-  await page.retry()
-  assert.equal(page.data.error, '')
-  assert.equal(page.data.isEmpty, true)
-  const callsBeforeReturn = calls.length
-  page.onHide()
-  page.onShow()
-  assert.equal(calls.length, callsBeforeReturn)
-  assert.equal(page.data.isEmpty, true)
+  assert.match(page.data.warning, /加载失败/); assert.equal(page.data.isEmpty, false)
+  assert.ok(page.data.results.every(item => item.kind === 'pdf'))
 })
 
-test('guide tab onShow preserves an in-flight and ready request without issuing another read', async t => {
-  const pending = deferred()
-  let calls = 0
-  replaceMethod(t, publicApi, 'getGuides', () => {
-    calls += 1
-    return pending.promise
-  })
-  const page = createPage(guidesDefinition)
-
-  const request = page.loadGuides()
-  page.onShow()
-  assert.equal(calls, 1)
-  assert.equal(page.data.loading, true)
-  pending.resolve(guideList([guide('ready')]))
-  await request
-  page.onHide()
-  page.onShow()
-  assert.equal(calls, 1)
-  assert.deepEqual(page.data.guides.map(item => item.id), ['ready'])
-})
-
-test('guide pagination preserves server order, removes duplicate ids and uses server facets', async t => {
-  const calls = []
-  replaceMethod(t, publicApi, 'getGuides', async query => {
-    calls.push(query)
-    if (query.page === 1) {
-      return guideList([guide('a'), guide('b')], {
-        total: 3, page: 1, pageSize: 2, categories: ['选课与修读', '考试与成绩']
-      })
-    }
-    return guideList([guide('b'), guide('c')], {
-      total: 3, page: 2, pageSize: 2, categories: ['选课与修读', '考试与成绩']
-    })
-  })
-  const page = createPage(guidesDefinition, { pageSize: 2 })
-
-  await page.loadGuides()
-  assert.deepEqual(page.data.guides.map(item => item.id), ['a', 'b'])
-  assert.equal(page.data.hasMore, true)
-  assert.equal(page.data.categories.find(item => item.value === '考试与成绩').unavailable, false)
-  assert.equal(page.data.categories.find(item => item.value === '规范与权益').unavailable, true)
-
-  await page.loadGuides({ append: true })
-  assert.deepEqual(calls.map(call => call.page), [1, 2])
-  assert.deepEqual(page.data.guides.map(item => item.id), ['a', 'b', 'c'])
-  assert.equal(page.data.hasMore, false)
-  assert.equal(page.data.loadingMore, false)
-})
-
-test('guide list navigation URL-encodes the stable id', t => {
-  const routes = []
-  installWx(t, { navigateTo(options) { routes.push(options.url) } })
-  const page = createPage(guidesDefinition)
-
-  page.openGuide({ currentTarget: { dataset: { id: '指南/一 ?' } } })
-
-  assert.deepEqual(routes, ['/pages/guide-detail/index?id=%E6%8C%87%E5%8D%97%2F%E4%B8%80%20%3F'])
-})
-
-test('category guide page renders one five-category result set and opens stable guide ids', async t => {
-  const calls = []
-  const routes = []
-  replaceMethod(t, publicApi, 'getGuides', async query => {
-    calls.push(query)
-    return guideList([
-      guide('exam-attendance-and-exceptions', {
-        title: '参加考试或无法按时考试时怎么办？',
-        category: '考试与成绩',
-        summary: '不应显示的旧摘要'
-      }),
-      guide('course-grade-and-gpa', {
-        title: '课程总评成绩和GPA如何计算？',
-        category: '考试与成绩',
-        summary: '不应显示的旧摘要'
-      }),
-      guide('grade-review', {
-        title: '对课程成绩有异议，如何申请复核？',
-        category: '考试与成绩',
-        summary: '不应显示的旧摘要'
-      })
-    ], { total: 3, categories: ['考试与成绩'] })
-  })
-  replaceMethod(t, navigation, 'openGuide', id => routes.push(id))
+test('guide home tab returns preserve four entries without issuing catalog requests', async t => {
   installWx(t)
-  const page = createPage(categoryDefinition)
+  let calls = 0
+  replaceMethod(t, publicApi, 'getGuides', () => { calls++; return Promise.resolve(guideList([])) })
+  const page = createPage(guidesDefinition)
+  page.onLoad(); page.onShow(); page.onShow()
+  assert.equal(calls, 0)
+  assert.deepEqual(page.data.homeCategories.map(x => x.label), ['新生入学','学海无涯','在校生活','学长焚决'])
+})
 
-  await page.onLoad({ category: encodeURIComponent('考试与成绩') })
-  assert.deepEqual(calls, [{ category: '考试与成绩', page: 1, page_size: 20 }])
-  assert.equal(page.data.header.title, '考试与成绩')
-  assert.equal(page.data.header.countLabel, '共 3 篇已发布指南')
-  assert.deepEqual(page.data.guides.map(item => item.title), [
-    '参加考试或无法按时考试时怎么办？',
-    '课程总评成绩和GPA如何计算？',
-    '对课程成绩有异议，如何申请复核？'
-  ])
-  assert.equal(page.data.guides[0].preview, '不应显示的旧摘要')
-  assert.doesNotMatch(fs.readFileSync(path.join(projectRoot, 'miniprogram/pages/guide-category/index.js'), 'utf8'), /SAMPLE_PRESENTATION/)
+test('catalog pagination preserves server order, removes duplicates and uses only compatible API parameters', async t => {
+  const calls = []
+  replaceMethod(t, publicApi, 'getGuides', async q => {
+    calls.push(q)
+    return q.page === 1 ? guideList([guide('a'),guide('b')], {total:3})
+      : guideList([guide('b'),guide('c')], {total:3,page:2})
+  })
+  const page = createPage(searchDefinition, {kind:'guide'})
+  await page.loadGuides()
+  assert.deepEqual(page.data.results.map(x=>x.id), ['a','b','c'])
+  assert.deepEqual(calls, [{page:1,page_size:100},{page:2,page_size:100}])
+  assert.equal(page.data.total, 3)
+})
 
-  page.openGuide({ currentTarget: { dataset: { id: 'guide/一 ?' } } })
-  assert.deepEqual(routes, ['guide/一 ?'])
+test('guide list navigation URL-encodes the stable id', async t => {
+  const routes=[]
+  installWx(t, {navigateTo(o){routes.push(o.url)}})
+  replaceMethod(t, publicApi, 'getGuides', async()=>guideList([guide('guide/一 ?')]))
+  const page=createPage(searchDefinition)
+  await page.loadGuides()
+  await page.openItem({currentTarget:{dataset:{key:'guide:guide/一 ?'}}})
+  assert.deepEqual(routes, ['/pages/guide-detail/index?id='+encodeURIComponent('guide/一 ?')])
+})
 
-  const app = JSON.parse(fs.readFileSync(path.join(projectRoot, 'miniprogram/app.json'), 'utf8'))
-  const template = fs.readFileSync(path.join(projectRoot, 'miniprogram/pages/guide-category/index.wxml'), 'utf8')
-  const styles = fs.readFileSync(path.join(projectRoot, 'miniprogram/pages/guide-category/index.wxss'), 'utf8')
-  assert.ok(app.pages.includes('pages/guide-category/index'))
-  assert.match(template, /\{\{header\.countLabel\}\}/)
-  assert.match(template, /返回学习指南针/)
-  assert.match(template, /category-guide-card/)
-  assert.doesNotMatch(template, /scroll-x/)
-  assert.match(styles, /\.category-guide-card\s*\{[^}]*width:\s*100%\s*!important/s)
-  assert.match(styles, /\.category-tabs\s*\{[^}]*grid-template-columns:\s*repeat\(5,\s*minmax\(0,\s*1fr\)\)/s)
+test('category guide page maps legacy categories to four topics and filters locally', async t => {
+  const calls=[]
+  replaceMethod(t, publicApi, 'getGuides', async q=>{
+    calls.push(q)
+    return guideList([guide('a',{title:'成绩复核',category:'考试与成绩'}),guide('b',{title:'学生权益',category:'规范与权益'})])
+  })
+  installWx(t)
+  const page=createPage(categoryDefinition)
+  await page.onLoad({category:encodeURIComponent('考试与成绩')})
+  assert.equal(page.data.topic,'study')
+  assert.equal(page.data.title,'学海无涯')
+  assert.deepEqual(page.data.results.filter(x=>x.kind==='guide').map(x=>x.id),['a'])
+  page.chooseCategory({currentTarget:{dataset:{category:'life'}}})
+  assert.deepEqual(page.data.results.filter(x=>x.kind==='guide').map(x=>x.id),['b'])
+  assert.equal(calls.length,1)
+  assert.equal(page.data.topics.length,4)
 })
 
 test('category guide page keeps the all-guides route unfiltered', async t => {
-  const calls = []
-  replaceMethod(t, publicApi, 'getGuides', async query => {
-    calls.push(query)
-    return guideList([
-      guide('grade-review', { category: '考试与成绩' }),
-      guide('ai-coursework', { category: '规范与权益' })
-    ], { total: 2, categories: ['考试与成绩', '规范与权益'] })
-  })
+  const calls=[]
+  replaceMethod(t, publicApi, 'getGuides',async q=>{calls.push(q);return guideList([guide('a'),guide('b',{category:'规范与权益'})])})
   installWx(t)
-  const page = createPage(categoryDefinition)
-
-  await page.onLoad({ category: '' })
-  assert.deepEqual(calls, [{ category: '', page: 1, page_size: 20 }])
-  assert.equal(page.data.header.title, '全部指南')
-  assert.deepEqual(page.data.guides.map(item => item.id), ['grade-review', 'ai-coursework'])
+  const page=createPage(categoryDefinition)
+  await page.onLoad({category:''})
+  assert.equal(page.data.topic,''); assert.equal(page.data.title,'全部指南')
+  assert.deepEqual(page.data.results.filter(x=>x.kind==='guide').map(x=>x.id),['a','b'])
+  assert.deepEqual(calls,[{page:1,page_size:100}])
 })
 
-test('guide list owns a full-width native button layout', () => {
-  const styles = fs.readFileSync(path.join(projectRoot, 'miniprogram/pages/guides/index.wxss'), 'utf8')
-  assert.match(styles, /\.guide-list\s*\{[^}]*width:\s*100%/s)
-  assert.match(styles, /\.guide-row\s*\{[^}]*width:\s*100%\s*!important/s)
-  assert.match(styles, /\.guide-row\s*\{[^}]*min-width:\s*100%/s)
-  assert.match(styles, /\.guide-row\s*\{[^}]*max-width:\s*100%/s)
-  assert.match(styles, /\.guide-row\s*\{[^}]*margin:\s*0\s*!important/s)
+test('guide list owns a full-width native button layout', async t => {
+  const styles=fs.readFileSync(path.join(projectRoot,'miniprogram/features/learning-compass/catalog.wxss'),'utf8')
+  assert.match(styles, /\.catalog-row\s*\{[^}]*width:\s*100%\s*!important/s)
+  assert.match(styles, /\.catalog-row\s*\{[^}]*margin:\s*0\s+0\s+18rpx\s*!important/s)
+  assert.match(styles, /\.catalog-main\s*\{[^}]*min-width:\s*0/s)
 })
 
-test('guide home implements the approved Learning Compass visual contract', () => {
-  const template = fs.readFileSync(path.join(projectRoot, 'miniprogram/pages/guides/index.wxml'), 'utf8')
-  const styles = fs.readFileSync(path.join(projectRoot, 'miniprogram/pages/guides/index.wxss'), 'utf8')
-  const config = JSON.parse(fs.readFileSync(path.join(projectRoot, 'miniprogram/pages/guides/index.json'), 'utf8'))
-
-  assert.equal(config.navigationBarTitleText, '学习指南针')
-  assert.match(template, /src="\/assets\/brand\.png"/)
-  assert.match(template, />学习指南针</)
-  assert.match(template, /搜索选课、成绩、学籍、AI规范等问题/)
-  assert.match(template, /问问学习指南针/)
-  assert.match(template, /基于已审核的学校文件回答，并附原文来源/)
-  assert.match(template, /PDF 学生资料/)
-  assert.match(template, /学生整理内容仅供参考，重要事项以学校最新通知为准/)
-  assert.match(template, /\{\{pdfDocuments\.length\}\} 份/)
-  assert.match(template, /近期更新/)
-  assert.doesNotMatch(template, />培养方案</)
-  assert.deepEqual(guidesDefinition.data.homeCategories.map(item => item.label), [
-    '选课与修读', '考试与成绩', '学籍与毕业', '学业拓展', '规范与权益'
-  ])
-  assert.match(styles, /\.guide-search\s*\{[^}]*width:\s*100%\s*!important/s)
-  assert.match(styles, /\.assistant-action\s*\{[^}]*width:\s*150rpx\s*!important/s)
-  assert.match(styles, /\.category-panel\s*\{[^}]*display:\s*flex/s)
-  assert.match(styles, /\.home-category\s*\{[^}]*width:\s*20%\s*!important/s)
-  assert.match(styles, /\.home-category\s*\{[^}]*max-width:\s*20%/s)
-  assert.match(styles, /\.view-all\s*\{[^}]*margin:\s*0\s+0\s+0\s+auto\s*!important/s)
-  assert.match(styles, /\.guide-intro\s*\{[^}]*linear-gradient/s)
-  assert.match(styles, /\.assistant-card\s*\{[^}]*border-radius/s)
-  assert.match(styles, /\.pdf-document-card\s*\{[^}]*width:\s*100%\s*!important/s)
-  assert.deepEqual(guidesDefinition.data.pdfDocuments.map(item => [item.title, item.file_url]), [
-    ['在 NKU 健康地爬行指南', 'https://resources.nkustudy.top/guide-sources/nku-healthy-crawling-guide.pdf'],
-    ['南开大学选课教程', 'https://resources.nkustudy.top/guide-sources/nankai-course-selection-tutorial.pdf'],
-    ['选课、公共课与体育', 'https://resources.nkustudy.top/guide-sources/nku-course-selection-and-general-courses.pdf'],
-    ['三学院课程与专业分流', 'https://resources.nkustudy.top/guide-sources/nku-college-courses-and-major-placement.pdf'],
-    ['AI 工具与科研入门', 'https://resources.nkustudy.top/guide-sources/nku-ai-tools-and-research-starter.pdf'],
-    ['辅修、竞赛与推免准备', 'https://resources.nkustudy.top/guide-sources/nku-minor-competitions-and-postgraduate-recommendation.pdf'],
-    ['计算机考研备考路线', 'https://resources.nkustudy.top/guide-sources/nku-postgraduate-entrance-exam-roadmap.pdf']
-  ])
+test('guide home implements the approved Learning Compass visual contract', async t => {
+  const template=fs.readFileSync(path.join(projectRoot,'miniprogram/pages/guides/index.wxml'),'utf8')
+  const styles=fs.readFileSync(path.join(projectRoot,'miniprogram/pages/guides/index.wxss'),'utf8')
+  assert.match(template,/src="\/assets\/brand\.png"/)
+  assert.match(template,/学习和生活指南针/)
+  assert.match(template,/PDF 学生资料/)
+  assert.match(template,/bindtap="openDocuments"/)
+  assert.doesNotMatch(template,/近期更新|wx:for="{{pdfDocuments}}"/)
+  assert.match(styles,/\.home-category\s*\{[^}]*width:\s*25%\s*!important/s)
+  assert.deepEqual(guidesDefinition.data.homeCategories.map(x=>x.label),['新生入学','学海无涯','在校生活','学长焚决'])
+  assert.equal(guidesDefinition.data.pdfCount,7)
 })
 
 test('guide PDF cards download and open only the selected trusted document', async t => {
-  const downloads = []
-  const opened = []
-  installWx(t, {
-    downloadFile(options) {
-      downloads.push(options.url)
-      options.success({ statusCode: 200, tempFilePath: '/tmp/guide.pdf' })
-    },
-    openDocument(options) {
-      opened.push({ filePath: options.filePath, fileType: options.fileType, showMenu: options.showMenu })
-      options.success()
-    }
-  })
-  const page = createPage(guidesDefinition)
-
-  assert.equal(await page.openPdfDocument({ currentTarget: { dataset: { id: 'nku-postgraduate-entrance-exam-roadmap' } } }), true)
-  assert.deepEqual(downloads, ['https://resources.nkustudy.top/guide-sources/nku-postgraduate-entrance-exam-roadmap.pdf'])
-  assert.deepEqual(opened, [{ filePath: '/tmp/guide.pdf', fileType: 'pdf', showMenu: true }])
-  assert.equal(page.data.openingDocumentId, '')
-  assert.equal(await page.openPdfDocument({ currentTarget: { dataset: { id: 'unknown-document' } } }), false)
+  const downloads=[],opened=[]
+  installWx(t,{downloadFile(o){downloads.push(o.url);o.success({statusCode:200,tempFilePath:'/tmp/guide.pdf'})},
+    openDocument(o){opened.push(o.fileType);o.success()}})
+  replaceMethod(t,publicApi,'getGuides',()=>assert.fail('PDF directory must work offline'))
+  const page=createPage(documentsDefinition)
+  await page.onLoad()
+  assert.equal(await page.openItem({currentTarget:{dataset:{key:'pdf:nku-postgraduate-entrance-exam-roadmap'}}}),true)
+  assert.deepEqual(downloads,['https://resources.nkustudy.top/guide-sources/nku-postgraduate-entrance-exam-roadmap.pdf'])
+  assert.deepEqual(opened,['pdf']); assert.equal(page.data.openingDocumentId,'')
+  assert.equal(await page.openItem({currentTarget:{dataset:{key:'unknown'}}}),false)
 })
 
-test('guide home search, category and AI controls have honest recoverable behavior', t => {
-  const routes = []
-  const categories = []
-  installWx(t, {
-    navigateTo(options) { routes.push(options.url) },
-    getNetworkType() { assert.fail('guide AI entry must not probe network') }
-  })
-  replaceMethod(t, navigation, 'openGuideCategory', category => categories.push(category))
-  const page = createPage(guidesDefinition)
-
-  page.openSearch()
-  page.openHomeCategory({ currentTarget: { dataset: { value: '考试与成绩' } } })
-  page.openAllGuides()
-  page.openAssistant()
-
-  assert.equal(page.data.activeHomeCategory, '考试与成绩')
-  assert.deepEqual(routes, ['/pages/search/index?q=', '/pages/guide-assistant/index'])
-  assert.deepEqual(categories, ['考试与成绩', ''])
-  assert.equal(page.data.guideContextLabel, '年级未设置 · 专业未设置')
+test('guide home search, category and AI controls have honest recoverable behavior', async t => {
+  const routes=[]
+  installWx(t,{navigateTo(o){routes.push(o.url)},getNetworkType(){assert.fail('entry must not probe network')}})
+  const page=createPage(guidesDefinition)
+  page.openSearch();page.openHomeCategory({currentTarget:{dataset:{value:'study'}}});page.openDocuments();page.openAssistant()
+  assert.equal(page.data.activeHomeCategory,'study')
+  assert.deepEqual(routes,['/pages/guide-search/index?q=','/pages/guide-category/index?category=study','/pages/guide-documents/index','/pages/guide-assistant/index'])
 })
 
-test('rapid guide category changes are latest-request-wins and stale errors stay silent', async t => {
-  const pending = [deferred(), deferred()]
-  const calls = []
-  replaceMethod(t, publicApi, 'getGuides', query => {
-    calls.push(query)
-    return pending[calls.length - 1].promise
-  })
-  const page = createPage(guidesDefinition)
-
-  const oldRequest = page.loadGuides()
-  page.setData({ category: 'exam-grade' })
-  const latestRequest = page.loadGuides()
-  pending[1].resolve(guideList([guide('latest', { category: 'exam-grade' })]))
-  await latestRequest
-  pending[0].reject(new Error('old provider diagnostic'))
-  await oldRequest
-
-  assert.deepEqual(calls.map(call => call.category), ['', 'exam-grade'])
-  assert.deepEqual(page.data.guides.map(item => item.id), ['latest'])
-  assert.equal(page.data.error, '')
+test('concurrent catalog retries are latest-request-wins and stale errors stay silent', async t => {
+  const first=deferred(),second=deferred()
+  let count=0
+  replaceMethod(t,publicApi,'getGuides',()=>++count===1?first.promise:second.promise)
+  const page=createPage(categoryDefinition,{kind:'guide'})
+  const a=page.loadGuides(),b=page.retry()
+  second.resolve(guideList([guide('new')])); await b
+  first.reject(Error('stale private')); await a
+  assert.equal(page.data.warning,'')
+  assert.deepEqual(page.data.results.map(x=>x.id),['new'])
 })
 
-test('guide category retries only the selected category and never shows its previous list', async t => {
-  const calls = []
-  replaceMethod(t, publicApi, 'getGuides', async query => {
-    calls.push(query)
-    if (query.category === 'exam-grade' && calls.filter(item => item.category === 'exam-grade').length === 1) {
-      const error = new Error('old category diagnostic')
-      error.code = 'NETWORK_ERROR'
-      throw error
-    }
-    return guideList([guide(query.category || 'all', { category: query.category || 'add-drop' })])
+test('guide category retry respects the current local topic and never shows mismatched items', async t => {
+  let count=0
+  replaceMethod(t,publicApi,'getGuides',async()=>{
+    if(++count===1)throw Error('offline')
+    return guideList([guide('a',{title:'成绩复核',category:'考试与成绩'}),guide('b',{title:'申诉',category:'规范与权益'})])
   })
-  const page = createPage(guidesDefinition)
-
-  await page.loadGuides()
-  assert.deepEqual(page.data.guides.map(item => item.id), ['all'])
-  await page.chooseCategory({ currentTarget: { dataset: { category: 'exam-grade' } } })
-  assert.equal(page.data.category, 'exam-grade')
-  assert.deepEqual(page.data.guides, [])
-  assert.equal(page.data.error, '网络连接失败，请检查网络后重试。')
-
+  const page=createPage(categoryDefinition,{topic:'study',kind:'guide'})
+  await page.loadGuides(); assert.equal(page.data.results.length,0)
+  page.chooseCategory({currentTarget:{dataset:{category:'life'}}})
   await page.retry()
-  assert.deepEqual(page.data.guides.map(item => item.id), ['exam-grade'])
-  assert.deepEqual(calls.map(item => item.category), ['', 'exam-grade', 'exam-grade'])
+  assert.equal(page.data.warning,'')
+  assert.deepEqual(page.data.results.map(x=>x.id),['b'])
 })
 
-test('guide load-more failure preserves items and retries the same next page', async t => {
-  const calls = []
-  replaceMethod(t, publicApi, 'getGuides', async query => {
-    calls.push(query)
-    if (query.page === 1) return guideList([guide('first')], { total: 2, page: 1, pageSize: 1 })
-    if (calls.filter(item => item.page === 2).length === 1) throw new Error('provider private retry detail')
-    return guideList([guide('second')], { total: 2, page: 2, pageSize: 1 })
-  })
-  const page = createPage(guidesDefinition, { pageSize: 1 })
-
+test('guide local load-more preserves order without requests and rejects incomplete API snapshots', async t => {
+  let count=0
+  replaceMethod(t,publicApi,'getGuides',async()=>{count++;return guideList(Array.from({length:45},(_,i)=>guide(String(i))))})
+  const page=createPage(searchDefinition,{kind:'guide'})
   await page.loadGuides()
-  await page.loadGuides({ append: true })
-  assert.deepEqual(page.data.guides.map(item => item.id), ['first'])
-  assert.equal(page.data.error, '')
-  assert.equal(page.data.loadMoreError, '加载更多失败，请重试。')
-
-  await page.retryLoadMore()
-  assert.deepEqual(calls.map(item => item.page), [1, 2, 2])
-  assert.deepEqual(page.data.guides.map(item => item.id), ['first', 'second'])
-  assert.equal(page.data.loadMoreError, '')
+  assert.equal(page.data.results.length,20)
+  page.onReachBottom(); assert.equal(page.data.results.length,40)
+  page.onReachBottom(); assert.equal(page.data.results.length,45)
+  assert.equal(page.data.hasMore,false); assert.equal(count,1)
+  // Empty second API pages must fail rather than silently omitting guides.
+  await assert.rejects(catalog.loadCatalog({api:{getGuides:async()=>({items:[],total:45})}}))
 })
 
 test('an in-flight guide list response cannot call setData after unload', async t => {
-  const pending = deferred()
-  replaceMethod(t, publicApi, 'getGuides', () => pending.promise)
-  const page = createPage(guidesDefinition)
-
-  const request = page.loadGuides()
+  const pending=deferred()
+  replaceMethod(t,publicApi,'getGuides',()=>pending.promise)
+  const page=createPage(searchDefinition)
+  const loading=page.loadGuides()
   page.onUnload()
-  const callsAtUnload = page._setDataCalls.length
+  const calls=page._setDataCalls.length
   pending.resolve(guideList([guide('late')]))
-  await request
-
-  assert.equal(page._setDataCalls.length, callsAtUnload)
-  assert.deepEqual(page.data.guides, [])
+  await loading
+  assert.equal(page._setDataCalls.length,calls)
 })
 
 test('guide detail rejects an invalid id without requesting and loads public detail fields', async t => {
@@ -830,7 +637,7 @@ test('learning compass categories and assistant actions use the shared icon owne
   const assistantTemplate = fs.readFileSync(path.join(projectRoot, 'miniprogram/pages/guide-assistant/index.wxml'), 'utf8')
   const assistantStyles = fs.readFileSync(path.join(projectRoot, 'miniprogram/pages/guide-assistant/index.wxss'), 'utf8')
   const iconAssets = ['thumb-up.svg', 'thumb-up-active.svg', 'thumb-down.svg', 'thumb-down-active.svg']
-  assert.match(guideSource, /getCategoryInfo/)
+  assert.match(guideSource, /TOPICS/)
   assert.doesNotMatch(guideSource, /GUIDE_PRESENTATION/)
   assert.match(detailTemplate, /本指南对你有帮助吗？<\/text><view class="feedback-buttons"/)
   for (const label of ['复制回答', '回答有帮助', '回答没有帮助']) assert.match(assistantTemplate, new RegExp(`aria-label="${label}"`))

@@ -165,7 +165,7 @@ function buildAssistantRequest(input = {}) {
   const profile = input.profile && typeof input.profile === 'object' ? input.profile : {}
   return {
     question: unicode(input.question, 1000),
-    history: Array.isArray(input.history) ? input.history.slice(0, 18).map(item => ({
+    history: Array.isArray(input.history) ? input.history.filter(item => item && (item.role === 'user' || item.role === 'assistant')).slice(-18).map(item => ({
       role: item && item.role === 'assistant' ? 'assistant' : 'user',
       content: unicode(item && item.content, 1000)
     })).filter(item => item.content) : [],
