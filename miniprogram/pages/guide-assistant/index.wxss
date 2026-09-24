@@ -1790,3 +1790,6 @@ button::after { border: 0; }
 .answer-markdown-row { display: table-row; }
 .answer-markdown-row--head { color: #42187C; background: #F0E8F8; font-weight: 700; }
 .answer-markdown-cell { display: table-cell; min-width: 156rpx; padding: 16rpx 18rpx; border-right: 1rpx solid #E6DFED; border-bottom: 1rpx solid #E6DFED; color: #353043; font-size: 24rpx; line-height: 1.55; white-space: normal; vertical-align: top; }
+.follow-up-options { display:flex; flex-wrap:wrap; gap:12rpx; padding:0 28rpx 28rpx; }
+.follow-up-options button { width:auto!important; margin:0!important; padding:12rpx 18rpx!important; font-size:24rpx; line-height:1.5; white-space:normal; color:#5B2B7B; background:#F4EEF8; border-radius:20rpx; }
+.follow-up-options button::after { border:0; }

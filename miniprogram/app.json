@@ -11,6 +11,8 @@
     "pages/guide-detail/index",
     "pages/guide-assistant/index",
     "pages/guide-category/index",
+    "pages/guide-search/index",
+    "pages/guide-documents/index",
     "pages/submit-resource/index",
     "pages/write-review/index",
     "pages/feedback/index",

@@ -76,7 +76,7 @@ test('AI assistant offline page is registered and matches the approved recovery 
 
   assert.ok(app.pages.includes('pages/guide-assistant/index'))
   assert.equal(config.navigationStyle, 'custom')
-  assert.match(template, /学习指南针 AI 问答/)
+  assert.match(template, /学习和生活指南针/)
   assert.match(template, /对话记录/)
   assert.match(template, /新开话题/)
   assert.match(template, /正在查找资料并整理回答中/)
@@ -118,8 +118,8 @@ test('AI assistant offline page is registered and matches the approved recovery 
   assert.match(template, /当前已完成 \{\{roundLabel\}\} 轮/)
   assert.match(source, /请检查网络或重试/)
   assert.match(template, /浏览知识库/)
-  assert.match(template, /去普通搜索/)
-  assert.match(template, /给学习指南针发送消息/)
+  assert.match(template, /去指南搜索/)
+  assert.match(template, /给学习和生活指南针发送消息/)
   assert.match(template, /内容由 AI 生成，请仔细甄别/)
   assert.match(template, /bindtap="retryNetwork"/)
   assert.match(template, /bindtap="copyQuestion"/)
@@ -243,7 +243,9 @@ test('loading the assistant while offline restores the question and registers ne
   await page.onLoad({ question: encodeURIComponent(question) })
 
   assert.equal(page.data.statusBarHeight, 22)
-  assert.equal(page.data.lastQuestion, question)
+  assert.equal(page.data.lastQuestion, '')
+  assert.equal(page.data.draft, question)
+  assert.deepEqual(page.data.messages, [])
   assert.equal(page.data.networkError, true)
   assert.equal(page.data.networkConnected, false)
   assert.equal(page.data.networkHint, '请检查网络或重试')
@@ -300,9 +302,9 @@ test('assistant recovery controls copy, edit in place, browse and search without
   const toasts = []
   const tabs = []
   const searches = []
-  const originalOpenSearch = navigation.openSearch
-  navigation.openSearch = query => searches.push(query)
-  t.after(() => { navigation.openSearch = originalOpenSearch })
+  const originalOpenSearch = navigation.openGuideSearch
+  navigation.openGuideSearch = query => searches.push(query)
+  t.after(() => { navigation.openGuideSearch = originalOpenSearch })
   installWx(t, {
     setClipboardData(options) { copied.push(options.data); options.success() },
     showToast(options) { toasts.push(options) },
@@ -765,6 +767,10 @@ test('a failed follow-up keeps every previously completed message visible', t =>
 })
 
 test('AI response blocks are rebuilt for answers, refusals, restored history and every reset path', async t => {
+  const runtime = require('../miniprogram/features/guide-assistant/runtime')
+  const originalFactory = runtime.createController
+  runtime.createController = () => createGuideAssistantController({ api: { async askGuideAssistant() { return responses.shift() } } })
+  t.after(() => { runtime.createController = originalFactory })
   const responses = [
     { refused: false, answer: '# 成绩复核\n| 材料 | 时限 |\n| --- | --- |\n| **申请** | `3周` |\n<script>alert(1)</script>', applicable_scope: '', freshness_notice: '', citations: [] },
     { refused: true, reason: 'INSUFFICIENT_EVIDENCE', answer: '暂无**足够依据**', applicable_scope: '', freshness_notice: '', citations: [] },

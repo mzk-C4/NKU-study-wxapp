@@ -9,7 +9,7 @@
     <image class="guide-logo" src="/assets/brand.png" mode="aspectFit"></image>
     <view class="guide-intro-main">
       <view class="guide-title">学习指南针</view>
-      <view class="guide-sub">查找南开本科学习规则与办事流程</view>
+      <view class="guide-sub">从新生入学到校园生活，找到下一步方向</view>
       <view class="guide-trust"><view class="shield-mark">✓</view><text>学生共建 · 重要事项以最新官方文件为准</text></view>
     </view>
   </view>
@@ -17,7 +17,7 @@
   <view class="guide-body">
     <button class="guide-search" hover-class="control--pressed" aria-label="搜索学习指南" bindtap="openSearch">
       <view class="guide-search-icon"></view>
-      <text>搜索选课、成绩、学籍、AI规范等问题</text>
+      <text>搜索选课、保研、住宿与学生资料</text>
     </button>
 
     <view class="assistant-card">
@@ -25,8 +25,8 @@
         <view class="assistant-face"><view class="assistant-eye assistant-eye--left"></view><view class="assistant-eye assistant-eye--right"></view><view class="assistant-smile"></view></view>
       </view>
       <view class="assistant-main">
-        <view class="assistant-title">问问学习指南针</view>
-        <view class="assistant-desc">基于已审核的学校文件回答，并附原文来源</view>
+        <view class="assistant-title">学习和生活指南针</view>
+        <view class="assistant-desc">结合已有资料回答，重要结论附上来源</view>
         <view class="assistant-context"><text class="context-person">●</text><text>{{guideContextLabel}}</text></view>
       </view>
       <button class="assistant-action" hover-class="assistant-action--pressed" aria-label="开始AI提问" bindtap="openAssistant">开始提问 <text>›</text></button>
@@ -47,82 +47,15 @@
       </button>
     </view>
 
-    <view class="pdf-section-head">
-      <view>
+    <button class="pdf-entry" bindtap="openDocuments" aria-label="浏览 PDF 学生资料">
+      <view class="pdf-document-icon">PDF</view>
+      <view class="pdf-entry-main">
         <view class="pdf-section-title">PDF 学生资料</view>
-        <view class="pdf-section-note">学生整理内容仅供参考，重要事项以学校最新通知为准</view>
+        <view class="pdf-section-note">选课、科研与升学经验，进入资料库查找</view>
+        <view class="pdf-section-note">共 {{pdfCount}} 份 · 学生经验仅供参考</view>
       </view>
-      <view class="pdf-section-count">{{pdfDocuments.length}} 份</view>
-    </view>
-    <view class="pdf-document-list" aria-label="PDF 学生资料">
-      <button
-        wx:for="{{pdfDocuments}}"
-        wx:key="id"
-        class="pdf-document-card"
-        hover-class="pdf-document-card--pressed"
-        data-id="{{item.id}}"
-        bindtap="openPdfDocument"
-        loading="{{openingDocumentId === item.id}}"
-        disabled="{{openingDocumentId && openingDocumentId !== item.id}}"
-        aria-label="打开 PDF：{{item.title}}"
-      >
-        <view class="pdf-document-icon"><text>PDF</text></view>
-        <view class="pdf-document-main">
-          <view class="pdf-document-title">{{item.title}}</view>
-          <view class="pdf-document-description">{{item.description}}</view>
-          <view class="pdf-document-meta">{{openingDocumentId === item.id ? '正在打开…' : item.meta}}</view>
-        </view>
-        <view class="pdf-document-action">打开 <text>›</text></view>
-      </button>
-    </view>
-
-    <view class="guide-section-head">
-      <view class="guide-section-title">近期更新 <text class="new-mark" wx:if="{{guides.length}}">NEW</text></view>
-      <button class="view-all" hover-class="control--pressed" bindtap="openAllGuides">查看全部 <text>›</text></button>
-    </view>
-
-    <state-view
-      loading="{{loading}}"
-      error="{{error}}"
-      empty="{{isEmpty}}"
-      empty-text="暂时没有已发布指南"
-      bindretry="retry"
-    >
-      <view class="empty-help">普通搜索仍可使用，重要事项请以最新官方文件为准。</view>
-    </state-view>
-
-    <view class="guide-list" wx:if="{{!loading && !error && guides.length}}">
-      <button
-        wx:for="{{guides}}"
-        wx:key="id"
-        class="guide-row"
-        data-id="{{item.id}}"
-        bindtap="openGuide"
-        hover-class="guide-row--pressed"
-      >
-        <view class="guide-fresh-dot" wx:if="{{index === 0}}"></view>
-        <view class="guide-symbol guide-symbol--{{item.tone}}">{{item.symbol}}</view>
-        <view class="guide-main">
-          <view class="guide-name-line">
-            <view class="guide-name">{{item.title}}</view>
-            <text class="latest-mark" wx:if="{{index === 0}}">最新</text>
-          </view>
-          <view class="guide-summary" wx:if="{{item.summary}}">{{item.summary}}</view>
-          <view class="guide-bottom">
-            <text class="guide-scope">适用：{{item.scope_label}}</text>
-            <text class="guide-updated" wx:if="{{index === 0 && item.updated_label}}">{{item.updated_label}}</text>
-          </view>
-        </view>
-        <view class="guide-arrow">›</view>
-      </button>
-    </view>
-
-    <view class="load-more-state" wx:if="{{loadingMore}}">正在加载更多...</view>
-    <view class="load-more-error" wx:elif="{{loadMoreError}}">
-      <text>{{loadMoreError}}</text>
-      <button class="load-more-button" bindtap="retryLoadMore">重试</button>
-    </view>
-    <view class="load-more-state" wx:elif="{{guides.length && !hasMore}}">已显示全部指南</view>
+      <text class="pdf-entry-arrow">›</text>
+    </button>
 
     <view class="guide-footnote">学生共建 · 重要事项以最新官方文件为准</view>
   </view>

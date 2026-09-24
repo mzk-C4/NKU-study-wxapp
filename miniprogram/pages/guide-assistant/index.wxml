@@ -1,7 +1,7 @@
 <view class="assistant-page">
   <view class="custom-nav" style="padding-top: {{statusBarHeight}}px;">
     <button class="back-button" aria-label="返回学习指南针" hover-class="icon-pressed" bindtap="goBack"><view class="back-arrow"></view></button>
-    <view class="nav-title">学习指南针 AI 问答</view>
+    <view class="nav-title">学习和生活指南针</view>
     <view class="nav-capsule-space" aria-hidden="true"></view>
   </view>
 
@@ -322,7 +322,7 @@
         </view>
       </view>
       <view class="new-topic-title">今天想了解什么？</view>
-      <view class="new-topic-copy">我会根据已有文件查找答案，并附上来源。</view>
+      <view class="new-topic-copy">说说你遇到的具体问题，可以补充年级、专业和时间。我会根据已有资料回答；资料不足时，你可以继续补充，学校规定请核对原文。</view>
       <view class="new-topic-safety"><view class="new-topic-shield" aria-hidden="true"></view><text>学生共建 · 重要事项以最新官方文件为准</text></view>
       <button class="new-topic-profile" aria-label="编辑本机学习信息，当前为{{learningProfileLabel}}" hover-class="new-topic-profile--pressed" bindtap="openLearningProfile"><view class="profile-icon profile-icon--large" aria-hidden="true"></view><text>{{learningProfileLabel}}</text><text class="new-topic-profile-action">编辑</text><text class="new-topic-profile-arrow">›</text></button>
       <view class="new-topic-examples-title"><view class="new-topic-star" aria-hidden="true">✦</view><text>试试这些常见问题</text></view>
@@ -365,12 +365,14 @@
       </button>
       <button class="continue-card" hover-class="continue-card--pressed" bindtap="openSearch">
         <view class="continue-icon search-card-icon"><view class="search-ring"></view></view>
-        <view class="continue-main"><view class="continue-name">去普通搜索</view><view class="continue-copy">使用关键词查找相关指南或文件</view></view>
+        <view class="continue-main"><view class="continue-name">去指南搜索</view><view class="continue-copy">使用关键词查找相关指南或文件</view></view>
         <view class="continue-arrow">›</view>
       </button>
     </view>
+  <view class="follow-up-options" wx:if="{{!requestPending && !roundLimitReached && (answerMode || previewState === 'refusal') && !previewMode}}">
+    <button wx:for="{{followUpQuestions}}" wx:key="*this" data-question="{{item}}" bindtap="chooseExampleQuestion">{{item}}</button>
   </view>
-
+  </view>
   <view class="composer-area">
     <view class="composer-notice" wx:if="{{statusMessage}}" aria-live="polite">{{statusMessage}}</view>
     <view class="composer">
@@ -381,9 +383,9 @@
         focus="{{focusInput}}"
         disabled="{{requestPending || roundLimitReached || assistantState === 'rate-limited' || (previewMode && previewState === 'generating')}}"
         confirm-type="send"
-        placeholder="{{answerMode ? '继续追问这个问题' : '给学习指南针发送消息'}}"
+        placeholder="{{answerMode ? '继续追问这个问题' : '给学习和生活指南针发送消息'}}"
         placeholder-class="composer-placeholder"
-        aria-label="给学习指南针发送消息"
+        aria-label="给学习和生活指南针发送消息"
         bindinput="inputQuestion"
         bindfocus="focusComposer"
         bindblur="blurComposer"
