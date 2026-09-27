@@ -585,6 +585,15 @@ function createPublicApi(client = request, options = {}) {
       }
       return client.post('/auth/phone-verify', { code: String(code || '') }, { auth: 'required' })
     },
+    async confirmWebLogin(ticket) {
+      if (isReference) {
+        const error = new Error('本地参考环境不支持网页登录确认。')
+        error.code = 'REFERENCE_MOCK_UNAVAILABLE'
+        throw error
+      }
+      const data = await client.post('/auth/web-login/confirm', { ticket: String(ticket || '') }, { auth: 'required' })
+      return { confirmed: data && data.confirmed === true }
+    },
     async getDonate() {
       if (isReference) return { title: '捐助支持', content: '', amounts: [5, 10, 15], pay_enabled: false }
       const data = await client.get('/donate')
