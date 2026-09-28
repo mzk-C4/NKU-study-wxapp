@@ -1,42 +1,48 @@
 <view class="page">
   <view class="notice"><view class="notice-mark">!</view><text>请先删除资料中的姓名、学号等个人信息，并确认拥有分享权限。</text></view>
+  <view class="submission-intro">分享一份资料，帮到下一位同学</view>
+  <view class="submission-help">填写网盘链接即可，无需上传文件。投稿通过内容反馈渠道交给管理员核对收录，不会自动上架。请勿提交私人信息，收录或反馈处理后相关内容可能公开。</view>
+  <view wx:if="{{!loggedIn}}" class="submission-status"><text>浏览无需登录；提交资料需登录并按服务端要求完成手机号验证。</text><button class="button button--ghost" bindtap="goLogin">保存草稿并去登录</button></view>
+  <view wx:if="{{submitted}}" class="submission-status" aria-live="polite"><view>已交给管理员核对收录</view><view>可在意见反馈的“我的反馈”中查看管理员的处理回复。</view><button class="button button--ghost" bindtap="openFeedback">查看我的反馈</button></view>
+  <view class="field"><text class="field-label">课程名称</text><input class="input" disabled="{{submitting}}" maxlength="80" placeholder="例如：高等数学 A（上）" value="{{form.courseName}}" data-field="courseName" bindinput="onInput" /></view>
 
   <view class="field">
     <text class="field-label">资料标题</text>
-    <input class="input" placeholder="例如：2025 秋期中试题" value="{{form.title}}" data-field="title" bindinput="onInput" />
+    <input class="input" disabled="{{submitting}}" maxlength="100" placeholder="例如：2025 秋期中试题" value="{{form.title}}" data-field="title" bindinput="onInput" />
   </view>
 
   <view class="field">
     <text class="field-label">资料类型</text>
-    <picker mode="selector" range="{{resourceTypes}}" bindchange="onTypeChange">
+    <picker mode="selector" disabled="{{submitting}}" range="{{resourceTypes}}" bindchange="onTypeChange">
       <view class="picker">{{form.type || '请选择资料类型'}}</view>
     </picker>
   </view>
 
   <view class="field">
     <text class="field-label">网盘平台</text>
-    <picker mode="selector" range="{{platforms}}" bindchange="onPlatformChange">
+    <picker mode="selector" disabled="{{submitting}}" range="{{platforms}}" bindchange="onPlatformChange">
       <view class="picker">{{form.platform || '请选择网盘平台'}}</view>
     </picker>
   </view>
 
   <view class="field">
     <text class="field-label">分享链接</text>
-    <input class="input" placeholder="粘贴可正常访问的链接" value="{{form.url}}" data-field="url" bindinput="onInput" />
+    <input class="input" disabled="{{submitting}}" maxlength="500" placeholder="https:// 开头的网盘分享链接" value="{{form.url}}" data-field="url" bindinput="onInput" />
   </view>
 
   <view class="field">
     <text class="field-label">提取码（选填）</text>
-    <input class="input" placeholder="请输入提取码" value="{{form.code}}" data-field="code" bindinput="onInput" />
+    <input class="input" disabled="{{submitting}}" maxlength="20" placeholder="请输入提取码" value="{{form.code}}" data-field="code" bindinput="onInput" />
   </view>
 
   <view class="field">
     <text class="field-label">补充说明（选填）</text>
-    <textarea class="textarea" placeholder="说明资料范围或使用方法" value="{{form.description}}" data-field="description" bindinput="onInput" maxlength="500" />
+    <textarea class="textarea" disabled="{{submitting}}" placeholder="说明资料范围或使用方法" value="{{form.description}}" data-field="description" bindinput="onInput" maxlength="500" />
   </view>
 
   <view class="two-buttons">
     <button class="button button--ghost" bindtap="saveDraft">保存草稿</button>
-    <button class="button button--primary" bindtap="submit" disabled="{{submitting}}">提交投稿</button>
+    <button class="button button--primary" bindtap="submit" loading="{{submitting}}" disabled="{{submitting || !loggedIn}}">提交投稿</button>
   </view>
+  <view wx:if="{{submitError}}" class="submission-error" aria-live="assertive">{{submitError}}</view>
 </view>

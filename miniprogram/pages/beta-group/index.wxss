@@ -1,0 +1,8 @@
+.beta-page { padding: 38rpx 32rpx 60rpx; }
+.beta-kicker { color: #8A6D3B; font-size: 21rpx; letter-spacing: 3rpx; }
+.beta-title { margin-top: 16rpx; color: #2B123E; font-size: 40rpx; font-weight: 700; }
+.beta-intro, .beta-note, .beta-help { margin-top: 20rpx; color: #6F6972; font-size: 25rpx; line-height: 1.7; }
+.beta-poster { display: block; width: 100%; margin-top: 32rpx; border-radius: 24rpx; }
+.beta-note { padding: 24rpx; margin-bottom: 28rpx; border-radius: 20rpx; background: #F8EFD9; color: #72510C; }
+.beta-help { font-size: 22rpx; text-align: center; }
+.beta-page .button { width: 100% !important; min-width: 100%; max-width: 100%; min-height: 88rpx; height: auto; margin: 0 !important; padding: 20rpx; box-sizing: border-box; line-height: 1.6; }

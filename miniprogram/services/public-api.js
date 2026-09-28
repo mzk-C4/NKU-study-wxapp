@@ -585,35 +585,6 @@ function createPublicApi(client = request, options = {}) {
       }
       return client.post('/auth/phone-verify', { code: String(code || '') }, { auth: 'required' })
     },
-    async getDonate() {
-      if (isReference) return { title: '捐助支持', content: '', amounts: [5, 10, 15], pay_enabled: false }
-      const data = await client.get('/donate')
-      const raw = data && typeof data === 'object' ? data : {}
-      return {
-        title: toText(raw.title) || '捐助支持',
-        content: toText(raw.content),
-        amounts: (Array.isArray(raw.amounts) ? raw.amounts : []).map((item) => Number(item)).filter((item) => Number.isFinite(item) && item > 0),
-        records: (Array.isArray(raw.records) ? raw.records : []).map((row) => ({
-          date: toText(row && row.date).slice(0, 10),
-          nickname: toText(row && row.nickname) || '好心人',
-          usage: toText(row && row.usage) || '待定'
-        })),
-        pay_enabled: raw.pay_enabled === true
-      }
-    },
-    async createDonateOrder({ amount, nickname, remark } = {}) {
-      if (isReference) {
-        const error = new Error('本地参考环境不支持支付。')
-        error.code = 'REFERENCE_MOCK_UNAVAILABLE'
-        throw error
-      }
-      const payload = { amount: Number(amount) || 0 }
-      const nick = String(nickname || '').trim().slice(0, 32)
-      const note = String(remark || '').trim().slice(0, 200)
-      if (nick) payload.nickname = nick
-      if (note) payload.remark = note
-      return client.post('/donate/pay', payload, { auth: 'required' })
-    },
     async getAbout() {
       if (isReference) return { title: '关于', content: '' }
       const data = await client.get('/about')
@@ -734,8 +705,8 @@ function createPublicApi(client = request, options = {}) {
         rating: toCount(input.rating),
         tags: toTextArray(input.tags),
         body: toText(input.body),
-        anonymous: input.anonymous === true
-      }, { auth: 'optional' })
+        anonymous: false
+      }, { auth: 'required' })
     },
     validateResourceDownloadUrl,
     isAllowedResourceDownloadUrl(value) { return Boolean(validateResourceDownloadUrl(value)) },

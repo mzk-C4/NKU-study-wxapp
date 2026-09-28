@@ -1,0 +1,12 @@
+.document-kicker { margin-top: 16rpx; color: #6F6972; font-size: 22rpx; }
+.document-title { margin-top: 14rpx; color: #2B123E; font-size: 42rpx; font-weight: 700; line-height: 1.35; }
+.document-intro { margin-top: 20rpx; color: #6F6972; font-size: 27rpx; line-height: 1.8; }
+.document-label { margin-bottom: 16rpx; color: #2B123E; font-size: 28rpx; font-weight: 700; }
+.document-url { display: block; color: #4B1F6F; font-size: 26rpx; line-height: 1.7; word-break: break-all; }
+.document-copy { margin-top: 28rpx; width: 100% !important; }
+.document-success, .document-error { margin-top: 18rpx; font-size: 24rpx; line-height: 1.6; }
+.document-success { color: #266E5A; }
+.document-error { color: #A33040; }
+.document-help { color: #514B54; font-size: 26rpx; line-height: 1.8; }
+.document-help > view + view { margin-top: 12rpx; }
+.document-footnote { margin-top: 36rpx; color: #817A84; font-size: 24rpx; line-height: 1.7; }

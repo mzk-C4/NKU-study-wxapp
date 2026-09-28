@@ -20,18 +20,6 @@
       <text>搜索选课、保研、住宿与学生资料</text>
     </button>
 
-    <view class="assistant-card">
-      <view class="assistant-mark" aria-hidden="true">
-        <view class="assistant-face"><view class="assistant-eye assistant-eye--left"></view><view class="assistant-eye assistant-eye--right"></view><view class="assistant-smile"></view></view>
-      </view>
-      <view class="assistant-main">
-        <view class="assistant-title">学习和生活指南针</view>
-        <view class="assistant-desc">结合已有资料回答，重要结论附上来源</view>
-        <view class="assistant-context"><text class="context-person">●</text><text>{{guideContextLabel}}</text></view>
-      </view>
-      <button class="assistant-action" hover-class="assistant-action--pressed" aria-label="开始AI提问" bindtap="openAssistant">开始提问 <text>›</text></button>
-    </view>
-
     <view class="category-panel" aria-label="指南一级分类">
       <button
         wx:for="{{homeCategories}}"

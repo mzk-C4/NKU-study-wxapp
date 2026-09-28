@@ -16,6 +16,22 @@
     "ignore": [
       {
         "type": "folder",
+        "value": "pages/submit-resource"
+      },
+      {
+        "type": "folder",
+        "value": "pages/submission-status"
+      },
+      {
+        "type": "folder",
+        "value": "pages/guide-assistant"
+      },
+      {
+        "type": "folder",
+        "value": "features/guide-assistant"
+      },
+      {
+        "type": "folder",
         "value": "design"
       },
       {

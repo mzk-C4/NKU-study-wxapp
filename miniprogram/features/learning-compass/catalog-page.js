@@ -95,8 +95,7 @@ function createCatalogPage(mode) {
       } finally {
         if (!this._isUnloaded) this.setData({ openingDocumentId: '' })
       }
-    },
-    askAssistant() { navigation.openGuideAssistant(this.data.query) }
+    }
   }
 }
 module.exports = { createCatalogPage }

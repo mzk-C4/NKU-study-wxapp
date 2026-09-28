@@ -1,6 +1,9 @@
 {
   "pages": [
     "pages/home/index",
+    "pages/beta-group/index",
+    "pages/nkucs-web/index",
+    "pages/feishu-document/index",
     "pages/courses/index",
     "pages/guides/index",
     "pages/profile/index",
@@ -9,11 +12,9 @@
     "pages/course-resources/index",
     "pages/course-reviews/index",
     "pages/guide-detail/index",
-    "pages/guide-assistant/index",
     "pages/guide-category/index",
     "pages/guide-search/index",
     "pages/guide-documents/index",
-    "pages/submit-resource/index",
     "pages/write-review/index",
     "pages/feedback/index",
     "pages/participate-web/index",

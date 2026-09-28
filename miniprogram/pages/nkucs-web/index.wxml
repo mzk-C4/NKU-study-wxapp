@@ -1,0 +1,7 @@
+<web-view wx:if="{{!failed}}" src="{{url}}" binderror="failed"></web-view>
+<view wx:else class="page">
+  <view class="card"><view class="section-title">暂时无法在微信内打开</view><view class="link-note">NKUCS.ICU 是独立网站。若域名尚未配置为小程序业务域名，可复制链接到浏览器访问。</view><text class="link-url" user-select="{{true}}">{{url}}</text></view>
+  <button class="button button--primary" bindtap="copyLink">复制 NKUCS.ICU 链接</button>
+  <button class="button button--ghost" bindtap="retry">重试打开</button>
+  <view wx:if="{{copyError}}" class="link-note">{{copyError}}</view>
+</view>

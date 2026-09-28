@@ -185,9 +185,116 @@ test('logged-out users are blocked before any submission flow', async () => {
   try {
     page.onLoad({})
     await page.prepare()
-    assert.equal(page.data.loading, true, '未登录时不进入加载流程')
+    assert.equal(page.data.loading, false, '未登录时显示登录入口，不保持加载中')
+    assert.equal(page.data.isLoggedIn, false)
     assert.equal(page.data.pickerMode, false)
   } finally {
     global.wx.getStorageSync = () => ({ token: 'testtokenabcdef123456', expires_at: Date.now() + 86400000, user: { id: 1 } })
   }
+})
+
+test('submission rechecks missing and expired sessions without calling API', async t => {
+  const original = global.wx.getStorageSync
+  t.after(() => { global.wx.getStorageSync = original })
+  let submissions = 0
+  const page = makePage(fakeApi({ submitReview: async () => { submissions++ } }))
+  page.setData({ courseId: 'c1' })
+  await page.prepare()
+  page.setData({ teacher: '张老师', rating: 5, body: '这门课程的讲解很清晰，收获很多' })
+  for (const stored of [null, { token: 'testtokenabcdef123456', expires_at: Date.now() - 1, user: { id: 1 } }]) {
+    global.wx.getStorageSync = () => stored
+    await page.submit()
+    assert.equal(page.data.isLoggedIn, false)
+    assert.equal(submissions, 0)
+  }
+})
+
+test('401 blocks the form and never resubmits automatically', async t => {
+  const original = global.wx.getStorageSync
+  let stored = original()
+  const previousRemove = global.wx.removeStorageSync
+  global.wx.getStorageSync = () => stored
+  global.wx.removeStorageSync = () => { stored = null }
+  t.after(() => { global.wx.getStorageSync = original; global.wx.removeStorageSync = previousRemove })
+  let submissions = 0
+  const page = makePage(fakeApi({ submitReview: async () => {
+    submissions++
+    throw Object.assign(new Error('expired'), { statusCode: 401, code: 'AUTH_REQUIRED' })
+  } }))
+  page.setData({ courseId: 'c1' })
+  await page.prepare()
+  page.setData({ teacher: '张老师', rating: 5, body: '这门课程的讲解很清晰，收获很多' })
+  await page.submit()
+  assert.equal(stored, null)
+  assert.equal(page.data.isLoggedIn, false)
+  assert.equal(page.data.submitting, false)
+  assert.match(page.data.loginMessage, /已失效/)
+  assert.equal(page.data.body, '这门课程的讲解很清晰，收获很多')
+  await page.submit()
+  assert.equal(submissions, 1)
+})
+
+test('authenticated submission forces non-anonymous mode and blocks duplicate taps', async () => {
+  let complete
+  const submitted = []
+  const page = makePage(fakeApi({ submitReview: payload => {
+    submitted.push(payload)
+    return new Promise(resolve => { complete = resolve })
+  } }))
+  page.setData({ courseId: 'c1' })
+  await page.prepare()
+  page.setData({ teacher: '张老师', rating: 5, body: '这门课程的讲解很清晰，收获很多', anonymous: true })
+  const pending = page.submit()
+  await page.submit()
+  assert.equal(submitted.length, 1)
+  assert.equal(submitted[0].anonymous, false)
+  complete({ submitted: true })
+  await pending
+  assert.equal(page.data.submitting, false)
+})
+
+test('review form has an explicit login state and no anonymous switch', () => {
+  const fs = require('node:fs')
+  const path = require('node:path')
+  const template = fs.readFileSync(path.join(__dirname, '../miniprogram/pages/write-review/index.wxml'), 'utf8')
+  assert.doesNotMatch(template, /<switch|toggleAnonymous|checked="\{\{anonymous\}\}"/)
+  assert.match(template, /bindtap="goLogin"/)
+  assert.match(template, /isLoggedIn && !loading && !error && course/)
+})
+
+test('all logged-out deep links stop before loading data or exposing the picker', async t => {
+  const original = global.wx.getStorageSync
+  global.wx.getStorageSync = () => null
+  t.after(() => { global.wx.getStorageSync = original })
+  let calls = 0
+  const unexpected = async () => { calls++; throw new Error('must not run') }
+  const api = fakeApi({ getHome: unexpected, getCourse: unexpected, getReviewGroups: unexpected, getSearchData: unexpected, submitReview: unexpected })
+  for (const options of [{}, { course_id: 'c1' }, { course_title: '历史课程' }]) {
+    const page = makePage(api)
+    page.onLoad(options)
+    await page.prepare()
+    await page.submit()
+    assert.equal(page.data.isLoggedIn, false)
+    assert.equal(page.data.pickerMode, false)
+    assert.equal(page.data.loading, false)
+  }
+  assert.equal(calls, 0)
+})
+
+test('returning to a prepared form rechecks authentication without erasing the draft', async t => {
+  const original = global.wx.getStorageSync
+  t.after(() => { global.wx.getStorageSync = original })
+  const page = makePage(fakeApi())
+  page.setData({ courseId: 'c1' })
+  await page.prepare()
+  page.setData({ body: '保留尚未提交的评价草稿' })
+  global.wx.getStorageSync = () => null
+  page.onShow()
+  assert.equal(page.data.isLoggedIn, false)
+  assert.equal(page.data.body, '保留尚未提交的评价草稿')
+  global.wx.getStorageSync = original
+  page.onShow()
+  assert.equal(page.data.isLoggedIn, true)
+  assert.equal(page.data.body, '保留尚未提交的评价草稿')
+  assert.equal(page.data.course.id, 'c1')
 })

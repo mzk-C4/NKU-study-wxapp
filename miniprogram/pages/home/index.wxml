@@ -6,23 +6,47 @@
       <view class="site-status-line"><text class="site-status-label">累计访问</text><text class="site-status-value">{{siteStatus.visitValue}}次</text></view>
     </view>
   </view>
+  <button wx:if="{{announcement}}" class="announcement-bar" bindtap="openAnnouncement" aria-label="查看平台公告">
+    <text class="announcement-badge">公告</text><text class="announcement-preview">{{announcement.preview}}</text><text class="announcement-arrow">›</text>
+  </button>
   <view class="hero">
     <view class="hero-kicker">南开学生共建</view>
     <view class="hero-title">选课前，先来查一查</view>
     <view class="search-box" bindtap="openSearch"><view class="search-icon"></view><text>搜索</text></view>
   </view>
 
+  <view class="home-carousel section" aria-label="课程资料、选课评价与指南推荐">
+    <swiper class="banner-swiper" current="{{currentSlide}}" autoplay="{{carouselVisible && !carouselPaused && !carouselTouching && !announcementOpen}}" circular="{{true}}" interval="6000" duration="300" bindchange="changeSlide" bindtouchstart="startCarouselTouch" bindtouchend="endCarouselTouch" bindtouchcancel="endCarouselTouch">
+      <swiper-item wx:for="{{slides}}" wx:key="id">
+        <button class="banner-card" data-id="{{item.id}}" bindtap="openSlide" hover-class="banner-card--pressed" aria-label="{{item.title}}，{{item.description}}，{{item.action}}">
+          <image wx:if="{{!failedImages[item.id]}}" class="banner-image" src="{{item.image}}" mode="aspectFill" data-id="{{item.id}}" binderror="bannerImageError" aria-hidden="{{true}}"></image>
+          <view wx:if="{{item.qrImage}}" class="banner-qr" aria-hidden="{{true}}"><image src="{{item.qrImage}}" class="banner-qr-source" mode="scaleToFill"></image></view>
+          <view class="banner-copy">
+            <view class="banner-kicker">{{item.kicker}}</view>
+            <view class="banner-title">{{item.title}}</view>
+            <view class="banner-description">{{item.description}}</view>
+            <view class="banner-action">{{item.action}} <text>›</text></view>
+          </view>
+        </button>
+      </swiper-item>
+    </swiper>
+    <view class="carousel-toolbar">
+      <view class="carousel-progress" aria-label="第 {{currentSlide + 1}} 张，共 {{slides.length}} 张">
+        <view wx:for="{{slides}}" wx:key="id" class="carousel-dot {{index === currentSlide ? 'carousel-dot--active' : ''}}"></view>
+        <text class="carousel-count">{{currentSlide + 1}} / {{slides.length}}</text>
+      </view>
+      <button class="carousel-toggle" bindtap="toggleCarousel" aria-label="{{carouselPaused ? '播放轮播图' : '暂停轮播图'}}">{{carouselPaused ? '播放轮播' : '暂停轮播'}}</button>
+    </view>
+  </view>
+
+  <button class="document-entry" bindtap="openFeishuDocument" hover-class="banner-card--pressed" aria-label="NKU 计网 软件 人智大类生存手册，查看原文链接与打开说明">
+    <view class="document-entry-icon" aria-hidden="{{true}}">文</view>
+    <view class="document-entry-copy"><view class="document-entry-title">NKU 计网 软件 人智大类生存手册</view><view class="document-entry-note">感谢编写手册的学长 · 飞书原文</view></view>
+    <text class="document-entry-arrow" aria-hidden="{{true}}">›</text>
+  </button>
+
   <state-view loading="{{loading}}" error="{{error}}" bindretry="loadHome"></state-view>
   <block wx:if="{{!loading && !error && home}}">
-    <view class="season-card section" bindtap="openPage" data-url="/pages/guides/index">
-      <view class="season-title">选课季 · 开始前先确认</view>
-      <view class="season-text">小程序指南建设中，请以教务系统最新通知为准</view><view class="season-mark">选</view>
-    </view>
-    <view class="section">
-      <view class="section-head"><view class="section-title">大家在看</view><view class="section-link" bindtap="openPage" data-url="/pages/courses/index">查看全部</view></view>
-      <state-view wx:if="{{hotCourses.length === 0}}" empty="{{true}}" emptyText="暂时没有热门课程"></state-view>
-      <course-card wx:for="{{hotCourses}}" wx:key="id" course="{{item}}" bindselect="openCourse"></course-card>
-    </view>
     <view class="section" wx:if="{{latestUpdates.length}}">
       <view class="section-head"><view class="section-title">最近更新</view></view>
       <view class="card update-row" wx:for="{{latestUpdates}}" wx:key="id" data-id="{{item.id}}" bindtap="openUpdate">
@@ -37,7 +61,6 @@
         <view class="update-more">查看课程 ›</view>
       </view>
     </view>
-    <view class="notice section" wx:if="{{home.announcement}}"><view class="notice-mark">i</view><text>{{home.announcement}}</text></view>
     <view class="collaborators section" aria-label="协作者名单">
       <view class="collaborators-head">
         <view class="collaborators-title">协作者</view>
@@ -54,4 +77,14 @@
     <view class="build-note">学生共建 · 非南开大学官方平台</view>
   </block>
   <view class="build-note">津ICP备2026009194号-3</view>
+  <view wx:if="{{announcementOpen && announcement}}" class="announcement-mask" catchtouchmove="noop">
+    <view class="announcement-dialog" role="dialog" aria-label="平台公告">
+      <view class="announcement-heading"><view><view class="announcement-eyebrow">NKUSTUDY · 同学共建</view><view class="announcement-title">平台公告</view></view><button class="announcement-close" bindtap="closeAnnouncement" aria-label="关闭公告">×</button></view>
+      <scroll-view scroll-y="{{true}}" class="announcement-body">
+        <text user-select="{{true}}"><block wx:for="{{announcement.parts}}" wx:key="id"><text wx:if="{{item.link}}" class="announcement-link" bindtap="openNkuCs" role="link">{{item.text}} ↗</text><text wx:else>{{item.text}}</text></block></text>
+      </scroll-view>
+      <view class="announcement-footnote">公告更新后会再次提醒，可随时从首页顶部查看。</view>
+      <button class="announcement-confirm" bindtap="closeAnnouncement">我知道了</button>
+    </view>
+  </view>
 </view>

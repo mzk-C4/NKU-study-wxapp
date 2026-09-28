@@ -1,20 +1,25 @@
 const { reportVisit } = require('../../utils/visit-report')
 const theme = require('../../utils/theme')
 const feedbackApi = require('../../utils/feedback-api')
+const authSession = require('../../utils/auth-session')
 
 const RESOURCE_TYPES = ['试卷', '笔记', '课件', '作业', '教材']
 const PLATFORMS = ['百度网盘', '夸克网盘', '阿里云盘', '腾讯微云', '蓝奏云', '123云盘', '其他']
 const DRAFT_KEY = 'nkustudy_resource_draft'
+const LIMITS = { courseName: 80, title: 100, type: 10, platform: 20, url: 500, code: 20, description: 500 }
+function cleanForm(value = {}) {
+  return Object.fromEntries(Object.entries(LIMITS).map(([key, limit]) => [key, typeof value[key] === 'string' ? value[key].slice(0, limit) : '']))
+}
 
 Page({
   onLoad(options) {
     reportVisit('/mp/submit-resource')
     this.restoreDraft()
     if (options && options.courseName) {
-      this.setData({ 'form.courseName': decodeURIComponent(options.courseName) })
+      try { this.setData({ 'form.courseName': decodeURIComponent(options.courseName).slice(0, 80) }) } catch (_) {}
     }
   },
-    onShow() { theme.onPageShow() },
+    onShow() { theme.onPageShow(); this.setData({ loggedIn: Boolean(authSession.readSession()) }) },
 
   data: {
     form: {
@@ -28,56 +33,51 @@ Page({
     },
     resourceTypes: RESOURCE_TYPES,
     platforms: PLATFORMS,
-    submitting: false
+    submitting: false,
+    loggedIn: false,
+    submitError: '',
+    submitted: false
   },
 
   onInput(event) {
+    if (this.data.submitting) return
     const field = event.currentTarget.dataset.field
-    this.setData({ ['form.' + field]: event.detail.value })
+    if (Object.prototype.hasOwnProperty.call(LIMITS, field)) this.setData({ ['form.' + field]: String(event.detail.value).slice(0, LIMITS[field]), submitError: '', submitted: false })
   },
 
   onTypeChange(event) {
-    this.setData({ 'form.type': this.data.resourceTypes[event.detail.value] })
+    if (this.data.submitting) return
+    const type = this.data.resourceTypes[Number(event.detail.value)]
+    if (type) this.setData({ 'form.type': type, submitted: false })
   },
 
   onPlatformChange(event) {
-    this.setData({ 'form.platform': this.data.platforms[event.detail.value] })
+    if (this.data.submitting) return
+    const platform = this.data.platforms[Number(event.detail.value)]
+    if (platform) this.setData({ 'form.platform': platform, submitted: false })
   },
 
   saveDraft() {
-    wx.setStorageSync(DRAFT_KEY, this.data.form)
-    wx.showToast({ title: '草稿已保存', icon: 'success' })
+    try { wx.setStorageSync(DRAFT_KEY, cleanForm(this.data.form)); wx.showToast({ title: '草稿已保存', icon: 'success' }); return true }
+    catch (_) { wx.showToast({ title: '草稿保存失败，请勿关闭页面', icon: 'none' }); return false }
   },
 
   restoreDraft() {
-    const draft = wx.getStorageSync(DRAFT_KEY)
-    if (draft) this.setData({ form: { ...this.data.form, ...draft } })
+    try { const draft = wx.getStorageSync(DRAFT_KEY); if (draft) this.setData({ form: cleanForm(draft) }) } catch (_) {}
   },
 
   validate() {
     const { form } = this.data
     if (!form.courseName.trim()) { wx.showToast({ title: '请输入课程名称', icon: 'none' }); return false }
     if (!form.title.trim()) { wx.showToast({ title: '请输入资料标题', icon: 'none' }); return false }
-    if (!form.type) { wx.showToast({ title: '请选择资料类型', icon: 'none' }); return false }
-    if (!form.platform) { wx.showToast({ title: '请选择网盘平台', icon: 'none' }); return false }
-    if (!form.url.trim()) { wx.showToast({ title: '请输入分享链接', icon: 'none' }); return false }
+    if (!RESOURCE_TYPES.includes(form.type)) { wx.showToast({ title: '请选择资料类型', icon: 'none' }); return false }
+    if (!PLATFORMS.includes(form.platform)) { wx.showToast({ title: '请选择网盘平台', icon: 'none' }); return false }
+    if (!/^https:\/\/[^\s/@?#]+\.[^\s/@?#]+(?:[/?#][^\s]*)?$/i.test(form.url.trim())) { wx.showToast({ title: '请填写完整的 HTTPS 分享链接', icon: 'none' }); return false }
     return true
   },
 
-  recordSubmission() {
-    const { form } = this.data
-    const submissions = wx.getStorageSync('nkustudy_submissions') || []
-    submissions.unshift({
-      id: 'local-' + Date.now(),
-      title: form.title.trim(),
-      type: form.type,
-      platform: form.platform,
-      url: form.url.trim(),
-      status: 'pending',
-      submitted_at: new Date().toLocaleString('zh-CN')
-    })
-    wx.setStorageSync('nkustudy_submissions', submissions.slice(0, 50))
-  },
+  goLogin() { if (!this.data.submitting && this.saveDraft()) wx.switchTab({ url: '/pages/profile/index' }) },
+  openFeedback() { wx.navigateTo({ url: '/pages/feedback/index' }) },
 
   buildFeedbackBody() {
     const { form } = this.data
@@ -99,29 +99,24 @@ Page({
   },
 
   async submit() {
-    if (!this.validate() || this.data.submitting) return
-    this.setData({ submitting: true })
+    if (this.data.submitting) return
+    if (!authSession.readSession()) { this.setData({ loggedIn: false, submitError: '请先到“我的”登录，再返回提交。表单内容不会清空。' }); return }
+    if (!this.validate()) return
+    this.setData({ submitting: true, submitError: '' })
     try {
       const response = await feedbackApi.submitFeedback(this.buildFeedbackBody())
       const body = response.data || {}
-      if (response.statusCode >= 400 || body.ok === false) {
-        throw new Error(body.error || '提交失败，请稍后重试')
+      if (response.statusCode === 401) { authSession.clearSession(); this.setData({ loggedIn: false }); throw new Error('登录已过期，请重新登录后提交。') }
+      if (response.statusCode === 403) throw new Error('暂时无法投稿，请到“我的”确认手机号已验证；若仍失败，请稍后重试。')
+      if (!Number.isInteger(response.statusCode) || response.statusCode < 200 || response.statusCode >= 300 || body.ok !== true) {
+        throw new Error(response.statusCode === 429 ? '提交太频繁，请稍后重试。' : '未确认提交成功，请稍后重试。')
       }
-      this.recordSubmission()
-      wx.removeStorageSync(DRAFT_KEY)
-      wx.showModal({
-        title: '投稿已提交',
-        content: '资料已进入审核队列，管理员通过后会发布到对应课程的资料页，可在「我的-资料投稿」查看进度。',
-        showCancel: false,
-        success: () => {
-          this.setData({ submitting: false })
-          wx.navigateTo({ url: '/pages/submission-status/index' })
-        }
-      })
+      try { wx.removeStorageSync(DRAFT_KEY) } catch (_) {}
+      this.setData({ submitted: true, form: cleanForm() })
     } catch (error) {
-      // 网络异常时本地暂存草稿内容，避免投稿信息丢失
-      wx.showToast({ title: (error.message || '网络异常') + '，请稍后重试', icon: 'none' })
-      this.setData({ submitting: false })
-    }
+      let saved = false
+      try { wx.setStorageSync(DRAFT_KEY, cleanForm(this.data.form)); saved = true } catch (_) {}
+      this.setData({ submitError: (error.message || '网络异常，请稍后重试。') + (saved ? ' 草稿已保存。' : ' 请勿关闭本页，表单仍保留。') })
+    } finally { this.setData({ submitting: false }) }
   }
 })

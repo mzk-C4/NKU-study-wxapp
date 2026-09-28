@@ -50,6 +50,7 @@ function createProfilePage(api = publicApi, sessionStore = authSession) {
     data: {
       user: null,
       userInitial: 'N',
+      avatarFailed: false,
       isLoggedIn: false,
       history: [],
       phoneVerified: false,
@@ -61,7 +62,7 @@ function createProfilePage(api = publicApi, sessionStore = authSession) {
       contentLoading: false,
       contentError: '',
       favoriteLabel: '登录后查看',
-      submissionLabel: '网站投稿',
+      submissionLabel: '前往网站投稿',
       reviewLabel: '登录后查看',
       editingProfile: false,
       nicknameDraft: '',
@@ -185,8 +186,9 @@ function createProfilePage(api = publicApi, sessionStore = authSession) {
 
     resetLoggedOut(history) {
       this.setData({
-        user: null,
-        userInitial: 'N',
+          user: null,
+          userInitial: 'N',
+          avatarFailed: false,
         isLoggedIn: false,
         history, phoneVerified: false,
         favorites: [],
@@ -212,6 +214,7 @@ function createProfilePage(api = publicApi, sessionStore = authSession) {
       const storedUser = stored.user || {}
       this.setData({
         user: storedUser,
+        avatarFailed: false,
         userInitial: (storedUser.nickname || 'N').slice(0, 1),
         isLoggedIn: true,
         history,
@@ -305,6 +308,7 @@ function createProfilePage(api = publicApi, sessionStore = authSession) {
     startEditProfile() {
       this.setData({ editingProfile: true, nicknameDraft: this.data.user?.nickname || '' })
     },
+    avatarError() { this.setData({ avatarFailed: true }) },
     closeEditProfile() { if (!this.data.profileSaving) this.setData({ editingProfile: false }) },
     inputNickname(event) { this.setData({ nicknameDraft: event.detail.value }) },
     async saveProfile() {
@@ -343,7 +347,7 @@ function createProfilePage(api = publicApi, sessionStore = authSession) {
     },
 
     openFeedback() { wx.navigateTo({ url: '/pages/feedback/index' }) },
-    openDonate() { wx.navigateTo({ url: '/pages/donate/index' }) },
+    openWebsite() { wx.navigateTo({ url: '/pages/donate/index' }) },
     openAbout() { wx.navigateTo({ url: '/pages/about/index' }) },
     noop() {},
     confirmDeleteAccount() {

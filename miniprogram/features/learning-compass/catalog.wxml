@@ -34,7 +34,6 @@
     </button>
   </view>
   <button class="catalog-more" wx:if="{{hasMore}}" bindtap="onReachBottom">加载更多</button>
-  <button class="catalog-ask" wx:if="{{query && !loading}}" bindtap="askAssistant">带着这个问题，问问学习和生活指南针 ›</button>
   <view class="catalog-footnote">搜索范围为指南标题、摘要和 PDF 介绍，不包含 PDF 全文。学生经验不代表学校规定。</view>
 </view>
 

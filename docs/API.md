@@ -25,7 +25,6 @@
 | GET | `/guides` | 指南分类、列表和分页 |
 | GET | `/guides/{guideId}` | 指南详情、相关课程、来源和纠错入口 |
 | GET | `/guides/{guideId}/variants/{variantId}` | 转专业等多学院指南的学院正文与来源 |
-| POST | `/guide-assistant/answers` | 需要 Bearer Token 的学习指南针 AI 问答 |
 | GET | `/courses` | 课程列表、搜索、筛选和分页 |
 | GET | `/courses/{courseUid}` | 课程详情 |
 | GET | `/courses/{courseUid}/resources` | 课程资源与 R2 下载地址 |
@@ -42,11 +41,13 @@
 | POST | `/me/delete-account` | 注销当前账号绑定关系 |
 | POST | `/favorites` | 收藏课程 |
 | DELETE | `/favorites/{courseUid}` | 取消收藏课程 |
-| POST | `/reviews` | 按课程 ID、目录课程 ID 或历史课程名匿名投稿，进入现有审核队列 |
+| POST | `/reviews` | 强制登录后按课程 ID、目录课程 ID 或历史课程名投稿；用户已确认生产鉴权部署，真机待验收 |
 
 所有动态路径参数必须 URL 编码。通用业务页面通过 `miniprogram/services/public-api.js` 调用公开接口；学习指南针通过 feature-local 的 `miniprogram/features/learning-compass/api.js` 调用指南接口，两者都复用统一请求层与认证会话。
 
-### 学习指南针生产契约
+### 学习指南针 AI 历史契约（当前客户端已停用）
+
+2026-09-26：按用户要求移除 AI 工具。指南首页与目录搜索不再提供 AI 入口，AI 页面不再注册且已加入打包排除规则；`askGuideAssistant` 在所有环境本地返回 `FEATURE_REMOVED`，不发起网络请求。以下 AI 请求/响应说明仅为历史参考，不代表当前可用功能；普通指南、学院 variant 和来源原件接口不变。本轮没有关闭或修改网站生产后端服务。
 
 生产已提供五分类指南、学院 variant、R2 原件和 AI 回答接口。AI 请求为：
 
@@ -83,7 +84,7 @@
   "rating": 5,
   "tags": ["网站已有评价标签"],
   "body": "评价正文",
-  "anonymous": true
+  "anonymous": false
 }
 ```
 
@@ -91,9 +92,17 @@
 
 评价只使用单一 `rating`、`body` 和 `tags`，不恢复旧多维评分。
 
+2026-09-26 评价登录整改：小程序页面进入、重新显示和提交时检查有效会话；`submitReview` 使用 `auth: 'required'`，缺失或过期 Token 时不发出请求。客户端固定发送 `anonymous: false`，不再提供匿名开关；401 清除会话并要求重新登录，不自动重发评价。
+
+**服务端强制要求（待当前生产 owner 核验，非已上线声明）**：`POST /reviews` 必须在任何入队/落盘之前验证 Token，缺失、无效、过期或撤销的 Token 返回 401；用户 ID 只能从服务端认证会话取得，不信任正文提供的身份。认证服务不可用时必须拒绝写入，不能降级为匿名。`anonymous: false` 不是认证手段，也不保证后端已支持公开昵称展示。本机旧网站源码快照允许 `userId: authUser?.id || null`，并未传递 anonymous 字段到写入服务；它不能证明当前线上行为，需在后端测试环境补齐并验证后再提交审核。
+
+2026-09-27 核验更新（覆盖前述旧快照疑虑）：公开后端 main 提交 `6352c94b892615fbb4145d4683ec4e5dc29d3783` 的 `server/public-api-router.mjs:335–350` 已对评价请求强制检查有效登录身份，未登录返回 401，并在 `isPhoneVerified` 方法存在时拒绝未验证手机号的账号（403 `PHONE_VERIFY_REQUIRED`）。作者 ID 从会话取得。已确认源码实现，不代表已确认当前生产部署或通过真机投稿测试。
+
 ## 微信登录与个人数据
 
-个人主体小程序不使用手机号授权。客户端调用 `wx.login()` 获取一次性 code，再提交 `{ "code": "..." }` 到 `/auth/wechat`。服务器返回：
+2026-09-27 部署状态补充：用户确认线上已部署上节所述评价登录校验逻辑；这属于用户提供的部署确认，不代表助手已实测生产投稿、核对精确部署提交或完成微信审核。
+
+微信登录本身使用 `wx.login()` 获取一次性 code，再提交 `{ "code": "..." }` 到 `/auth/wechat`，不把手机号授权当作登录。当前客户端另有手机号验证入口，公开后端源码也对评价发布设置了手机号验证检查，原“个人主体不使用手机号授权”的描述已过时；是否可用需结合当前主体配置和真机核验。服务器登录返回：
 
 ```json
 { "token": "...", "expires_in": 2592000, "user": { "id": 1, "nickname": "", "avatar_url": "" } }
@@ -101,7 +110,7 @@
 
 Token 仅保存于微信本地存储，受保护请求使用 `Authorization: Bearer <token>`；过期或收到 401 时立即清除。openid 与 AppSecret 不进入响应、日志或客户端仓库。昵称最多 32 字符，头像只接受公开 HTTPS 地址。
 
-`GET /me/favorites` 与 `GET /me/reviews` 使用 `page/page_size`，`page_size` 不超过 100。收藏正文为 `{ "course_id": "immutable-course-uuid" }`。已登录用户提交评价时携带可选 Token，因此公开内容仍匿名，但可在“我的评价”查看审核状态。
+`GET /me/favorites` 与 `GET /me/reviews` 使用 `page/page_size`，`page_size` 不超过 100。收藏正文为 `{ "course_id": "immutable-course-uuid" }`。当前小程序提交评价必须携带 Token，可在“我的评价”查看审核状态。公开作者展示方式仍由后端公开 DTO 决定，不得公开手机号、学号、OpenID 或 Token。
 
 ## 四类搜索
 
@@ -151,7 +160,23 @@ Fuse 权重为 `name 0.30 / short_name 0.20 / aliases 0.15 / tags 0.15 / teacher
 
 `download_url` 只接受 HTTPS 且主机严格等于 `resources.nkustudy.top`。客户端不拼接 `basePath`、内部文件路径或 R2 地址。
 
-## 公开站点访问统计
+2026-09-27 客户端下载处理：课程资源使用 120 秒超时，显示进度并阻止重复下载；仅 PDF、DOC/DOCX、XLS/XLSX、PPT/PPTX 调用 `openDocument`。其他格式或预览失败时，由用户选择 `shareFileMessage` 转发文件或复制原始下载链接；不再调用 `saveFile` 后声称能从微信文件管理中找到文件。已知大小超过微信单次 200MB 上限时直接提供浏览器下载提示；老版本微信、网络失败也保留显式复制链接出口。依据：[downloadFile](https://developers.weixin.qq.com/miniprogram/dev/api/network/download/wx.downloadFile.html)、[openDocument](https://developers.weixin.qq.com/miniprogram/dev/api/file/wx.openDocument.html)、[shareFileMessage](https://developers.weixin.qq.com/miniprogram/dev/api/share/wx.shareFileMessage.html)。
+
+`downloadFile` 合法域名必须配置 `https://resources.nkustudy.top`，不是 `web-view` 的业务域名，也不能只配置 `https://nkustudy.top`。本轮未修改后台配置或关闭合法域名校验；网站可下载不能代替小程序真机验收。指南原件的 source-opener 流程本轮未改。
+
+## 资料投稿、原生反馈与公告（2026-09-28，2.0.1 要求修正）
+
+- 用户澄清：资料投稿仍由网站完成，只有意见反馈在小程序内提交。“我的 → 资料投稿”打开固定 `https://nkustudy.top/participate/` 的 web-view；原生 `submit-resource` 页已取消注册并排除打包，源码与本机已有草稿不删除。真机打开网站仍需 nkustudy.top 业务域名配置。
+- 模拟器补验实际出现“不支持打开该网页”，参与页已增加加载错误后的固定链接复制、手动选择和重试入口，并实看回退界面；该回退不代表域名已放行，网站投稿仍由用户在网站完成。
+- “我的 → 意见反馈”继续进入原生 `feedback` 页，通过既有 `POST https://nkustudy.top/feedback-api/submit` 提交标题、正文、类型、可选联系方式与投诉上下文；使用既有会话凭证，鉴权与手机号验证由服务端执行。保留公开反馈、本人反馈及管理员回复；本轮不改变该接口或提交逻辑，不向生产发送测试内容。
+- 后续反馈可靠性补验：重新读取公开后端 `handleFeedbackSubmit`，确认成功正文为 `{ok:true}`。原生反馈页现要求整数 2xx 状态码且 `ok === true` 才清空表单；异常响应、401/403/429 及网络失败保留本页内容，使用受控提示，不直出服务端内部错误。提交期间锁定输入与类型、防重复；网络结果不确定时提示先核对“我的反馈”，不自动重发。链接预填容忍错误 URL 编码并限制长度。未改变接口、登录和服务端验证规则，未进行真实生产写入。
+- 首页继续读取 `/home` 的 `announcement` 字符串；以完整正文作为已读版本，关闭后仅在内容变化时再次弹窗。首页顶部保留入口；应用从后台恢复且停留在非首页时通过原生弹窗提醒，可选择留在原页面或查看首页全文。
+- 分享链接冷启动直达非首页时使用 App 入口 path 启动公告检查，等待页面挂载后再提示（最多 20 次、100ms 间隔的本地检查，不重复请求网络）。进入后台取消等待，前后台轮次标识阻止过期请求显示旧公告；未能及时挂载时不阻塞页面，后续恢复/进入首页可再次检查。
+- 公告只为已知 `NKUCS.ICU` 文本绑定固定 `https://nkucs.icu/#/?id=nkucsicu`，不执行任意远程 HTML 或导航。web-view 真机需要 `nkucs.icu` 业务域名配置与对方校验文件，目前未确认；加载失败提供复制原链接提示。
+- 微信头像：本轮仅完成圆形样式与已有服务端 `avatar_url` 的显示及加载失败回退。微信 `chooseAvatar` 返回临时本地路径，现有 `/me/profile` 只接受 HTTPS URL，公开后端尚未发现普通用户头像上传接口。**一键选择并持久化头像仍未实现，不把临时预览、本地保存或管理员图片上传当作完成。**
+- 待后端提供头像上传契约：须使用有效 Bearer Token、校验真实图片内容和尺寸/大小、内容安全检查、仅修改本人头像，并返回可持久访问的 HTTPS 地址或更新后的 user。路由、multipart 字段、限制、错误码及是否自动更新用户应由后端 owner 确认后再接入；不要把密钥或管理接口交给客户端。
+
+## 公开站点访问统计（接口）
 
 首页通过独立于 `/api/v1` 的公开站点统计接口展示运行时长与累计访问量：
 
@@ -161,6 +186,8 @@ Fuse 权重为 `name 0.30 / short_name 0.20 / aliases 0.15 / tags 0.15 / teacher
 统计请求不携带 Token、OpenID 或设备标识，失败时静默降级，不得阻塞首页业务内容。生产接口尚未返回 `startedAt` 时，客户端使用已核验的网站启用时间兼容展示；字段上线后以服务端值为准。
 
 ## 明确不调用
+
+2026-09-27：按用户要求移除小程序内的打赏、赞助与支付功能。客户端已删除捐助数据读取和支付下单方法，不再调用 `GET /donate` 或 `POST /donate/pay`，仅提供固定网站首页链接复制入口；网站端接口和数据未修改。
 
 仍不调用：
 

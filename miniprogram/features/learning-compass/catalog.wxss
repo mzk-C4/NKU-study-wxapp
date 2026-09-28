@@ -20,7 +20,7 @@
 .catalog-badge--pdf { background: #FAF1DA; color: #947426; }
 .catalog-arrow { color: #67358A; font-size: 34rpx; }
 .catalog-warning { border-radius: 16rpx; padding: 20rpx; color: #785C22; background: #FFF5DF; font-size: 24rpx; }
-.catalog-warning button,.catalog-more,.catalog-ask { font-size: 24rpx; color: #4B1F6F; background: #F5EFF9; border-radius: 18rpx; margin-top: 16rpx; white-space: normal; }
+.catalog-warning button,.catalog-more { font-size: 24rpx; color: #4B1F6F; background: #F5EFF9; border-radius: 18rpx; margin-top: 16rpx; white-space: normal; }
 .catalog-page button::after { border: 0; }
 @media (prefers-color-scheme: dark) {
   .catalog-page { background: #1D1722; }

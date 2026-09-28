@@ -1,0 +1,20 @@
+<view class="page">
+  <view class="document-kicker">外部文档 · 保留原文</view>
+  <view class="document-title">NKU 计网 软件 人智大类生存手册</view>
+  <view class="document-intro">这里保留飞书原文入口，不复制正文。内容更新与访问权限由原文维护者管理。</view>
+  <view class="notice section">感谢参与本手册编写、整理与持续完善的各位学长！编写者署名与内容更新请以飞书原文为准。</view>
+  <view class="card section">
+    <view class="document-label">原文链接</view>
+    <text class="document-url" user-select="{{true}}">{{documentUrl}}</text>
+    <button class="button button--primary document-copy" bindtap="copyLink" loading="{{copying}}" disabled="{{copying}}">{{copied ? '再次复制链接' : '复制原文链接'}}</button>
+    <view class="document-success" wx:if="{{copied}}">链接已复制，请粘贴到浏览器中打开。</view>
+    <view class="document-error" wx:if="{{copyError}}">{{copyError}}</view>
+  </view>
+  <view class="section document-help">
+    <view class="document-label">打开说明</view>
+    <view>1. 点击上方按钮复制原文链接。</view>
+    <view>2. 在浏览器地址栏粘贴并打开。</view>
+    <view>3. 如需登录或申请权限，请按照飞书页面提示操作。</view>
+  </view>
+  <view class="document-footnote">当前入口不在小程序内嵌打开飞书网页，也不会自动获得原文访问权限。</view>
+</view>

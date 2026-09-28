@@ -1,0 +1,10 @@
+<view class="page beta-page">
+  <view class="beta-kicker">NKUSTUDY · 学生共建</view>
+  <view class="beta-title">一起把它变得更好</view>
+  <view class="beta-intro">体验新功能、反馈使用问题，和同学一起完善 NKUStudy。</view>
+  <image class="beta-poster" src="{{image}}" mode="widthFix" show-menu-by-longpress="{{true}}" bindtap="preview" aria-label="NK study 内测群原始飞书二维码，点击查看大图"></image>
+  <view class="beta-note">这是飞书群，不是微信群。原码仅限组织内部成员加入，请使用所属组织的飞书账号识别；微信不能直接扫码入群。</view>
+  <button class="button button--primary" bindtap="preview">查看原图 / 保存二维码</button>
+  <view class="beta-help">打开大图后长按保存，再到飞书扫一扫，从相册选择图片。</view>
+  <view wx:if="{{error}}" class="beta-help" aria-live="assertive">{{error}}</view>
+</view>

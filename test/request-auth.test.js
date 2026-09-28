@@ -28,9 +28,9 @@ test('required authentication fails before a network request when logged out', a
   assert.equal(lastRequest, null)
 })
 
-test('optional authentication attaches the stored bearer token', async () => {
+test('optional authentication attaches the stored bearer token on browsing', async () => {
   authSession.saveSession({ token, expires_in: 60, user: { id: 1 } })
-  await request.post('/reviews', { body: 'test' }, { auth: 'optional' })
+  await request.get('/review-groups', undefined, { auth: 'optional' })
   assert.equal(lastRequest.header.authorization, `Bearer ${token}`)
 })
 
@@ -38,5 +38,26 @@ test('a 401 response clears the rejected local session', async () => {
   authSession.saveSession({ token, expires_in: 60, user: { id: 1 } })
   response = { statusCode: 401, data: { code: 'AUTH_REQUIRED', message: '请先登录。' } }
   await assert.rejects(request.get('/me', undefined, { auth: 'required' }), error => error.statusCode === 401)
+  assert.equal(authSession.readSession(), null)
+})
+
+test('review API rejects missing and expired sessions before any network call', async () => {
+  const { publicApi } = require('../miniprogram/services/public-api')
+  for (const stored of [null, { token, expires_at: Date.now() - 1, user: { id: 1 } }]) {
+    if (stored) storage.set(authSession.STORAGE_KEY, stored)
+    await assert.rejects(publicApi.submitReview({ course_id: 'test', body: 'test' }), error => error.code === 'AUTH_REQUIRED')
+    assert.equal(lastRequest, null)
+  }
+})
+
+test('review API requires a bearer token, forces non-anonymous payload and clears rejected session', async () => {
+  const { publicApi } = require('../miniprogram/services/public-api')
+  authSession.saveSession({ token, expires_in: 60, user: { id: 1 } })
+  await publicApi.submitReview({ course_id: 'test', body: 'test', anonymous: true })
+  assert.equal(lastRequest.method, 'POST')
+  assert.equal(lastRequest.header.authorization, `Bearer ${token}`)
+  assert.equal(lastRequest.data.anonymous, false)
+  response = { statusCode: 401, data: { code: 'AUTH_REQUIRED' } }
+  await assert.rejects(publicApi.submitReview({ body: 'test' }), error => error.statusCode === 401)
   assert.equal(authSession.readSession(), null)
 })

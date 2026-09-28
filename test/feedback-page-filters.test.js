@@ -15,6 +15,28 @@ function freshPage() {
   return instance
 }
 
+test('native feedback submits the form through the feedback API without website navigation', async () => {
+  const instance = freshPage()
+  const feedbackApi = require('../miniprogram/utils/feedback-api')
+  const originalSubmit = feedbackApi.submitFeedback
+  const originalWx = global.wx
+  let payload, refreshed = false
+  feedbackApi.submitFeedback = async data => { payload = data; return { statusCode: 200, data: { ok: true } } }
+  global.wx = { showToast() {}, navigateTo() { throw new Error('feedback must stay native') } }
+  instance.loadFeedback = async () => { refreshed = true }
+  instance.setData({ title: ' 界面建议 ', content: ' 希望优化提示 ', contact: '', type: 'feature' })
+  try {
+    await instance.submit()
+    assert.deepEqual(payload, { title: '界面建议', content: '希望优化提示', contact: '', type: 'feature' })
+    assert.equal(refreshed, true)
+    assert.equal(instance.data.submitting, false)
+    assert.equal(instance.data.content, '')
+  } finally {
+    feedbackApi.submitFeedback = originalSubmit
+    global.wx = originalWx
+  }
+})
+
 test('applyFilters searches title/content/reply and filters by status', () => {
   const instance = freshPage()
   instance.setData({
@@ -38,6 +60,88 @@ test('applyFilters searches title/content/reply and filters by status', () => {
   instance.setData({ filterStatus: 'open' })
   instance.applyFilters()
   assert.deepEqual(instance.data.visibleFeedbacks.map(item => item.id), ['2', '3'])
+})
+
+test('feedback rejects malformed and denied responses without clearing form or leaking errors', async () => {
+  const feedbackApi = require('../miniprogram/utils/feedback-api')
+  const originalSubmit = feedbackApi.submitFeedback
+  const originalWx = global.wx
+  let successes = 0
+  global.wx = { showToast(value) { if (value.icon === 'success') successes++ } }
+  try {
+    for (const result of [null, {}, { statusCode: '200', data: { ok: true } },
+      { statusCode: 200, data: { ok: false } }, { statusCode: 200, data: '<html>error</html>' },
+      ...[302, 400, 401, 403, 429, 500].map(statusCode => ({ statusCode, data: { ok: true, error: 'internal-private-path' } }))]) {
+      const instance = freshPage()
+      const draft = { title: '标题', content: '反馈的内容', contact: '联系方式', reportUrl: 'https://example.com', reportTarget: '目标' }
+      instance.setData(draft)
+      instance.loadFeedback = async () => { throw new Error('must not refresh on failure') }
+      feedbackApi.submitFeedback = async () => result
+      await instance.submit()
+      for (const [field, value] of Object.entries(draft)) assert.equal(instance.data[field], value)
+      assert.equal(instance.data.submitting, false)
+      assert.ok(instance.data.submitError)
+      assert.doesNotMatch(instance.data.submitError, /internal-private-path/)
+    }
+    assert.equal(successes, 0)
+  } finally { feedbackApi.submitFeedback = originalSubmit; global.wx = originalWx }
+})
+
+test('feedback locks all draft fields and blocks duplicate submissions while awaiting response', async () => {
+  const feedbackApi = require('../miniprogram/utils/feedback-api')
+  const originalSubmit = feedbackApi.submitFeedback
+  const originalWx = global.wx
+  let resolve, calls = 0
+  feedbackApi.submitFeedback = () => { calls++; return new Promise(done => { resolve = done }) }
+  global.wx = { showToast() {} }
+  try {
+    const instance = freshPage()
+    const draft = { title: '投诉标题', content: '投诉内容', contact: '联系', type: 'report', reportUrl: 'https://example.com', reportTarget: '目标' }
+    instance.setData(draft)
+    instance.loadFeedback = async () => {}
+    const pending = instance.submit()
+    for (const method of ['inputTitle', 'inputContent', 'inputContact', 'inputReportUrl', 'inputReportTarget']) instance[method]({ detail: { value: '新编辑' } })
+    instance.chooseType({ currentTarget: { dataset: { value: 'bug' } } })
+    await instance.submit()
+    assert.equal(calls, 1)
+    for (const [field, value] of Object.entries(draft)) assert.equal(instance.data[field], value)
+    resolve({ statusCode: 200, data: { ok: true } })
+    await pending
+    for (const field of ['title', 'content', 'contact', 'reportUrl', 'reportTarget']) assert.equal(instance.data[field], '')
+    assert.equal(instance.data.submitting, false)
+  } finally { feedbackApi.submitFeedback = originalSubmit; global.wx = originalWx }
+})
+
+test('feedback keeps content after network errors and allows deliberate retry', async () => {
+  const feedbackApi = require('../miniprogram/utils/feedback-api')
+  const originalSubmit = feedbackApi.submitFeedback
+  const originalWx = global.wx
+  global.wx = { showToast() {} }
+  try {
+    const instance = freshPage()
+    instance.setData({ title: '建议', content: '建议的内容' })
+    feedbackApi.submitFeedback = async () => { throw new Error('private diagnostic') }
+    await instance.submit()
+    assert.equal(instance.data.content, '建议的内容')
+    assert.equal(instance.data.submitting, false)
+    assert.match(instance.data.submitError, /网络异常/)
+    assert.doesNotMatch(instance.data.submitError, /private diagnostic/)
+    instance.inputContent({ detail: { value: '补充建议' } })
+    assert.equal(instance.data.submitError, '')
+    instance.loadFeedback = async () => {}
+    feedbackApi.submitFeedback = async () => ({ statusCode: 200, data: { ok: true } })
+    await instance.submit()
+    assert.equal(instance.data.content, '')
+  } finally { feedbackApi.submitFeedback = originalSubmit; global.wx = originalWx }
+})
+
+test('feedback prefill tolerates malformed encoding and bounds deep-link content', () => {
+  const instance = freshPage()
+  instance.loadFeedback = async () => {}
+  instance.onLoad({ prefill_title: '%E0%A4%A', prefill_content: encodeURIComponent('字'.repeat(2100)) })
+  assert.equal(instance.data.title, '%E0%A4%A')
+  assert.equal(instance.data.content.length, 2000)
+  assert.equal(instance.data.type, 'content')
 })
 
 test('loadFeedback merges own feedback (middle) with public feedback (bottom) when logged in', async () => {

@@ -135,12 +135,17 @@ async function loadSearchData(api) {
 
 function createWriteReviewPage(api = publicApi) {
   return {
-    onShow() { theme.onPageShow() },
+    onShow() {
+      theme.onPageShow()
+      const wasLoggedIn = this.data.isLoggedIn
+      if (this.checkLogin() && !wasLoggedIn && !this.data.loading && !this.data.course) this.prepare()
+    },
   data: {
     courseId: '', loading: true, submitting: false, course: null,
     error: '',
     teacher: '', scoreOptions: [1, 2, 3, 4, 5], rating: 0,
-    body: '', anonymous: true,
+    body: '', isLoggedIn: false,
+    loginMessage: '发表评价必须先使用微信登录，浏览评价无需登录。',
     minLength: 12, moderationRequired: true,
     pickerMode: false, pickerKeyword: '', pickerEntries: [], pickerFiltered: [],
     isGroupMode: false, isCatalogMode: false, groupCourseTitle: '', catalogCourseId: '', teacherOptions: []
@@ -154,17 +159,19 @@ function createWriteReviewPage(api = publicApi) {
     })
     this.prepare()
   },
+  checkLogin() {
+    const isLoggedIn = Boolean(authSession.getToken())
+    this.setData(isLoggedIn ? { isLoggedIn: true } : { isLoggedIn: false, loading: false, error: '' })
+    return isLoggedIn
+  },
+  goLogin() {
+    wx.switchTab({
+      url: '/pages/profile/index',
+      fail: () => wx.showToast({ title: '无法打开登录页，请稍后重试', icon: 'none' })
+    })
+  },
   async prepare() {
-    if (!authSession.getToken()) {
-      wx.showModal({
-        title: '需要先登录',
-        content: '写评价需要先登录，登录后即可提交评价。',
-        confirmText: '去登录',
-        success: () => wx.switchTab({ url: '/pages/profile/index' }),
-        fail: () => wx.navigateBack()
-      })
-      return
-    }
+    if (!this.checkLogin()) return
     this.setData({ loading: true, error: '' })
     try {
       const home = await (typeof api.getHome === 'function' ? api.getHome().catch(() => null) : Promise.resolve(null))
@@ -253,16 +260,18 @@ function createWriteReviewPage(api = publicApi) {
   chooseTeacher(event) { this.setData({ teacher: event.currentTarget.dataset.teacher }) },
   setRating(event) { this.setData({ rating: Number(event.currentTarget.dataset.score) }) },
   inputBody(event) { this.setData({ body: event.detail.value }) },
-  toggleAnonymous(event) { this.setData({ anonymous: event.detail.value }) },
   async submit() {
-    const { course, isGroupMode, groupCourseTitle, teacher, rating, body, anonymous, minLength } = this.data
+    if (this.data.submitting) return
+    if (!this.checkLogin()) return
+    if (this.data.loading || this.data.error || !this.data.course) return
+    const { course, isGroupMode, groupCourseTitle, teacher, rating, body, minLength } = this.data
     if (!teacher.trim() || !rating || body.trim().length < minLength) {
       wx.showToast({ title: `请填写教师、完成评分并填写至少 ${minLength} 字`, icon: 'none' })
       return
     }
     this.setData({ submitting: true })
     try {
-      const base = { teacher: teacher.trim(), rating, body: body.trim(), anonymous }
+      const base = { teacher: teacher.trim(), rating, body: body.trim(), anonymous: false }
       const payload = this.data.isCatalogMode && this.data.catalogCourseId
         ? { catalog_course_id: this.data.catalogCourseId, ...base }
         : isGroupMode
@@ -270,10 +279,16 @@ function createWriteReviewPage(api = publicApi) {
           : { course_id: course.id, ...base }
       await api.submitReview(payload)
       const content = this.data.moderationRequired
-        ? '评价已进入审核，通过后将公开展示，公开页面保持匿名。'
-        : '评价已提交并公开展示，公开页面保持匿名。'
+        ? '评价已进入审核，通过后将公开展示。可在“我的评价”查看处理状态。'
+        : '评价已提交。可在“我的评价”查看处理状态。'
       wx.showModal({ title: '提交成功', content, showCancel: false, success: () => wx.navigateBack() })
     } catch (error) {
+      if (error.statusCode === 401 || error.code === 'AUTH_REQUIRED') {
+        authSession.clearSession()
+        this.checkLogin()
+        this.setData({ loginMessage: '登录状态已失效，请重新微信登录后再提交评价。' })
+        return
+      }
       wx.showToast({ title: error.message, icon: 'none' })
     } finally {
       this.setData({ submitting: false })

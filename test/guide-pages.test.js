@@ -214,7 +214,7 @@ test('guide home implements the approved Learning Compass visual contract', asyn
   const template=fs.readFileSync(path.join(projectRoot,'miniprogram/pages/guides/index.wxml'),'utf8')
   const styles=fs.readFileSync(path.join(projectRoot,'miniprogram/pages/guides/index.wxss'),'utf8')
   assert.match(template,/src="\/assets\/brand\.png"/)
-  assert.match(template,/学习和生活指南针/)
+  assert.doesNotMatch(template,/学习和生活指南针|assistant-card/)
   assert.match(template,/PDF 学生资料/)
   assert.match(template,/bindtap="openDocuments"/)
   assert.doesNotMatch(template,/近期更新|wx:for="{{pdfDocuments}}"/)
@@ -236,13 +236,14 @@ test('guide PDF cards download and open only the selected trusted document', asy
   assert.equal(await page.openItem({currentTarget:{dataset:{key:'unknown'}}}),false)
 })
 
-test('guide home search, category and AI controls have honest recoverable behavior', async t => {
+test('guide home retains search, categories and PDF without an AI entry', async t => {
   const routes=[]
   installWx(t,{navigateTo(o){routes.push(o.url)},getNetworkType(){assert.fail('entry must not probe network')}})
   const page=createPage(guidesDefinition)
-  page.openSearch();page.openHomeCategory({currentTarget:{dataset:{value:'study'}}});page.openDocuments();page.openAssistant()
+  page.openSearch();page.openHomeCategory({currentTarget:{dataset:{value:'study'}}});page.openDocuments()
+  assert.equal(page.openAssistant, undefined)
   assert.equal(page.data.activeHomeCategory,'study')
-  assert.deepEqual(routes,['/pages/guide-search/index?q=','/pages/guide-category/index?category=study','/pages/guide-documents/index','/pages/guide-assistant/index'])
+  assert.deepEqual(routes,['/pages/guide-search/index?q=','/pages/guide-category/index?category=study','/pages/guide-documents/index'])
 })
 
 test('concurrent catalog retries are latest-request-wins and stale errors stay silent', async t => {

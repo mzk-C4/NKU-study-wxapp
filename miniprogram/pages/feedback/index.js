@@ -14,9 +14,22 @@ function beijingDateLabel(value) {
   return year + '-' + month + '-' + day
 }
 
+function decodePrefill(value, limit) {
+  const text = typeof value === 'string' ? value : ''
+  try { return decodeURIComponent(text).slice(0, limit) } catch (_) { return text.slice(0, limit) }
+}
+
+function submitFailure(status) {
+  if (status === 401) return '请到“我的”重新登录后提交，已填写的内容仍保留在本页。'
+  if (status === 403) return '暂时无法提交，请确认账号已完成手机号验证；也可能是反馈提交暂未开放。'
+  if (status === 400) return '请检查标题，并补充更完整的反馈内容。'
+  if (status === 429) return '提交太频繁，请稍后再试。'
+  return '未确认提交成功，内容仍保留。请先查看“我的反馈”，确认没有收到后再重试。'
+}
+
 Page({
   data: {
-    loading: true, error: '', submitting: false, loggedIn: false,
+    loading: true, error: '', submitting: false, submitError: '', loggedIn: false,
     feedbacks: [], visibleFeedbacks: [], myFeedbacks: [], searchKeyword: '', title: '', content: '', contact: '',
     type: 'bug', typeOptions: [
       { value: 'bug', label: 'Bug' },
@@ -35,8 +48,8 @@ Page({
     ]
   },
   onLoad(options = {}) {
-    const prefillTitle = decodeURIComponent(String(options.prefill_title || '')).slice(0, 120)
-    const prefillContent = decodeURIComponent(String(options.prefill_content || '')).slice(0, 2000)
+    const prefillTitle = decodePrefill(options.prefill_title, 120)
+    const prefillContent = decodePrefill(options.prefill_content, 2000)
     this.setData({
       ...(prefillTitle ? { title: prefillTitle, type: 'content' } : {}),
       ...(prefillContent ? { content: prefillContent } : {})
@@ -82,31 +95,36 @@ Page({
     })
     this.setData({ visibleFeedbacks: list })
   },
-  inputTitle(e) { this.setData({ title: e.detail.value }) },
-  inputReportUrl(e) { this.setData({ reportUrl: e.detail.value }) },
-  inputReportTarget(e) { this.setData({ reportTarget: e.detail.value }) },
-  inputContent(e) { this.setData({ content: e.detail.value }) },
-  inputContact(e) { this.setData({ contact: e.detail.value }) },
-  chooseType(e) { this.setData({ type: e.currentTarget.dataset.value }) },
+  inputTitle(e) { if (!this.data.submitting) this.setData({ title: String(e.detail.value || '').slice(0, 120), submitError: '' }) },
+  inputReportUrl(e) { if (!this.data.submitting) this.setData({ reportUrl: String(e.detail.value || '').slice(0, 300), submitError: '' }) },
+  inputReportTarget(e) { if (!this.data.submitting) this.setData({ reportTarget: String(e.detail.value || '').slice(0, 120), submitError: '' }) },
+  inputContent(e) { if (!this.data.submitting) this.setData({ content: String(e.detail.value || '').slice(0, 2000), submitError: '' }) },
+  inputContact(e) { if (!this.data.submitting) this.setData({ contact: String(e.detail.value || '').slice(0, 120), submitError: '' }) },
+  chooseType(e) {
+    const type = e.currentTarget.dataset.value
+    if (!this.data.submitting && this.data.typeOptions.some(option => option.value === type)) this.setData({ type, submitError: '' })
+  },
   chooseStatus(e) { this.setData({ filterStatus: e.currentTarget.dataset.value }); this.applyFilters() },
   async submit() {
     const { title, content, contact, type, submitting } = this.data
+    if (submitting) return
     if (!title.trim() || !content.trim()) {
       wx.showToast({ title: '请填写标题和内容', icon: 'none' }); return
     }
-    if (submitting) return
-    this.setData({ submitting: true })
+    this.setData({ submitting: true, submitError: '' })
     try {
       const extra = (type === 'report' || type === 'complaint') ? { reportUrl: this.data.reportUrl.trim(), reportTarget: this.data.reportTarget.trim() } : {}
       const res = await feedbackApi.submitFeedback({ title: title.trim(), content: content.trim(), type, contact: contact.trim(), ...extra })
-      if (res.statusCode >= 400) throw new Error(res.data?.error || '提交失败')
+      if (!Number.isInteger(res?.statusCode) || res.statusCode < 200 || res.statusCode >= 300 || res.data?.ok !== true) {
+        this.setData({ submitError: submitFailure(res?.statusCode) })
+        return
+      }
       wx.showToast({ title: '已提交', icon: 'success' })
-      this.setData({ title: '', content: '', contact: '', submitting: false })
+      this.setData({ title: '', content: '', contact: '', reportUrl: '', reportTarget: '' })
       this.loadFeedback()
-    } catch (error) {
-      wx.showToast({ title: error.message || '提交失败', icon: 'none' })
-      this.setData({ submitting: false })
-    }
+    } catch (_) {
+      this.setData({ submitError: '网络异常，未确认提交结果。内容仍保留，请先查看“我的反馈”再决定是否重试。' })
+    } finally { this.setData({ submitting: false }) }
   }
 })
 

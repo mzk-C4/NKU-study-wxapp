@@ -38,62 +38,17 @@ test('guide adapter maps five-category queries and reference source files', asyn
   assert.equal(detail.sources[0].file_url, 'http://127.0.0.1:3000/__local__/learning-compass/source-files/SRC-001')
 })
 
-test('production AI uses required authentication, numeric admission year and R2 citations', async () => {
-  const calls = []
-  const api = createApi({
-    get() { throw new Error('not used') },
-    async post(path, body, options) {
-      calls.push({ path, body, options })
-      return {
-        refused: false,
-        answer: '生产回答',
-        citations: [{
-          id: 'SRC-003', title: '考试与成绩管理规定', file_type: 'pdf',
-          file_url: 'https://resources.nkustudy.top/guide-sources/rules.pdf'
-        }]
-      }
-    }
-  }, { apiProfile: 'production' })
-
-  const result = await api.askGuideAssistant({
-    question: '成绩复核怎么办？',
-    profile: { admission_year: '２０２５', major: '计算机科学与技术' }
+for (const apiProfile of ['production', 'reference']) {
+  test(apiProfile + ' AI is disabled locally without any network request', async () => {
+    let requests = 0
+    const api = createApi({
+      get() { requests++; throw new Error('unexpected GET') },
+      post() { requests++; throw new Error('unexpected POST') }
+    }, { apiProfile })
+    await assert.rejects(api.askGuideAssistant({
+      question: '成绩复核怎么办？',
+      history: [{ role: 'user', content: '之前的问题' }]
+    }), error => error.code === 'FEATURE_REMOVED' && /已移除/.test(error.message))
+    assert.equal(requests, 0)
   })
-
-  assert.equal(calls[0].path, '/guide-assistant/answers')
-  assert.deepEqual(calls[0].options, { timeout: 30000, auth: 'required' })
-  assert.deepEqual(calls[0].body.profile, { admission_year: 2025, major: '计算机科学与技术' })
-  assert.equal(result.citations[0].file_url, 'https://resources.nkustudy.top/guide-sources/rules.pdf')
-})
-
-test('reference AI request is bounded, authenticated and maps citations', async () => {
-  const calls = []
-  const api = createApi({
-    get() { throw new Error('not used') },
-    async post(path, body, options) {
-      calls.push({ path, body, options })
-      return {
-        refused: false,
-        answer: '请按规定申请成绩复核。',
-        citations: [{
-          id: 'SRC-003',
-          title: '考试与成绩管理规定',
-          file_type: 'pdf',
-          file_url: '/__local__/learning-compass/source-files/SRC-003'
-        }]
-      }
-    }
-  }, { apiProfile: 'reference' })
-
-  const result = await api.askGuideAssistant({
-    question: '  成绩复核怎么办？  ',
-    history: [{ role: 'user', content: '  前一个问题  ' }],
-    profile: { admission_year: '２０２５', major: '  计算机科学与技术  ' }
-  })
-
-  assert.equal(calls[0].path, '/guide-assistant/answers')
-  assert.equal(calls[0].options.timeout, 30000)
-  assert.equal(calls[0].options.auth, 'required')
-  assert.deepEqual(calls[0].body.profile, { admission_year: 2025, major: '计算机科学与技术' })
-  assert.equal(result.citations[0].file_url, 'http://127.0.0.1:3000/__local__/learning-compass/source-files/SRC-003')
-})
+}

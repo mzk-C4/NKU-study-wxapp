@@ -67,14 +67,14 @@ function installWx(t, implementation = {}) {
 const assistantDefinition = capturePage('miniprogram/pages/guide-assistant/index.js')
 const guidesDefinition = capturePage('miniprogram/pages/guides/index.js')
 
-test('AI assistant offline page is registered and matches the approved recovery structure', () => {
+test('legacy AI page is unregistered while its historical implementation remains recoverable', () => {
   const app = JSON.parse(fs.readFileSync(path.join(projectRoot, 'miniprogram/app.json'), 'utf8'))
   const config = JSON.parse(fs.readFileSync(path.join(projectRoot, 'miniprogram/pages/guide-assistant/index.json'), 'utf8'))
   const template = fs.readFileSync(path.join(projectRoot, 'miniprogram/pages/guide-assistant/index.wxml'), 'utf8')
   const styles = fs.readFileSync(path.join(projectRoot, 'miniprogram/pages/guide-assistant/index.wxss'), 'utf8')
   const source = fs.readFileSync(path.join(projectRoot, 'miniprogram/pages/guide-assistant/index.js'), 'utf8')
 
-  assert.ok(app.pages.includes('pages/guide-assistant/index'))
+  assert.equal(app.pages.includes('pages/guide-assistant/index'), false)
   assert.equal(config.navigationStyle, 'custom')
   assert.match(template, /学习和生活指南针/)
   assert.match(template, /对话记录/)
@@ -589,20 +589,10 @@ test('manual retry only leaves the offline state after a confirmed connection', 
   assert.deepEqual(toasts.map(item => item.title), ['网络已恢复，请再次发送'])
 })
 
-test('guide AI entry opens the real assistant without probing network or runtime profile', t => {
-  const calls = []
-  const originalOpenAssistant = navigation.openGuideAssistant
-  navigation.openGuideAssistant = (question, options) => calls.push({ question, options })
-  t.after(() => { navigation.openGuideAssistant = originalOpenAssistant })
-  installWx(t, {
-    getAccountInfoSync() { return { miniProgram: { envVersion: 'release' } } },
-    getNetworkType() { assert.fail('guide entry must not probe network before opening the assistant') }
-  })
+test('guide AI entry and navigation helper are removed', () => {
   const page = createPage(guidesDefinition)
-
-  page.openAssistant()
-
-  assert.deepEqual(calls, [{ question: undefined, options: undefined }])
+  assert.equal(page.openAssistant, undefined)
+  assert.equal(navigation.openGuideAssistant, undefined)
 })
 
 test('network-error preview renders the approved state even while the developer machine is online', async t => {
@@ -624,17 +614,17 @@ test('network-error preview renders the approved state even while the developer 
   assert.equal(page.data.networkHint, '请检查网络或重试')
 })
 
-test('assistant navigation encodes a bounded question in the stable route', t => {
-  const routes = []
-  installWx(t, { navigateTo(options) { routes.push(options.url) } })
-  navigation.openGuideAssistant('成绩复核 / 下一步？')
-  navigation.openGuideAssistant('成绩复核？', { previewNetworkError: true })
-  navigation.openGuideAssistant('成绩复核？', { previewAnswer: true })
-  assert.deepEqual(routes, [
-    '/pages/guide-assistant/index?question=%E6%88%90%E7%BB%A9%E5%A4%8D%E6%A0%B8%20%2F%20%E4%B8%8B%E4%B8%80%E6%AD%A5%EF%BC%9F',
-    '/pages/guide-assistant/index?question=%E6%88%90%E7%BB%A9%E5%A4%8D%E6%A0%B8%EF%BC%9F&preview=network-error',
-    '/pages/guide-assistant/index?question=%E6%88%90%E7%BB%A9%E5%A4%8D%E6%A0%B8%EF%BC%9F&preview=answer'
-  ])
+test('release excludes legacy AI folders and exposes no catalog AI entry', () => {
+  const config = JSON.parse(fs.readFileSync(path.join(projectRoot, 'project.config.json'), 'utf8'))
+  const ignores = config.packOptions.ignore.filter(item => item.type === 'folder').map(item => item.value)
+  assert.ok(ignores.includes('pages/guide-assistant'))
+  assert.ok(ignores.includes('features/guide-assistant'))
+  const { createCatalogPage } = require('../miniprogram/features/learning-compass/catalog-page')
+  for (const mode of ['search', 'category', 'documents']) assert.equal(createCatalogPage(mode).askAssistant, undefined)
+  for (const relative of ['pages/guides/index.wxml', 'features/learning-compass/catalog.wxml']) {
+    const markup = fs.readFileSync(path.join(projectRoot, 'miniprogram', relative), 'utf8')
+    assert.doesNotMatch(markup, /openAssistant|askAssistant|assistant-card|开始AI提问|开始提问|问问学习/)
+  }
 })
 
 test('reference page waits for the controller, renders real data, and restores one multi-round conversation', async t => {

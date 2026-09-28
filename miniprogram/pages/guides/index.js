@@ -21,6 +21,5 @@ Page({
     if (!TOPICS.some(item => item.value === value)) return
     this.setData({ activeHomeCategory: value })
     navigation.openGuideCategory(value)
-  },
-  openAssistant() { navigation.openGuideAssistant() }
+  }
 })

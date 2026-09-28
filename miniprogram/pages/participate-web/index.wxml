@@ -1,1 +1,11 @@
-<web-view src="{{url}}"></web-view>
+<web-view wx:if="{{!failed}}" src="{{url}}" binderror="failed"></web-view>
+<view wx:else class="page">
+  <view class="card">
+    <view class="section-title">请前往网站投稿资料</view>
+    <view class="link-note">当前无法在微信内打开网站。可复制链接到浏览器，在网站参与页完成资料投稿。意见反馈仍可在小程序内提交。</view>
+    <text class="link-url" user-select="{{true}}">{{url}}</text>
+  </view>
+  <button class="button button--primary" bindtap="copyLink">复制网站投稿链接</button>
+  <button class="button button--ghost" bindtap="retry">重试打开</button>
+  <view wx:if="{{copyError}}" class="link-note" aria-live="polite">{{copyError}}</view>
+</view>

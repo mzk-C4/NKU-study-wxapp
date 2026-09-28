@@ -1,8 +1,9 @@
 <view class="profile-page">
   <view class="profile-hero">
     <view class="profile-row">
-      <view class="profile-avatar">{{userInitial}}</view>
+      <view class="profile-avatar"><image wx:if="{{isLoggedIn && user.avatar_url && !avatarFailed}}" class="profile-avatar-image" src="{{user.avatar_url}}" mode="aspectFill" binderror="avatarError" aria-label="我的头像"></image><text wx:else>{{userInitial}}</text></view>
       <view class="profile-copy">
+        <view class="profile-eyebrow">NKUSTUDY · 我的学习空间</view>
         <view class="profile-name">{{isLoggedIn ? (user.nickname || '南开同学') : '你好，南开同学'}}</view>
         <view class="profile-sub">{{isLoggedIn ? '微信身份已验证，可同步收藏与评价' : '浏览课程、资料和评价无需登录'}}</view>
       </view>
@@ -93,8 +94,8 @@
     </view>
 
     <view class="card menu section">
-      <view class="menu-row" bindtap="openFeedback"><text>意见反馈</text><text>›</text></view>
-      <view class="menu-row" bindtap="openDonate"><text>捐助支持</text><text>›</text></view>
+      <view class="menu-row" bindtap="openFeedback"><text>意见反馈</text><text class="muted">小程序内提交 ›</text></view>
+      <view class="menu-row" bindtap="openWebsite"><text>访问 NKUStudy 网站</text><text>›</text></view>
       <view class="menu-row" bindtap="openAbout"><text>关于 NKUStudy</text><text>›</text></view>
     </view>
     <view class="section" wx:if="{{isLoggedIn}}" style="margin-top:16rpx;">

@@ -197,10 +197,9 @@ function createApi(client = request, options = {}) {
     getGuideVariant(guideId, variantId) {
       return client.get(`/guides/${encode(guideId)}/variants/${encode(variantId)}`).then(value => mapVariant(value, isReference))
     },
-    askGuideAssistant(input) {
-      return client.post('/guide-assistant/answers', buildAssistantRequest(input), {
-        timeout: 30000, auth: 'required'
-      }).then(value => mapAssistant(value, isReference))
+    askGuideAssistant() {
+      // 仅保留旧实现的安全兼容边界：所有环境停止发起 AI 请求。
+      return Promise.reject(Object.assign(new Error('AI 问答已移除，请使用指南搜索。'), { code: 'FEATURE_REMOVED' }))
     },
     validateGuideFileUrl(value) { return guideFileUrl(value, isReference) },
     isAllowedGuideFileUrl(value) { return Boolean(guideFileUrl(value, isReference)) },

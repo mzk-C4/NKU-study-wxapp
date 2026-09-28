@@ -27,10 +27,32 @@
 .quick-icon--green { color: #266E5A; background: #E7F3EE; }
 .quick-icon--red { color: #9B4951; background: #F9E9EA; }
 .quick-label { color: #514B54; font-size: 22rpx; line-height: 1.2; }
-.season-card { position: relative; overflow: hidden; padding: 28rpx 130rpx 28rpx 28rpx; color: #FFFFFF; border-radius: 28rpx; background: #2B123E; }
-.season-title { font-size: 28rpx; font-weight: 700; }
-.season-text { margin-top: 8rpx; color: rgba(255,255,255,.72); font-size: 21rpx; line-height: 1.5; }
-.season-mark { position: absolute; right: 26rpx; top: -26rpx; color: rgba(215,166,60,.22); font-size: 150rpx; font-weight: 700; }
+.banner-swiper { height: 300rpx; border-radius: 26rpx; overflow: hidden; }
+.banner-card { position: relative; width: 100% !important; min-width: 100%; max-width: 100%; height: 100%; margin: 0 !important; padding: 0; overflow: hidden; border: 1rpx solid #E8E2DC; border-radius: 26rpx; text-align: left; background: #F7F0E4; color: #2B123E; box-sizing: border-box; }
+.banner-card--pressed { opacity: .86; }
+.banner-image { position: absolute; inset: 0; width: 100%; height: 100%; }
+.banner-copy { position: relative; width: 60%; padding: 28rpx; box-sizing: border-box; }
+.banner-kicker { font-size: 20rpx; line-height: 1.5; color: #6F5973; }
+.banner-title { margin-top: 10rpx; font-size: 34rpx; font-weight: 700; line-height: 1.3; }
+.banner-description { margin-top: 10rpx; font-size: 22rpx; line-height: 1.5; color: #645B61; }
+.banner-action { display: inline-flex; align-items: center; gap: 16rpx; margin-top: 18rpx; color: #4B1F6F; font-size: 23rpx; line-height: 1.5; font-weight: 700; }
+.carousel-toolbar { display: flex; align-items: center; justify-content: space-between; min-height: 88rpx; }
+.carousel-progress { display: flex; align-items: center; gap: 10rpx; }
+.carousel-dot { width: 9rpx; height: 9rpx; border-radius: 50%; background: #D3C9DA; }
+.carousel-dot--active { width: 26rpx; border-radius: 8rpx; background: #4B1F6F; }
+.carousel-count { margin-left: 8rpx; color: #6F6972; font-size: 22rpx; font-variant-numeric: tabular-nums; }
+.carousel-toggle { min-width: 132rpx; min-height: 88rpx; margin: 0 -12rpx 0 0; padding: 0 12rpx; display: flex; align-items: center; justify-content: center; color: #6F6972; background: transparent; font-size: 22rpx; line-height: 1.4; border-radius: 12rpx; }
+.document-entry { display: flex; align-items: center; gap: 20rpx; width: 100% !important; min-width: 100%; max-width: 100%; margin: 0 !important; padding: 24rpx; border: 1rpx solid #E8E2EC; border-radius: 24rpx; background: #FFFDF8; text-align: left; box-sizing: border-box; }
+.document-entry-icon { flex: none; display: flex; align-items: center; justify-content: center; width: 72rpx; height: 72rpx; border-radius: 18rpx; color: #4B1F6F; background: #EFE8F4; font-size: 28rpx; font-weight: 700; }
+.document-entry-copy { flex: 1; min-width: 0; }
+.document-entry-title { color: #2B123E; font-size: 28rpx; line-height: 1.4; font-weight: 700; }
+.document-entry-note { margin-top: 6rpx; color: #6F6972; font-size: 22rpx; line-height: 1.5; }
+.document-entry-arrow { color: #817A84; font-size: 36rpx; }
+@media (max-width: 340px) {
+  .banner-swiper { height: 320rpx; }
+  .banner-copy { width: 64%; padding: 24rpx; }
+  .banner-title { font-size: 32rpx; }
+}
 .update-row { margin-bottom: 16rpx; padding: 24rpx 26rpx; }
 .update-head { display: flex; align-items: center; justify-content: space-between; gap: 16rpx; }
 .update-title { flex: 1; min-width: 0; font-size: 26rpx; font-weight: 700; line-height: 1.4; }
@@ -53,3 +75,20 @@
 .collaborator-account { min-width: 0; color: #6F6972; font-size: 20rpx; line-height: 1.5; word-break: break-all; }
 .build-note { margin-top: 28rpx; text-align: center; color: #817A84; font-size: 20rpx; }
 .search-box { width: 280rpx; height: 68rpx; border-radius: 34rpx; font-size: 24rpx; margin: 0 auto; }
+.announcement-bar { display: flex; align-items: center; gap: 16rpx; width: 100% !important; max-width: none; margin: 0 0 22rpx !important; min-height: 84rpx; padding: 16rpx 20rpx; border-radius: 18rpx; background: #F8EFD9; text-align: left; box-sizing: border-box; }
+.announcement-badge { flex: none; color: #72510C; font-size: 22rpx; font-weight: 700; }
+.announcement-preview { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: #725D38; font-size: 22rpx; line-height: 1.5; }
+.announcement-arrow { color: #72510C; font-size: 30rpx; }
+.announcement-mask { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; padding: 40rpx; background: rgba(29, 16, 38, .6); }
+.announcement-dialog { width: 100%; max-width: 680rpx; max-height: 85vh; padding: 32rpx; box-sizing: border-box; border-radius: 32rpx; background: #FFFDF8; border-top: 8rpx solid #D7A63C; }
+.announcement-heading { display: flex; align-items: center; justify-content: space-between; gap: 12rpx; }
+.announcement-eyebrow { color: #8A6D3B; font-size: 19rpx; letter-spacing: 2rpx; }
+.announcement-title { margin-top: 10rpx; color: #2B123E; font-size: 38rpx; font-weight: 700; }
+.announcement-close { flex: none; min-width: 80rpx; max-width: 80rpx; width: 80rpx !important; height: 80rpx; margin: 0 !important; padding: 0; color: #6F5973; background: #F2EDF5; border-radius: 50%; line-height: 76rpx; font-size: 42rpx; }
+.announcement-body { max-height: 44vh; margin: 26rpx 0; color: #484248; font-size: 26rpx; line-height: 1.9; white-space: pre-wrap; overflow-wrap: anywhere; }
+.announcement-link { color: #59257B; text-decoration: underline; font-weight: 700; }
+.announcement-footnote { margin-bottom: 24rpx; color: #817A84; font-size: 21rpx; line-height: 1.6; }
+.announcement-confirm { width: 100% !important; max-width: none; margin: 0 !important; min-height: 88rpx; padding: 20rpx; color: #FFFDF8; background: #4B1F6F; border-radius: 18rpx; font-size: 26rpx; line-height: 1.6; }
+/* Keep the original QR bytes intact: this viewport shows only its full white quiet zone. */
+.banner-qr { position: absolute; right: 26rpx; top: 48rpx; width: 200rpx; height: 200rpx; border: 8rpx solid #FFF; border-radius: 16rpx; overflow: hidden; box-shadow: 0 8rpx 24rpx rgba(43,18,62,.12); }
+.banner-qr-source { position: absolute; width: 419rpx; height: 487rpx; left: -109rpx; top: -166rpx; }

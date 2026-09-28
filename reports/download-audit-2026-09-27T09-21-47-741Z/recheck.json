@@ -1,0 +1,11 @@
+{
+  "method": "Sequential unauthenticated HEAD, 8-second spacing after initial scan; separate course-resource GET confirmed all 10 failed records still listed",
+  "results": [
+    {"checkedAt":"2026-09-27T09:31:44.9293936Z","id":"fhkRMblPqz9fQ7epyVv_J1l_","status":404},
+    {"checkedAt":"2026-09-27T09:31:58.4006198Z","id":"pFCSytGmgajUSOOwmM21vsIT","status":404},
+    {"checkedAt":"2026-09-27T09:32:11.9019449Z","id":"yYtpBWG7NXs5650KZKolJ1U2","status":404}
+  ],
+  "finalCounts": {"uniqueLinks":979,"reachable":969,"missing":10,"reachableButOver200MiB":4},
+  "productionModified": false,
+  "deviceTested": false
+}

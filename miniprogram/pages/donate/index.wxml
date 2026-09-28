@@ -1,50 +1,10 @@
 <view class="page">
-  <state-view loading="{{loading}}" error="{{error}}" empty="{{!loading && !error && !blocks.length}}" empty-text="暂无内容" bindretry="loadDonate"></state-view>
-
-  <view class="card donate-card" wx:if="{{!loading && !error}}">
-    <block wx:for="{{blocks}}" wx:key="id" wx:for-item="block">
-      <view wx:if="{{block.type === 'heading'}}" class="donate-heading donate-heading--{{block.level}}"><block wx:for="{{block.runs}}" wx:key="id" wx:for-item="run"><rich-text wx:if="{{run.kind !== 'link'}}" nodes="{{run.html}}"></rich-text><text wx:else class="donate-link">{{run.text}}</text></block></view>
-      <view wx:elif="{{block.type === 'list-item'}}" class="donate-list-item"><text class="donate-marker">{{block.marker}}</text><view class="donate-list-body"><block wx:for="{{block.runs}}" wx:key="id" wx:for-item="run"><rich-text wx:if="{{run.kind !== 'link'}}" nodes="{{run.html}}"></rich-text><text wx:else class="donate-link">{{run.text}}</text></block></view></view>
-      <view wx:elif="{{block.type === 'blockquote'}}" class="donate-quote"><block wx:for="{{block.runs}}" wx:key="id" wx:for-item="run"><rich-text wx:if="{{run.kind !== 'link'}}" nodes="{{run.html}}"></rich-text></block></view>
-      <view wx:else class="donate-paragraph"><block wx:for="{{block.runs}}" wx:key="id" wx:for-item="run"><rich-text wx:if="{{run.kind !== 'link'}}" nodes="{{run.html}}"></rich-text><text wx:else class="donate-link">{{run.text}}</text></block></view>
-    </block>
-  </view>
-
-  <view class="card donate-records" wx:if="{{!loading && !error}}">
-    <view class="donate-records-title">捐赠记录与资金去向</view>
-    <view class="donate-records-empty" wx:if="{{!records.length}}">暂无捐赠记录，成为第一位支持者吧。</view>
-    <view wx:else class="donate-records-row donate-records-row--head"><text>时间</text><text>昵称</text><text>去向</text></view>
-    <view wx:for="{{records}}" wx:key="index" class="donate-records-row"><text>{{item.date}}</text><text>{{item.nickname}}</text><text>{{item.usage}}</text></view>
-  </view>
-
-  <view class="donate-actions" wx:if="{{!loading && !error}}">
-    <button class="button button--quiet donate-exit" bindtap="exit">退出</button>
-    <button class="button button--primary donate-confirm" bindtap="confirmDonate">确定</button>
-  </view>
-
-  <view class="donate-mask" wx:if="{{pickerVisible}}" bindtap="closePicker">
-    <view class="donate-sheet" catchtap="noop">
-      <view class="donate-sheet-head">
-        <view class="donate-sheet-title">选择捐助金额</view>
-        <view class="donate-sheet-close" bindtap="closePicker">×</view>
-      </view>
-      <view class="donate-amount-row">
-        <view wx:for="{{amounts}}" wx:key="*this" class="donate-amount-chip {{selectedAmount === item ? 'donate-amount-chip--active' : ''}}" data-value="{{item}}" bindtap="chooseAmount">{{item}} 元</view>
-      </view>
-      <view class="donate-custom">
-        <text class="donate-custom-label">自定义金额（元）</text>
-        <input class="donate-custom-input" type="digit" value="{{customAmount}}" placeholder="输入金额" bindinput="inputCustomAmount" />
-      </view>
-      <view class="donate-custom">
-        <text class="donate-custom-label">昵称（选填，记录中展示，留空显示"好心人"）</text>
-        <input class="donate-custom-input" type="nickname" maxlength="32" value="{{nickname}}" placeholder="你的昵称" bindinput="inputNickname" />
-      </view>
-      <view class="donate-custom">
-        <text class="donate-custom-label">备注（选填，仅管理员可见）</text>
-        <input class="donate-custom-input" maxlength="200" value="{{remark}}" placeholder="想说的话（选填）" bindinput="inputRemark" />
-      </view>
-      <button class="button button--primary" loading="{{paying}}" disabled="{{paying}}" bindtap="pay">捐助 {{selectedAmount > 0 ? selectedAmount + ' 元' : (customAmount ? customAmount + ' 元' : '')}}</button>
-      <view class="donate-sheet-note">所有捐助均为自愿行为，感谢你对 NKUStudy 的支持</view>
-    </view>
+  <view class="card website-card">
+    <view class="website-title">NKUStudy 网站</view>
+    <view class="website-description">复制链接，在浏览器中打开网站。</view>
+    <text class="website-url" user-select="{{true}}">{{websiteUrl}}</text>
+    <button class="button button--primary section" loading="{{copying}}" disabled="{{copying}}" bindtap="copyWebsite">{{copied ? '再次复制网站链接' : '复制网站链接'}}</button>
+    <view wx:if="{{copied}}" class="website-description" aria-live="polite">链接已复制，请在浏览器地址栏粘贴并打开。</view>
+    <view wx:if="{{copyError}}" class="notice section" aria-live="polite">{{copyError}}</view>
   </view>
 </view>
