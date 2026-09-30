@@ -1,16 +1,32 @@
 <view class="profile-page">
   <view class="profile-hero">
     <view class="profile-row">
-      <view class="profile-avatar"><image wx:if="{{isLoggedIn && user.avatar_url && !avatarFailed}}" class="profile-avatar-image" src="{{user.avatar_url}}" mode="aspectFill" binderror="avatarError" aria-label="我的头像"></image><text wx:else>{{userInitial}}</text></view>
+      <button wx:if="{{isLoggedIn && avatarSupported}}" class="profile-avatar profile-avatar-button" open-type="chooseAvatar" bindchooseavatar="chooseAvatar" disabled="{{avatarSaving || profileSaving || loading || editingProfile}}" aria-label="选择我的头像">
+        <image wx:if="{{avatarPreviewUrl || (user.avatar_url && !avatarFailed)}}" class="profile-avatar-image" src="{{avatarPreviewUrl || user.avatar_url}}" mode="aspectFill" binderror="avatarError"></image><text wx:else>{{userInitial}}</text>
+      </button>
+      <view wx:else class="profile-avatar" bindtap="avatarUnavailable"><image wx:if="{{isLoggedIn && user.avatar_url && !avatarFailed}}" class="profile-avatar-image" src="{{user.avatar_url}}" mode="aspectFill" binderror="avatarError" aria-label="我的头像"></image><text wx:else>{{userInitial}}</text></view>
       <view class="profile-copy">
         <view class="profile-eyebrow">NKUSTUDY · 我的学习空间</view>
         <view class="profile-name">{{isLoggedIn ? (user.nickname || '南开同学') : '你好，南开同学'}}</view>
         <view class="profile-sub">{{isLoggedIn ? '微信身份已验证，可同步收藏与评价' : '浏览课程、资料和评价无需登录'}}</view>
       </view>
     </view>
+    <view wx:if="{{isLoggedIn}}" class="avatar-status" aria-live="polite">
+      <view wx:if="{{avatarSaving}}">头像保存中，请稍候…</view>
+      <block wx:else>
+        <view wx:if="{{!avatarSaveAvailable}}">头像可选择预览，保存功能暂未开放。</view>
+        <view wx:elif="{{!avatarDraftUrl}}">点击头像更换</view>
+        <view wx:if="{{avatarPreviewUrl}}" class="avatar-preview-note">当前为预览，尚未保存</view>
+        <view wx:if="{{avatarErrorText}}">{{avatarErrorText}}</view>
+      </block>
+      <view wx:if="{{avatarDraftUrl}}" class="avatar-draft-actions">
+        <button wx:if="{{avatarSaveAvailable && !avatarSaving}}" class="avatar-action" disabled="{{profileSaving || loading}}" bindtap="saveAvatar">重试保存</button>
+        <button class="avatar-action" disabled="{{avatarSaving}}" bindtap="discardAvatar">{{avatarPreviewUrl ? '取消预览' : '放弃本次更换'}}</button>
+      </view>
+    </view>
     <button wx:if="{{!isLoggedIn}}" class="login-button" loading="{{loading}}" disabled="{{loading}}" bindtap="login">微信登录</button>
     <view wx:else class="profile-actions">
-      <button class="hero-button" bindtap="startEditProfile">编辑昵称</button>
+      <button class="hero-button" disabled="{{avatarSaving}}" bindtap="startEditProfile">编辑昵称</button>
       <button class="hero-button hero-button--quiet" loading="{{loading}}" disabled="{{loading}}" bindtap="logout">退出登录</button>
     </view>
   </view>

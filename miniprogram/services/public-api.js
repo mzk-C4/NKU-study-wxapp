@@ -1,5 +1,7 @@
 const request = require('../utils/request')
 const config = require('../config')
+const authSession = require('../utils/auth-session')
+const { validateAvatarFile } = require('../utils/avatar-file')
 
 const RESOURCE_DOWNLOAD_HOST = 'resources.nkustudy.top'
 const COURSE_QUERY_KEYS = Object.freeze(['q', 'term', 'group', 'tag', 'assessment', 'page', 'page_size'])
@@ -86,6 +88,11 @@ function validatePublicHttpsUrl(value) {
   const authority = match[1]
   const validAuthority = /^(?:\[[0-9a-f:.]+\]|[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?)(?::\d{1,5})?$/i
   return validAuthority.test(authority) ? value : ''
+}
+
+function validateAvatarUrl(value) {
+  // The backend generates base64url IDs and accepts 16–64 characters, not a fixed 32-character ID.
+  return typeof value === 'string' && /^https:\/\/resources\.nkustudy\.top\/avatars\/[A-Za-z0-9_-]{16,64}\.jpg$/.test(value) ? value : ''
 }
 
 function mapRatings(rawRatings, reviewCount) {
@@ -636,11 +643,28 @@ function createPublicApi(client = request, options = {}) {
       const data = await client.get('/me', undefined, { auth: 'required' })
       return mapUser(data && data.user)
     },
+    isAvatarUploadAvailable() { return !isReference },
+    async uploadAvatar(filePath) {
+      if (isReference) throw Object.assign(new Error('当前环境暂不支持头像上传。'), { code: 'AVATAR_UPLOAD_UNAVAILABLE' })
+      const token = authSession.getToken()
+      if (!token) throw Object.assign(new Error('请先登录后再选择头像。'), { statusCode: 401, code: 'AUTH_REQUIRED' })
+      await validateAvatarFile(filePath)
+      // File inspection is asynchronous; never upload an old selection under a replacement login.
+      if (authSession.getToken() !== token) throw Object.assign(new Error('登录状态已变化，请重新选择头像。'), { code: 'AVATAR_SESSION_CHANGED' })
+      const result = await client.upload('/me/avatar', filePath, { name: 'file', auth: 'required', timeout: 60000 })
+      const avatarUrl = validateAvatarUrl(result?.avatar_url)
+      if (!avatarUrl) throw Object.assign(new Error('头像上传结果无效，请稍后重试。'), { code: 'INVALID_AVATAR_URL' })
+      return { avatar_url: avatarUrl }
+    },
     async updateProfile(input = {}) {
       if (isReference) return authenticatedFeatureUnavailable()
+      const avatarUrl = input.avatar_url === undefined ? undefined : validateAvatarUrl(input.avatar_url)
+      if (input.avatar_url !== undefined && !avatarUrl) {
+        throw Object.assign(new Error('头像地址无效，请重新选择。'), { code: 'INVALID_AVATAR_URL' })
+      }
       const data = await client.post('/me/profile', {
-        nickname: toText(input.nickname).slice(0, 32),
-        ...(input.avatar_url === undefined ? {} : { avatar_url: validatePublicHttpsUrl(input.avatar_url) })
+        ...(input.nickname === undefined ? {} : { nickname: toText(input.nickname).slice(0, 32) }),
+        ...(avatarUrl === undefined ? {} : { avatar_url: avatarUrl })
       }, { auth: 'required' })
       return mapUser(data && data.user)
     },
@@ -729,6 +753,7 @@ module.exports = Object.assign(publicApi, {
   encodePathSegment,
   validateResourceDownloadUrl,
   validatePublicHttpsUrl,
+  validateAvatarUrl,
   mapCourse,
   mapCourseList,
   mapHome,

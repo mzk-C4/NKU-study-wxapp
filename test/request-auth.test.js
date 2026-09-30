@@ -41,6 +41,21 @@ test('a 401 response clears the rejected local session', async () => {
   assert.equal(authSession.readSession(), null)
 })
 
+test('a late profile-save 401 cannot clear a replacement login session', async t => {
+  const originalRequest = global.wx.request
+  t.after(() => { global.wx.request = originalRequest })
+  let pending
+  global.wx.request = options => { pending = options }
+  authSession.saveSession({ token, expires_in: 60, user: { id: 1 } })
+  const saving = request.post('/me/profile', { avatar_url: 'https://example.com/avatar.jpg' }, { auth: 'required' })
+  const rejected = assert.rejects(saving, error => error.statusCode === 401)
+  const newToken = `${token}-replacement`
+  authSession.saveSession({ token: newToken, expires_in: 60, user: { id: 2 } })
+  pending.success({ statusCode: 401, data: { code: 'AUTH_REQUIRED' } })
+  await rejected
+  assert.equal(authSession.getToken(), newToken)
+})
+
 test('review API rejects missing and expired sessions before any network call', async () => {
   const { publicApi } = require('../miniprogram/services/public-api')
   for (const stored of [null, { token, expires_at: Date.now() - 1, user: { id: 1 } }]) {
