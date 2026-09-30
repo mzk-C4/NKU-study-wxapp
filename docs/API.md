@@ -33,7 +33,8 @@
 | POST | `/auth/wechat` | `wx.login` code 换取 30 天 Bearer Token |
 | POST | `/auth/logout` | 注销当前 Bearer Token |
 | GET | `/me` | 当前小程序用户信息 |
-| POST | `/me/profile` | 更新昵称与 HTTPS 头像地址 |
+| POST | `/me/avatar` | Bearer 鉴权，multipart 上传头像文件，返回已审核 HTTPS 地址 |
+| POST | `/me/profile` | 部分更新昵称与本人已审核头像地址 |
 | GET | `/me/favorites` | 我的收藏课程列表 |
 | GET | `/me/reviews` | 我的评价与审核状态 |
 | GET | `/me/feedback` | 我的反馈与处理状态 |
@@ -112,6 +113,24 @@ Token 仅保存于微信本地存储，受保护请求使用 `Authorization: Bea
 
 `GET /me/favorites` 与 `GET /me/reviews` 使用 `page/page_size`，`page_size` 不超过 100。收藏正文为 `{ "course_id": "immutable-course-uuid" }`。当前小程序提交评价必须携带 Token，可在“我的评价”查看审核状态。公开作者展示方式仍由后端公开 DTO 决定，不得公开手机号、学号、OpenID 或 Token。
 
+### 用户头像上传与保存（2026-09-29 正式契约接线）
+
+后端来源：[shview/NKU-study-resources@39aeb72 的 API 文档](https://github.com/shview/NKU-study-resources/blob/39aeb72a392c7cb8fefb493a67d1455a77bddd15/docs/API.md)，功能提交 `a2df36c5b75e693257e8ddfea3674563c44d7114`。本机已只读核对该提交的路由、上传服务和资料更新实现。后端负责人回交生产 release `20260928-avatar1` 已部署、216 项测试通过；这是后端提供的部署/验证报告，本机未复跑后端测试或向生产上传图片。
+
+1. `POST /me/avatar`：`Authorization: Bearer <现有会话 Token>`；multipart 单文件字段 `file`，无其他必填字段。前端使用 `wx.uploadFile`，由微信生成 multipart boundary，不设置 JSON Content-Type；超时 60 秒，不自动重试。
+2. 约定输入 JPEG/PNG，文件 ≤2,097,152 字节，宽/高分别 ≤4096 像素。客户端先检查本地文件大小及解码信息再上传，检查期间切换账号则停止。服务端仍应独立验证限制。
+3. 上传成功为 `{ "code": 0, "data": { "avatar_url": "https://resources.nkustudy.top/avatars/<opaque-id>.jpg" } }`。上传不自动绑定；后端重编码为 256×256 JPEG，剥离元信息，微信同步图片审核通过后存储。前端同时检查整数 HTTP 2xx、JSON 业务码及 URL，不能仅凭 uploadFile success 回调认定成功。
+4. URL 校验按源码的 avatars 前缀及 `[A-Za-z0-9_-]{16,64}.jpg`；不接受其他域、其他目录、端口、查询串或片段。实际 ID 由 16 随机字节转 base64url（通常 22 字符）生成，回交文字中的“32 位”不能作为前端硬编码限制。
+5. 上传后 `POST /me/profile` 仅发送 `{ "avatar_url": "上传结果" }`，不补空昵称；成功读取完整 `data.user`。后端省略字段保留原值，`GET /me` 和重新登录返回保存后的头像。后端允许显式空串清空头像，但本次小程序不提供清空功能，也不发送空串。
+6. 上传次数由后端按用户限制为每 24 小时 5 次；413 `AVATAR_TOO_LARGE`、400 `AVATAR_INVALID_IMAGE`、403 `AVATAR_CONTENT_REJECTED` / `AVATAR_NOT_OWNED`、429 `RATE_LIMITED`、503 `AVATAR_UPLOAD_UNAVAILABLE` 均用受控提示。仅 HTTP 401 清理对应上传会话，迟到的 401 不清理新会话；普通失败保留有效登录。
+7. 已上传但绑定失败时，当前页面在 24 小时内重试只重发资料保存，避免重复占用上传额度；未绑定地址仅内存暂存。取消、更换选择、退出/切号或卸载清除该暂存；过期/归属拒绝后重新上传。旧头像在确认保存前保持为 user 中的有效值，不持久化临时文件路径。
+
+当前 production adapter 已接入真实上传；reference 仍禁用认证上传。平台域名和隐私指引由微信执行校验，客户端未关闭域名检查；平台配置与真机验收按下方注明的用户确认记录。
+
+2026-09-29 接线时的待办与源码核对记录：公众平台负责人添加 `https://nkustudy.top` 为 **uploadFile 合法域名**、确认头像隐私声明生效；随后真机验收保存、重启恢复、失败重试与昵称/登录保持。源码核对发现后端 `processImage` 当前未显式限制 `metadata.format`，需后端补齐 JPEG/PNG 校验和有效 GIF/WebP 拒绝测试；前端预检不能替代此项。孤立资源实际在后续成功上传时触发 24 小时阈值的惰性回收，并非保证到点定时删除。
+
+2026-09-29 后续状态：用户明确确认上传域名、头像隐私声明及后端格式限制三项已完成。按用户确认进入真机验收；本机未另行核对新增后端修复提交，以上问题保留为此前源码核对记录。随后在 2026-09-30，用户对所提供验收清单整体反馈“一切正确”，头像保存、重进/重新登录恢复、取消和失败重试据此记录为用户验收通过；本机未独立执行真机测试。本次头像功能提交包含上述实现、测试与文档；小程序版本尚未由本任务上传发布，调用契约不变。
+
 ## 四类搜索
 
 `GET /search-index` 不接收查询参数，一次返回 `{version,generated_at,items,total}`。索引项 `type` 只允许：
@@ -173,8 +192,7 @@ Fuse 权重为 `name 0.30 / short_name 0.20 / aliases 0.15 / tags 0.15 / teacher
 - 首页继续读取 `/home` 的 `announcement` 字符串；以完整正文作为已读版本，关闭后仅在内容变化时再次弹窗。首页顶部保留入口；应用从后台恢复且停留在非首页时通过原生弹窗提醒，可选择留在原页面或查看首页全文。
 - 分享链接冷启动直达非首页时使用 App 入口 path 启动公告检查，等待页面挂载后再提示（最多 20 次、100ms 间隔的本地检查，不重复请求网络）。进入后台取消等待，前后台轮次标识阻止过期请求显示旧公告；未能及时挂载时不阻塞页面，后续恢复/进入首页可再次检查。
 - 公告只为已知 `NKUCS.ICU` 文本绑定固定 `https://nkucs.icu/#/?id=nkucsicu`，不执行任意远程 HTML 或导航。web-view 真机需要 `nkucs.icu` 业务域名配置与对方校验文件，目前未确认；加载失败提供复制原链接提示。
-- 微信头像：本轮仅完成圆形样式与已有服务端 `avatar_url` 的显示及加载失败回退。微信 `chooseAvatar` 返回临时本地路径，现有 `/me/profile` 只接受 HTTPS URL，公开后端尚未发现普通用户头像上传接口。**一键选择并持久化头像仍未实现，不把临时预览、本地保存或管理员图片上传当作完成。**
-- 待后端提供头像上传契约：须使用有效 Bearer Token、校验真实图片内容和尺寸/大小、内容安全检查、仅修改本人头像，并返回可持久访问的 HTTPS 地址或更新后的 user。路由、multipart 字段、限制、错误码及是否自动更新用户应由后端 owner 确认后再接入；不要把密钥或管理接口交给客户端。
+- 微信头像（2026-09-29）：已按正式后端回交接入上传 → 资料保存两步流程，支持文件预检、受控失败提示及资料保存重试复用上传结果；仅保存成功后更新缓存并提示成功。详见上文“用户头像上传与保存”和 [头像交接记录](./AVATAR_UPLOAD_BACKEND_HANDOFF.md)。用户已确认平台 uploadFile 域名、隐私声明和后端格式限制完成，并于 2026-09-30 整体确认头像验收通过；真机结论来自用户反馈，不以本地模拟测试代替。代码与文档纳入本次头像功能提交，前端发布单独安排。
 
 ## 公开站点访问统计（接口）
 
