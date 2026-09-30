@@ -35,6 +35,12 @@
       </button>
     </view>
 
+    <button class="campus-map-entry" bindtap="openCampusMap" hover-class="control--pressed" aria-label="打开校园地图">
+      <view class="campus-map-symbol">⌖</view>
+      <view class="campus-map-main"><view class="campus-map-title">校园地图</view><view class="campus-map-note">八里台 · 津南校区，找地点、看介绍、去导航</view></view>
+      <text class="pdf-entry-arrow">›</text>
+    </button>
+
     <button class="pdf-entry" bindtap="openDocuments" aria-label="浏览 PDF 学生资料">
       <view class="pdf-document-icon">PDF</view>
       <view class="pdf-entry-main">

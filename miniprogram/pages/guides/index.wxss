@@ -578,3 +578,10 @@
 .pdf-entry-main { flex:1; min-width:0; }
 .pdf-entry-arrow { color:#67358A; font-size:40rpx; }
 @media (max-width: 360px) { .home-category-label { font-size:23rpx; } }
+
+.campus-map-entry { display:flex; align-items:center; gap:22rpx; width:100% !important; margin:28rpx 0 0 !important; padding:28rpx; border-radius:24rpx; background:#F3EDF8; text-align:left; line-height:1.5; box-sizing:border-box; }
+.campus-map-entry::after { border:0; }
+.campus-map-symbol { color:#7650A5; font-size:56rpx; }
+.campus-map-main { flex:1; min-width:0; }
+.campus-map-title { color:#2B174A; font-size:30rpx; font-weight:700; }
+.campus-map-note { margin-top:6rpx; color:#716A7D; font-size:23rpx; }

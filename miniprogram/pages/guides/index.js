@@ -14,6 +14,7 @@ Page({
   refreshLearningProfile() {
     if (!this._isUnloaded) this.setData({ guideContextLabel: learningProfile.formatLabel(learningProfile.read()) })
   },
+  openCampusMap() { navigation.openCampusMap() },
   openSearch() { navigation.openGuideSearch() },
   openDocuments() { navigation.openGuideDocuments() },
   openHomeCategory(event) {

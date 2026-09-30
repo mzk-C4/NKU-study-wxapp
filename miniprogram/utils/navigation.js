@@ -31,7 +31,12 @@ function openGuideDocuments() {
   wx.navigateTo({ url: '/pages/guide-documents/index' })
 }
 
+function openCampusMap() {
+  wx.navigateTo({ url: '/pages/campus-map/index' })
+}
+
 module.exports = {
+  openCampusMap,
   openCourse,
   openSearch,
   openCourseResources,

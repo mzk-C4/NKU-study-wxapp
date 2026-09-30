@@ -25,6 +25,16 @@
 - PASS：从暂存区导出的独立副本执行 npm test 272/272（36 + 90 + 71 + 25 + 50），静态检查 24 页面/5 Tab；python3 scripts/check-wxml.py miniprogram 为 33 文件/0 错误，暂存差异空白检查通过。未再次操作真机或写入生产。
 - 发布仍单独安排：本次 Git 交付不包含上传体验版、提交微信审核或正式发布。
 
+### 0.0 2026-09-30 指南页校园地图接入（本地实现）
+
+- 当前工作目录为根目录下的 NKU-study-wxapp；整理结果中的同名项目副本未修改。指南页新增校园地图入口，注册原生 pages/campus-map/index 页面。
+- 从用户指定的 整理结果/05_地图内容/CQUMAPS-1.0/js/data.js 导入全部 76 个地点，保留八里台/津南校区、分类、GCJ02 坐标、介绍与主楼原图；本地数据 owner 为 miniprogram/features/campus-map/data.js。
+- 支持校区切换、分类筛选、名称/介绍搜索、地图标记与列表选择、详情图片预览、校区视角复位和 wx.openLocation 导航。地图底图使用小程序原生 map，不依赖原网页高德 Key 或 web-view 域名。未接入网页步行路线规划或当前位置采集。
+- 验证：node --test test/campus-map.test.js test/guide-pages.test.js 26/26 通过；node scripts/check-miniprogram.js 通过（25 页面、5 Tab）；git diff --check 通过。地图交互、图片预览、原生地图及导航的开发者工具/真机渲染尚未验收，点位准确性沿用原素材，未逐点实地核验。
+- 人工验收：进入指南 → 校园地图，切换两校区、筛选学院楼、搜索主楼、点击标记/列表查看详情与图片、打开导航；无结果时检查提示，返回指南检查原分类/PDF 入口。
+- 已将地图测试加入 test:search-guide。公开 API 契约未变化，无需更新 API.md；已纳入本轮 Git 提交，未上传小程序或发布，本节不覆盖之前头像等任务的阻塞状态。
+
+
 ### 0.0 2026-09-28 完整目标阻塞审计（等待后端与用户配合）
 
 - 上轮有实际进展：原生反馈界面验收、网站投稿失败回退及测试。本轮只读复核，公开后端 main 仍为 `d219f37f1df5f2e43c640134e3a3697e80b85312`，profile 路由仍仅保存 nickname/avatar_url；当前客户端没有 chooseAvatar/uploadFile 接入，不能宣称一键微信头像已经实现。

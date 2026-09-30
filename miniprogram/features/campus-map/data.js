@@ -1,0 +1,1003 @@
+// 来源：用户提供的 NKU Maps，GCJ02 坐标；保持原始地点说明。
+module.exports = {
+  "categories": {
+    "teaching": {
+      "label": "教学楼",
+      "icon": "fa-graduation-cap"
+    },
+    "dormitory": {
+      "label": "学生宿舍",
+      "icon": "fa-building"
+    },
+    "canteen": {
+      "label": "食堂",
+      "icon": "fa-cutlery"
+    },
+    "library": {
+      "label": "图书馆",
+      "icon": "fa-book"
+    },
+    "sports": {
+      "label": "运动场馆",
+      "icon": "fa-futbol-o"
+    },
+    "admin": {
+      "label": "行政楼",
+      "icon": "fa-briefcase"
+    },
+    "gate": {
+      "label": "校门",
+      "icon": "fa-flag"
+    },
+    "hospital": {
+      "label": "校医院",
+      "icon": "fa-hospital-o"
+    },
+    "theater": {
+      "label": "剧场",
+      "icon": "fa-ticket"
+    },
+    "busstation": {
+      "label": "校车站",
+      "icon": "fa-bus"
+    },
+    "landmark": {
+      "label": "地标建筑",
+      "icon": "fa-star"
+    },
+    "college": {
+      "label": "学院楼",
+      "icon": "fa-university"
+    },
+    "food": {
+      "label": "附近美食",
+      "icon": "fa-coffee"
+    },
+    "express": {
+      "label": "快递点",
+      "icon": "fa-archive"
+    },
+    "transit": {
+      "label": "轨道交通",
+      "icon": "fa-train"
+    }
+  },
+  "campuses": {
+    "n": {
+      "name": "南开大学八里台校区",
+      "coord": [
+        117.171274,
+        39.102101
+      ],
+      "zoom": 17
+    },
+    "j": {
+      "name": "南开大学津南校区",
+      "coord": [
+        117.345,
+        38.989
+      ],
+      "zoom": 16
+    }
+  },
+  "buildings": [
+    {
+      "id": "n_landmark_01",
+      "name": "南开大学主楼",
+      "category": "landmark",
+      "campusId": "n",
+      "coord": [
+        117.171274,
+        39.102101
+      ],
+      "desc": "八里台校区标志性主楼，位于校园中轴线上，是南开大学的地标建筑。",
+      "images": [
+        {
+          "src": "/assets/campus-map/nankai-main-building.png",
+          "caption": "南开大学主楼与周恩来总理塑像"
+        }
+      ],
+      "markerId": 1
+    },
+    {
+      "id": "n_landmark_02",
+      "name": "周恩来总理塑像",
+      "category": "landmark",
+      "campusId": "n",
+      "coord": [
+        117.171302,
+        39.10173
+      ],
+      "desc": "主楼正前方广场上的周恩来总理塑像，南开的标志性打卡点。",
+      "markerId": 2
+    },
+    {
+      "id": "n_landmark_03",
+      "name": "周恩来总理纪念碑",
+      "category": "landmark",
+      "campusId": "n",
+      "coord": [
+        117.175527,
+        39.104012
+      ],
+      "desc": "马蹄湖畔的周恩来总理纪念碑，刻有「我是爱南开的」。",
+      "markerId": 3
+    },
+    {
+      "id": "n_landmark_04",
+      "name": "马蹄湖",
+      "category": "landmark",
+      "campusId": "n",
+      "coord": [
+        117.175527,
+        39.104005
+      ],
+      "desc": "南开最具代表性的圆形湖，湖心岛立有周恩来总理纪念碑，夏季荷花盛开。",
+      "markerId": 4
+    },
+    {
+      "id": "n_landmark_05",
+      "name": "新开湖",
+      "category": "landmark",
+      "campusId": "n",
+      "coord": [
+        117.172996,
+        39.103461
+      ],
+      "desc": "校区东部的开阔湖面，与马蹄湖相邻，湖边是课余散步的好去处。",
+      "markerId": 5
+    },
+    {
+      "id": "n_landmark_06",
+      "name": "校钟景观",
+      "category": "landmark",
+      "campusId": "n",
+      "coord": [
+        117.171163,
+        39.10312
+      ],
+      "desc": "南开校钟所在，校庆等重要时刻鸣响，铭记校史。",
+      "markerId": 6
+    },
+    {
+      "id": "n_landmark_07",
+      "name": "敬业广场",
+      "category": "landmark",
+      "campusId": "n",
+      "coord": [
+        117.167248,
+        39.103285
+      ],
+      "desc": "图书馆旁的开阔广场，课余休憩与社团活动的好去处。",
+      "markerId": 7
+    },
+    {
+      "id": "n_library_01",
+      "name": "图书馆",
+      "category": "library",
+      "campusId": "n",
+      "coord": [
+        117.165783,
+        39.103177
+      ],
+      "desc": "八里台校区图书馆，自习与借阅的核心场所。",
+      "markerId": 8
+    },
+    {
+      "id": "n_teaching_01",
+      "name": "第二主教学楼",
+      "category": "teaching",
+      "campusId": "n",
+      "coord": [
+        117.171116,
+        39.103659
+      ],
+      "desc": "位于主楼北侧的公共教学楼。",
+      "markerId": 9
+    },
+    {
+      "id": "n_teaching_02",
+      "name": "第四教学楼",
+      "category": "teaching",
+      "campusId": "n",
+      "coord": [
+        117.170096,
+        39.102659
+      ],
+      "desc": "公共教学楼。",
+      "markerId": 10
+    },
+    {
+      "id": "n_teaching_03",
+      "name": "第五教学楼",
+      "category": "teaching",
+      "campusId": "n",
+      "coord": [
+        117.169447,
+        39.102177
+      ],
+      "desc": "公共教学楼。",
+      "markerId": 11
+    },
+    {
+      "id": "n_teaching_04",
+      "name": "文科创新楼",
+      "category": "teaching",
+      "campusId": "n",
+      "coord": [
+        117.169188,
+        39.103834
+      ],
+      "desc": "文科类科研与创新用楼。",
+      "markerId": 12
+    },
+    {
+      "id": "n_teaching_05",
+      "name": "组合教学中心",
+      "category": "teaching",
+      "campusId": "n",
+      "coord": [
+        117.163582,
+        39.105295
+      ],
+      "desc": "校区西北部的公共教学组团，邻近学生活动中心。",
+      "markerId": 13
+    },
+    {
+      "id": "n_teaching_06",
+      "name": "中心实验室",
+      "category": "teaching",
+      "campusId": "n",
+      "coord": [
+        117.164389,
+        39.104501
+      ],
+      "desc": "公共实验教学楼。",
+      "markerId": 14
+    },
+    {
+      "id": "n_college_01",
+      "name": "范孙楼",
+      "category": "college",
+      "campusId": "n",
+      "coord": [
+        117.166571,
+        39.102215
+      ],
+      "desc": "八里台校区老建筑之一，邻近敬业广场。",
+      "markerId": 15
+    },
+    {
+      "id": "n_college_02",
+      "name": "伯苓楼",
+      "category": "college",
+      "campusId": "n",
+      "coord": [
+        117.164379,
+        39.103401
+      ],
+      "desc": "以张伯苓校长命名的历史建筑。",
+      "markerId": 16
+    },
+    {
+      "id": "n_college_03",
+      "name": "省身楼",
+      "category": "college",
+      "campusId": "n",
+      "coord": [
+        117.169864,
+        39.101032
+      ],
+      "desc": "陈省身数学研究所所在地，南开数学学科的重镇。",
+      "markerId": 17
+    },
+    {
+      "id": "n_college_04",
+      "name": "蒙民伟楼",
+      "category": "college",
+      "campusId": "n",
+      "coord": [
+        117.1767,
+        39.10227
+      ],
+      "desc": "位于校区东部、临近卫津路的教学科研楼。",
+      "markerId": 18
+    },
+    {
+      "id": "n_college_05",
+      "name": "东方艺术大楼",
+      "category": "college",
+      "campusId": "n",
+      "coord": [
+        117.173342,
+        39.102925
+      ],
+      "desc": "东方艺术系教学科研楼，紧邻新开湖。",
+      "markerId": 19
+    },
+    {
+      "id": "n_college_06",
+      "name": "化学楼",
+      "category": "college",
+      "campusId": "n",
+      "coord": [
+        117.168009,
+        39.103163
+      ],
+      "desc": "化学学院教学科研楼，化学是南开的传统优势学科。",
+      "markerId": 20
+    },
+    {
+      "id": "n_college_07",
+      "name": "文学院",
+      "category": "college",
+      "campusId": "n",
+      "coord": [
+        117.166618,
+        39.10222
+      ],
+      "desc": "文学院教学科研楼。",
+      "markerId": 21
+    },
+    {
+      "id": "n_college_08",
+      "name": "数学科学学院",
+      "category": "college",
+      "campusId": "n",
+      "coord": [
+        117.163965,
+        39.103851
+      ],
+      "desc": "数学科学学院教学楼。",
+      "markerId": 22
+    },
+    {
+      "id": "n_college_09",
+      "name": "汉语言文化学院",
+      "category": "college",
+      "campusId": "n",
+      "coord": [
+        117.172879,
+        39.102335
+      ],
+      "desc": "汉语言文化学院教学科研楼。",
+      "markerId": 23
+    },
+    {
+      "id": "n_college_10",
+      "name": "管理学院西院",
+      "category": "college",
+      "campusId": "n",
+      "coord": [
+        117.162072,
+        39.106948
+      ],
+      "desc": "管理学院西院办公教学区。",
+      "markerId": 24
+    },
+    {
+      "id": "n_canteen_01",
+      "name": "学生第一食堂",
+      "category": "canteen",
+      "campusId": "n",
+      "coord": [
+        117.167223,
+        39.104316
+      ],
+      "desc": "北区学生食堂之一。",
+      "markerId": 25
+    },
+    {
+      "id": "n_canteen_02",
+      "name": "学生第二食堂",
+      "category": "canteen",
+      "campusId": "n",
+      "coord": [
+        117.167026,
+        39.104806
+      ],
+      "desc": "北区学生食堂之一。",
+      "markerId": 26
+    },
+    {
+      "id": "n_canteen_03",
+      "name": "学生三食堂",
+      "category": "canteen",
+      "campusId": "n",
+      "coord": [
+        117.165837,
+        39.104806
+      ],
+      "desc": "北区学生食堂，邻近物美超市。",
+      "markerId": 27
+    },
+    {
+      "id": "n_sports_01",
+      "name": "体育场（田径场）",
+      "category": "sports",
+      "campusId": "n",
+      "coord": [
+        117.16927,
+        39.105496
+      ],
+      "desc": "标准田径场，含足球场，体育课与晨跑的主场地。",
+      "markerId": 28
+    },
+    {
+      "id": "n_sports_02",
+      "name": "体育馆",
+      "category": "sports",
+      "campusId": "n",
+      "coord": [
+        117.17146,
+        39.10514
+      ],
+      "desc": "室内体育馆，篮球、羽毛球等场地。",
+      "markerId": 29
+    },
+    {
+      "id": "n_sports_03",
+      "name": "游泳馆",
+      "category": "sports",
+      "campusId": "n",
+      "coord": [
+        117.174576,
+        39.103724
+      ],
+      "desc": "游泳馆，游泳课与日常锻炼场所。",
+      "markerId": 30
+    },
+    {
+      "id": "n_food_01",
+      "name": "西南村",
+      "category": "food",
+      "campusId": "n",
+      "coord": [
+        117.161646,
+        39.101672
+      ],
+      "desc": "西南村生活区，聚集各类小吃餐馆，是南开人「食堂之外」的觅食地。",
+      "markerId": 31
+    },
+    {
+      "id": "n_express_01",
+      "name": "顺丰速运（南开大学店）",
+      "category": "express",
+      "campusId": "n",
+      "coord": [
+        117.163427,
+        39.106041
+      ],
+      "desc": "校区快递驿站之一，顺丰件在此取寄。",
+      "markerId": 32
+    },
+    {
+      "id": "n_hospital_01",
+      "name": "校医院",
+      "category": "hospital",
+      "campusId": "n",
+      "coord": [
+        117.166632,
+        39.101544
+      ],
+      "desc": "校区医院，提供基础诊疗与药品购买。",
+      "markerId": 33
+    },
+    {
+      "id": "n_gate_01",
+      "name": "东门",
+      "category": "gate",
+      "campusId": "n",
+      "coord": [
+        117.177802,
+        39.101762
+      ],
+      "desc": "面向卫津路的主校门，大中路由此向西延伸。",
+      "markerId": 34
+    },
+    {
+      "id": "n_gate_02",
+      "name": "南门",
+      "category": "gate",
+      "campusId": "n",
+      "coord": [
+        117.171385,
+        39.101025
+      ],
+      "desc": "校区南门，邻近复康路一侧。",
+      "markerId": 35
+    },
+    {
+      "id": "n_gate_03",
+      "name": "西门",
+      "category": "gate",
+      "campusId": "n",
+      "coord": [
+        117.160782,
+        39.101935
+      ],
+      "desc": "校区西门，紧邻西南村生活区。",
+      "markerId": 36
+    },
+    {
+      "id": "n_landmark_08",
+      "name": "西南联大纪念碑",
+      "category": "landmark",
+      "campusId": "n",
+      "coord": [
+        117.16935,
+        39.102895
+      ],
+      "desc": "国立西南联合大学纪念碑，纪念抗战时期南开南迁与长沙临时大学、西南联大的办学历史。",
+      "markerId": 37
+    },
+    {
+      "id": "n_admin_01",
+      "name": "南开大学出版社",
+      "category": "admin",
+      "campusId": "n",
+      "coord": [
+        117.158883,
+        39.105912
+      ],
+      "desc": "南开大学出版社，位于校区西北角。",
+      "markerId": 38
+    },
+    {
+      "id": "n_teaching_07",
+      "name": "电教中心",
+      "category": "teaching",
+      "campusId": "n",
+      "coord": [
+        117.166693,
+        39.10332
+      ],
+      "desc": "电教中心，紧邻新图书馆。",
+      "markerId": 39
+    },
+    {
+      "id": "n_canteen_04",
+      "name": "清真食堂",
+      "category": "canteen",
+      "campusId": "n",
+      "coord": [
+        117.167195,
+        39.104404
+      ],
+      "desc": "清真食堂，位于北区食堂群。",
+      "markerId": 40
+    },
+    {
+      "id": "n_college_11",
+      "name": "经济学院",
+      "category": "college",
+      "campusId": "n",
+      "coord": [
+        117.162463,
+        39.103321
+      ],
+      "desc": "经济学院楼（含第一、第二教学楼），位于校区西侧。",
+      "markerId": 41
+    },
+    {
+      "id": "n_theater_01",
+      "name": "田家炳音乐厅",
+      "category": "theater",
+      "campusId": "n",
+      "coord": [
+        117.163614,
+        39.105766
+      ],
+      "desc": "田家炳音乐厅，演出与音乐会场地，紧邻学生活动中心。",
+      "markerId": 42
+    },
+    {
+      "id": "j_library_01",
+      "name": "津南校区图书馆",
+      "category": "library",
+      "campusId": "j",
+      "coord": [
+        117.346974,
+        38.986286
+      ],
+      "desc": "津南校区中心图书馆，空间宽敞、自习氛围好。",
+      "markerId": 43
+    },
+    {
+      "id": "j_teaching_01",
+      "name": "公共教学楼C区",
+      "category": "teaching",
+      "campusId": "j",
+      "coord": [
+        117.342801,
+        38.988329
+      ],
+      "desc": "本科生公共课程教学楼。",
+      "markerId": 44
+    },
+    {
+      "id": "j_teaching_02",
+      "name": "公共教学楼D区",
+      "category": "teaching",
+      "campusId": "j",
+      "coord": [
+        117.345993,
+        38.989238
+      ],
+      "desc": "本科生公共课程教学楼。",
+      "markerId": 45
+    },
+    {
+      "id": "j_teaching_03",
+      "name": "电子信息实验教学中心",
+      "category": "teaching",
+      "campusId": "j",
+      "coord": [
+        117.347704,
+        38.988031
+      ],
+      "desc": "电子信息类实验教学中心。",
+      "markerId": 46
+    },
+    {
+      "id": "j_teaching_04",
+      "name": "综合实验楼",
+      "category": "teaching",
+      "campusId": "j",
+      "coord": [
+        117.349099,
+        38.988928
+      ],
+      "desc": "综合实验教学楼群。",
+      "markerId": 47
+    },
+    {
+      "id": "j_dorm_01",
+      "name": "学生公寓",
+      "category": "dormitory",
+      "campusId": "j",
+      "coord": [
+        117.344178,
+        38.992447
+      ],
+      "desc": "津南校区学生公寓区。",
+      "markerId": 48
+    },
+    {
+      "id": "j_canteen_01",
+      "name": "第一食堂",
+      "category": "canteen",
+      "campusId": "j",
+      "coord": [
+        117.342336,
+        38.992424
+      ],
+      "desc": "津南校区主要食堂之一，紧邻学生公寓区。",
+      "markerId": 49
+    },
+    {
+      "id": "j_canteen_02",
+      "name": "第二食堂",
+      "category": "canteen",
+      "campusId": "j",
+      "coord": [
+        117.341225,
+        38.986165
+      ],
+      "desc": "津南校区食堂之一，位于校区西南部。",
+      "markerId": 50
+    },
+    {
+      "id": "j_sports_01",
+      "name": "体育馆",
+      "category": "sports",
+      "campusId": "j",
+      "coord": [
+        117.347626,
+        38.991919
+      ],
+      "desc": "津南校区室内体育馆。",
+      "markerId": 51
+    },
+    {
+      "id": "j_theater_01",
+      "name": "大学生活动中心",
+      "category": "theater",
+      "campusId": "j",
+      "coord": [
+        117.350444,
+        38.98823
+      ],
+      "desc": "大通学生中心，社团活动与讲座的主要场地。",
+      "markerId": 52
+    },
+    {
+      "id": "j_college_01",
+      "name": "金融学院",
+      "category": "college",
+      "campusId": "j",
+      "coord": [
+        117.34346,
+        38.990144
+      ],
+      "desc": "金融学院大楼，位于校区西北部。",
+      "markerId": 53
+    },
+    {
+      "id": "j_college_02",
+      "name": "材料科学与工程学院",
+      "category": "college",
+      "campusId": "j",
+      "coord": [
+        117.343057,
+        38.987573
+      ],
+      "desc": "材料科学与工程学院教学科研楼。",
+      "markerId": 54
+    },
+    {
+      "id": "j_college_03",
+      "name": "计算机学院",
+      "category": "college",
+      "campusId": "j",
+      "coord": [
+        117.342775,
+        38.986625
+      ],
+      "desc": "计算机学院（网络空间安全学院）教学科研楼。",
+      "markerId": 55
+    },
+    {
+      "id": "j_college_04",
+      "name": "人工智能学院北楼",
+      "category": "college",
+      "campusId": "j",
+      "coord": [
+        117.341779,
+        38.987988
+      ],
+      "desc": "人工智能学院楼（北楼）。",
+      "markerId": 56
+    },
+    {
+      "id": "j_college_05",
+      "name": "软件学院",
+      "category": "college",
+      "campusId": "j",
+      "coord": [
+        117.341934,
+        38.987802
+      ],
+      "desc": "软件学院教学楼。",
+      "markerId": 57
+    },
+    {
+      "id": "j_hospital_01",
+      "name": "校医院",
+      "category": "hospital",
+      "campusId": "j",
+      "coord": [
+        117.341864,
+        38.994124
+      ],
+      "desc": "津南校区校医院。",
+      "markerId": 58
+    },
+    {
+      "id": "j_gate_01",
+      "name": "西门",
+      "category": "gate",
+      "campusId": "j",
+      "coord": [
+        117.339575,
+        38.983975
+      ],
+      "desc": "津南校区西门。",
+      "markerId": 59
+    },
+    {
+      "id": "j_transit_01",
+      "name": "海河教育园区地铁站",
+      "category": "transit",
+      "campusId": "j",
+      "coord": [
+        117.322181,
+        38.988951
+      ],
+      "desc": "海河教育园区轨道交通站点，津南校区师生进出市区的重要交通节点。",
+      "markerId": 60
+    },
+    {
+      "id": "j_admin_01",
+      "name": "综合业务西楼",
+      "category": "admin",
+      "campusId": "j",
+      "coord": [
+        117.345725,
+        38.986225
+      ],
+      "desc": "综合业务楼，与东楼分列校园中轴线两侧，紧邻图书馆。",
+      "markerId": 61
+    },
+    {
+      "id": "j_admin_02",
+      "name": "综合业务东楼",
+      "category": "admin",
+      "campusId": "j",
+      "coord": [
+        117.348223,
+        38.986225
+      ],
+      "desc": "综合业务楼，与西楼分列校园中轴线两侧，紧邻图书馆。",
+      "markerId": 62
+    },
+    {
+      "id": "j_college_06",
+      "name": "哲学院",
+      "category": "college",
+      "campusId": "j",
+      "coord": [
+        117.344147,
+        38.99074
+      ],
+      "desc": "文科学院组团之一，位于校区西北部。",
+      "markerId": 63
+    },
+    {
+      "id": "j_college_07",
+      "name": "马克思主义教育学院",
+      "category": "college",
+      "campusId": "j",
+      "coord": [
+        117.344177,
+        38.991243
+      ],
+      "desc": "文科学院组团之一，位于校区西北部。",
+      "markerId": 64
+    },
+    {
+      "id": "j_college_08",
+      "name": "历史学院",
+      "category": "college",
+      "campusId": "j",
+      "coord": [
+        117.343471,
+        38.99114
+      ],
+      "desc": "文科学院组团之一，位于校区西北部。",
+      "markerId": 65
+    },
+    {
+      "id": "j_college_09",
+      "name": "周恩来政府管理学院",
+      "category": "college",
+      "campusId": "j",
+      "coord": [
+        117.342517,
+        38.991353
+      ],
+      "desc": "文科学院组团之一，位于校区西北部。",
+      "markerId": 66
+    },
+    {
+      "id": "j_college_10",
+      "name": "汉语言文化学院",
+      "category": "college",
+      "campusId": "j",
+      "coord": [
+        117.341757,
+        38.990665
+      ],
+      "desc": "文科学院组团之一，位于校区西北部。",
+      "markerId": 67
+    },
+    {
+      "id": "j_college_11",
+      "name": "法学院",
+      "category": "college",
+      "campusId": "j",
+      "coord": [
+        117.342266,
+        38.990299
+      ],
+      "desc": "文科学院组团之一，位于校区西北部。",
+      "markerId": 68
+    },
+    {
+      "id": "j_college_12",
+      "name": "医学院",
+      "category": "college",
+      "campusId": "j",
+      "coord": [
+        117.33691,
+        38.986981
+      ],
+      "desc": "理科学院一组团，位于校区西部。",
+      "markerId": 69
+    },
+    {
+      "id": "j_college_13",
+      "name": "药学院",
+      "category": "college",
+      "campusId": "j",
+      "coord": [
+        117.337758,
+        38.987719
+      ],
+      "desc": "理科学院一组团，位于校区西部。",
+      "markerId": 70
+    },
+    {
+      "id": "j_college_14",
+      "name": "环境科学与工程学院",
+      "category": "college",
+      "campusId": "j",
+      "coord": [
+        117.337425,
+        38.989196
+      ],
+      "desc": "理科学院一组团，位于校区西部。",
+      "markerId": 71
+    },
+    {
+      "id": "j_college_15",
+      "name": "旅游与服务学院",
+      "category": "college",
+      "campusId": "j",
+      "coord": [
+        117.338054,
+        38.991045
+      ],
+      "desc": "对外办学组团，位于校区西部。",
+      "markerId": 72
+    },
+    {
+      "id": "j_dorm_02",
+      "name": "留学生宿舍（A-E楼）",
+      "category": "dormitory",
+      "campusId": "j",
+      "coord": [
+        117.339726,
+        38.992515
+      ],
+      "desc": "对外办学组团留学生宿舍A至E楼。",
+      "markerId": 73
+    },
+    {
+      "id": "j_landmark_01",
+      "name": "思源堂",
+      "category": "landmark",
+      "campusId": "j",
+      "coord": [
+        117.340346,
+        38.990203
+      ],
+      "desc": "复建的南开历史建筑思源堂，与木斋馆、秀山堂同为津南校区标志性人文景观。",
+      "markerId": 74
+    },
+    {
+      "id": "j_landmark_02",
+      "name": "木斋图书馆",
+      "category": "landmark",
+      "campusId": "j",
+      "coord": [
+        117.3401,
+        38.99
+      ],
+      "desc": "复建的木斋图书馆，南开历史建筑之一，毗邻思源堂与秀山堂。",
+      "markerId": 75
+    },
+    {
+      "id": "j_landmark_03",
+      "name": "秀山堂",
+      "category": "landmark",
+      "campusId": "j",
+      "coord": [
+        117.340104,
+        38.989021
+      ],
+      "desc": "复建的南开历史建筑秀山堂，与思源堂、木斋馆毗邻。",
+      "markerId": 76
+    }
+  ]
+}
