@@ -55,6 +55,7 @@
 | WXML 结构检查 | ✅ 34 文件 / 0 错误 | 模板标签与结构 |
 | 生产 `/api/v1/home` | ✅ 只读检查 | 响应符合现有公开契约；不代表真实投稿验收 |
 | 差异空白检查 | ✅ 通过 | 没有新增空白错误 |
+| GitHub CI | ✅ [已通过](https://github.com/mzk-C4/NKU-study-wxapp/actions/runs/36954027383) | main 代码提交 d3427d9 的 test job 执行 npm test 成功 |
 | 本轮模拟器界面与交互 | ⏳ 等待工具授权 | 尚不能声称实际渲染通过 |
 | 真机 / 小屏 / 大字体 | ⬜ 未执行 | 自动化不能代替手机端体验 |
 
@@ -64,7 +65,7 @@
 
 - ✅ 功能、样式、回归测试与文档已在本地完成。
 - ✅ 已核对 GitHub main，无未同步的远端新增提交。
-- ⏳ Git 提交与推送待执行。
+- ✅ 代码与本日志已推送 [GitHub main](https://github.com/mzk-C4/NKU-study-wxapp/tree/main)，功能提交 [d3427d9](https://github.com/mzk-C4/NKU-study-wxapp/commit/d3427d9e2f8d749ab32f92b307e28b3476406cbd)，远端提交已独立核对，CI 通过。
 - ⏳ 微信开发者工具正在等待用户允许 Codex 连接。
 - ⏳ 开发版候选 **2.1.0**，上传目标待用户确认，尚未上传。
 - ⬜ 不包含微信审核、正式发布或生产后端部署。
