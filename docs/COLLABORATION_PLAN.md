@@ -26,7 +26,7 @@
 - PASS：npm.cmd run release:check 完整 292/292（36 + 106 + 75 + 25 + 50），25 页面/5 Tab 静态门禁，生产 /api/v1/home 只读检查；python scripts/check-wxml.py miniprogram 为 34 文件/0 错误，git diff --check 通过。新增 16 项 local-experience 专项已纳入标准 npm test。
 - Git：推送前 fetch origin main 并核对 main...origin/main 为 0/0；本轮 27 个文件已提交为 d3427d9e2f8d749ab32f92b307e28b3476406cbd，并推送 origin/main，ls-remote 已确认远端指向该提交。此前工作区地图修正与测试完整保留，安装到 Codex 的技能不进入项目提交。
 - GitHub CI：[run 36954027383](https://github.com/mzk-C4/NKU-study-wxapp/actions/runs/36954027383) 为 completed/success，test job 的 npm test 步骤成功。普通 main 推送响应曾提示 required status check 尚未产生，随后上述检查已实际通过；没有修改分支保护或工作流。
-- 微信调试：本机发现 wechatide-skill 0.3.9 与工具 2.02.2608070；自带安装检查对含空格安装路径误报 cli_unavailable，PowerShell 正确引用后 CLI 可执行。目前连接授权任务 auth_4b6cc75f12ba580ec919e47cab10515ec1e11c1f73f35da7 状态 pending，需用户在开发者工具中允许 Codex；授权后先核对登录/版本，再执行模拟器编译、交互与截图。
+- 微信调试：本机发现 wechatide-skill 0.3.9 与工具 2.02.2608070；自带安装检查对含空格安装路径误报 cli_unavailable，PowerShell 正确引用后 CLI 可执行。原授权任务 auth_4b6cc75f12ba580ec919e47cab10515ec1e11c1f73f35da7 最初为 pending，后续恢复检查返回 AUTH_TASK_ERROR/source=connect，结果未知，不作为失败或成功终态。进程检查未发现该安装目录的工具进程后，已启动现有微信开发者工具并确认进程运行；旧任务查询仍提示 Failed to connect to WechatIDE。没有重发授权、绕过 CLI 安全设置或发起上传。需用户确认重新连接并在工具中允许 Codex；连接后先核对登录/版本，再执行模拟器编译、交互与截图。
 - 发布门禁：候选开发版 2.1.0、现有 AppID wx4fe2a7554180e903 已向用户请求确认；不提交审核或正式发布。未读取上传私钥、未关闭域名校验、未向生产写评价/反馈；工具授权与上传目标未确认前不上传。
 - 修改日志：[CHANGELOG_2026-10-02.md](./CHANGELOG_2026-10-02.md)。API 调用契约没有变化，API.md 无需修改；真机、窄屏、大字体验及开发版上传结果仍未验证，不将本地测试等同于这些结果。
 
