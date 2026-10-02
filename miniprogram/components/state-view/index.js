@@ -2,6 +2,7 @@ Component({
   options: { styleIsolation: 'shared' },
   properties: {
     loading: Boolean,
+    skeleton: Boolean,
     error: String,
     empty: Boolean,
     emptyText: { type: String, value: '暂时没有内容' }

@@ -2,6 +2,7 @@ const { reportVisit } = require('../../utils/visit-report')
 const theme = require('../../utils/theme')
 const publicApi = require('../../services/public-api')
 const navigation = require('../../utils/navigation')
+const local = require('../../utils/local-preferences')
 const { createSearchEngine, SEARCH_TYPES } = require('../../utils/search-engine')
 const { normalizeBoundedSearchText } = require('../../utils/search-utils')
 const { buildCoursePresentation, buildSearchPresentation } = require('./presentation')
@@ -90,6 +91,7 @@ function userErrorMessage(error, target) {
 Page({
   data: {
     query: '',
+    searchHistory: [], historyNotice: '', filtersExpanded: false,
     mode: 'global',
     modeLabel: '四类搜索',
     selectedType: '',
@@ -137,7 +139,7 @@ Page({
     this._indexRequestId = 0
     this._matchedResults = []
     const query = String(options.q == null ? '' : options.q).slice(0, 80)
-    this.setData({ query })
+    this.setData({ query, searchHistory: local.readHistory() })
     const indexPromise = this.loadSearchIndex()
     const facetsPromise = this.loadFacetOptions()
     return Promise.all([indexPromise, facetsPromise])
@@ -179,8 +181,29 @@ Page({
   },
   submit() {
     this.cancelSearchTimer()
+    this.rememberQuery()
+    if (!this.data.indexReady && !hasActiveFilters(this.data)) return this.loadSearchIndex()
     return this.search()
   },
+  rememberQuery() {
+    if (!boundedQuery(this.data.query)) return
+    const result = local.recordHistory(this.data.query, this.data.searchHistory)
+    this.setData({ searchHistory: result.items, historyNotice: result.saved ? '' : '本机存储暂不可用，搜索仍可正常使用。' })
+  },
+  chooseHistory(event) {
+    const query = event.currentTarget.dataset.query
+    if (typeof query !== 'string') return
+    this.setData({ query: query.slice(0, 80) })
+    return this.submit()
+  },
+  clearHistory() {
+    wx.showModal({ title: '清空搜索历史？', content: '只清除本机记录，不影响课程收藏。', success: result => {
+      if (!result.confirm || this._isUnloaded) return
+      const saved = local.writeList(local.KEYS.search, [])
+      this.setData({ searchHistory: saved ? [] : this.data.searchHistory, historyNotice: saved ? '' : '清空失败，请稍后重试。' })
+    } })
+  },
+  toggleFilters() { this.setData({ filtersExpanded: !this.data.filtersExpanded }) },
   clearQuery() {
     this.cancelSearchTimer()
     this.invalidateServerRequest()
@@ -492,6 +515,7 @@ Page({
     const key = event && event.currentTarget && event.currentTarget.dataset.key
     const result = this.data.results.find(item => item.key === key)
     if (!result) return
+    this.rememberQuery()
     if (result.type === 'course') {
       navigation.openCourse(result.id)
       return

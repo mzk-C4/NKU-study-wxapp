@@ -2,6 +2,8 @@ const { reportVisit } = require('../../utils/visit-report')
 const theme = require('../../utils/theme')
 const feedbackApi = require('../../utils/feedback-api')
 const { publicApi } = require('../../services/public-api')
+const authSession = require('../../utils/auth-session')
+const drafts = require('../../utils/form-draft')
 
 // 后端存 UTC ISO（带 Z）：转成北京时间（UTC+8）并只保留年月日
 function beijingDateLabel(value) {
@@ -29,7 +31,7 @@ function submitFailure(status) {
 
 Page({
   data: {
-    loading: true, error: '', submitting: false, submitError: '', loggedIn: false,
+    loading: true, error: '', submitting: false, submitError: '', loggedIn: false, hasDraft: false, draftNotice: '',
     feedbacks: [], visibleFeedbacks: [], myFeedbacks: [], searchKeyword: '', title: '', content: '', contact: '',
     type: 'bug', typeOptions: [
       { value: 'bug', label: 'Bug' },
@@ -50,23 +52,62 @@ Page({
   onLoad(options = {}) {
     const prefillTitle = decodePrefill(options.prefill_title, 120)
     const prefillContent = decodePrefill(options.prefill_content, 2000)
+    this._isUnloaded = false
+    this._prefill = { title: prefillTitle, content: prefillContent }
     this.setData({
       ...(prefillTitle ? { title: prefillTitle, type: 'content' } : {}),
       ...(prefillContent ? { content: prefillContent } : {})
     })
+    this.startDraft()
     reportVisit('/mp/feedback')
     this.loadFeedback()
   },
-  onShow() { theme.onPageShow() },
+  onShow() {
+    theme.onPageShow()
+    const changedAccount = this._draft && this._draft.account !== drafts.owner(true)
+    this.startDraft()
+    if (changedAccount) this.loadFeedback()
+  },
+  onHide() { if (this._draft) this._draft.flush() },
+  onUnload() { if (this._draft) this._draft.flush(); this._isUnloaded = true; this._listRequestId = (this._listRequestId || 0) + 1 },
+  startDraft() {
+    const prefill = this._prefill || { title: '', content: '' }
+    const context = prefill.title || prefill.content ? `prefill:${prefill.title}\n${prefill.content}` : 'general'
+    if (this._draft && this._draft.account === drafts.owner(true) && this._draft.context === context) return
+    if (this._draft) {
+      this._draft.flush(); this._draft.stop()
+      this.setData({ title: prefill.title, content: prefill.content, contact: '', reportUrl: '', reportTarget: '', type: prefill.title ? 'content' : 'bug', submitError: '', myFeedbacks: [] })
+    }
+    this._draft = drafts.createFormDraft(this, { kind: 'feedback', context, allowGuest: true })
+    this._draft.restore()
+  },
+  discardDraft() {
+    if (this.data.submitting || !this._draft) return
+    const draft = this._draft
+    wx.showModal({ title: '清除这份反馈草稿？', content: '只清除本机未提交内容，不影响已提交反馈。', success: result => {
+      if (!result.confirm || this._isUnloaded || this.data.submitting || draft !== this._draft) return
+      if (!draft.clear()) { this.setData({ draftNotice: '清除失败，草稿仍保留，请稍后重试。' }); return }
+      this.setData({ title: '', content: '', contact: '', reportUrl: '', reportTarget: '', type: 'bug', submitError: '', hasDraft: false, draftNotice: '已清除本机草稿。' })
+    } })
+  },
+  updateDraftField(patch) {
+    if (this.data.submitting) return
+    this.setData({ ...patch, submitError: '' })
+    if (this._draft) this._draft.changed()
+  },
   onPullDownRefresh() { this.loadFeedback().finally(() => wx.stopPullDownRefresh()) },
   async loadFeedback() {
-    this.setData({ loading: true, error: '' })
+    const requestId = this._listRequestId = (this._listRequestId || 0) + 1
+    const token = authSession.getToken()
+    this.setData({ loading: true, error: '', myFeedbacks: [] })
     try {
       // 已登录时并行拉公开反馈与本人反馈；未登录只拉公开
       const tasks = [feedbackApi.listFeedback()]
-      const loggedIn = Boolean(require('../../utils/auth-session').readSession())
+      const loggedIn = Boolean(authSession.readSession())
       if (loggedIn) tasks.push(publicApi.getMyFeedback({ page: 1, page_size: 100 }).catch(() => ({ items: [] })))
       const [publicResult, myResult] = await Promise.all(tasks)
+      if (this._isUnloaded || requestId !== this._listRequestId) return
+      if (token !== authSession.getToken()) return this.loadFeedback()
       const present = item => ({
         ...item,
         ...item,
@@ -81,7 +122,11 @@ Page({
       const myFeedbacks = loggedIn ? ((myResult || {}).items || []).map(present) : []
       this.setData({ feedbacks, myFeedbacks, loggedIn, loading: false })
       this.applyFilters()
-    } catch (error) { this.setData({ loading: false, error: error.message || '加载失败' }) }
+    } catch (error) {
+      if (this._isUnloaded || requestId !== this._listRequestId) return
+      if (token !== authSession.getToken()) return this.loadFeedback()
+      this.setData({ loading: false, error: error.message || '加载失败' })
+    }
   },
   inputSearchKeyword(e) { this.setData({ searchKeyword: e.detail.value }); this.applyFilters() },
   clearSearchKeyword() { this.setData({ searchKeyword: '' }); this.applyFilters() },
@@ -95,36 +140,45 @@ Page({
     })
     this.setData({ visibleFeedbacks: list })
   },
-  inputTitle(e) { if (!this.data.submitting) this.setData({ title: String(e.detail.value || '').slice(0, 120), submitError: '' }) },
-  inputReportUrl(e) { if (!this.data.submitting) this.setData({ reportUrl: String(e.detail.value || '').slice(0, 300), submitError: '' }) },
-  inputReportTarget(e) { if (!this.data.submitting) this.setData({ reportTarget: String(e.detail.value || '').slice(0, 120), submitError: '' }) },
-  inputContent(e) { if (!this.data.submitting) this.setData({ content: String(e.detail.value || '').slice(0, 2000), submitError: '' }) },
-  inputContact(e) { if (!this.data.submitting) this.setData({ contact: String(e.detail.value || '').slice(0, 120), submitError: '' }) },
+  inputTitle(e) { this.updateDraftField({ title: String(e.detail.value || '').slice(0, 120) }) },
+  inputReportUrl(e) { this.updateDraftField({ reportUrl: String(e.detail.value || '').slice(0, 300) }) },
+  inputReportTarget(e) { this.updateDraftField({ reportTarget: String(e.detail.value || '').slice(0, 120) }) },
+  inputContent(e) { this.updateDraftField({ content: String(e.detail.value || '').slice(0, 2000) }) },
+  inputContact(e) { this.updateDraftField({ contact: String(e.detail.value || '').slice(0, 120) }) },
   chooseType(e) {
     const type = e.currentTarget.dataset.value
-    if (!this.data.submitting && this.data.typeOptions.some(option => option.value === type)) this.setData({ type, submitError: '' })
+    if (this.data.typeOptions.some(option => option.value === type)) this.updateDraftField({ type })
   },
   chooseStatus(e) { this.setData({ filterStatus: e.currentTarget.dataset.value }); this.applyFilters() },
   async submit() {
     const { title, content, contact, type, submitting } = this.data
     if (submitting) return
+    if (this._draft && this._draft.account !== drafts.owner(true)) { this.startDraft(); return }
     if (!title.trim() || !content.trim()) {
       wx.showToast({ title: '请填写标题和内容', icon: 'none' }); return
     }
     this.setData({ submitting: true, submitError: '' })
+    const draft = this._draft
+    const token = authSession.getToken()
+    if (draft) draft.flush()
     try {
       const extra = (type === 'report' || type === 'complaint') ? { reportUrl: this.data.reportUrl.trim(), reportTarget: this.data.reportTarget.trim() } : {}
       const res = await feedbackApi.submitFeedback({ title: title.trim(), content: content.trim(), type, contact: contact.trim(), ...extra })
-      if (!Number.isInteger(res?.statusCode) || res.statusCode < 200 || res.statusCode >= 300 || res.data?.ok !== true) {
+      const accepted = Number.isInteger(res?.statusCode) && res.statusCode >= 200 && res.statusCode < 300 && res.data?.ok === true
+      const cleared = accepted && (!draft || draft.submitted())
+      if (this._isUnloaded || token !== authSession.getToken() || draft !== this._draft) return
+      if (!accepted) {
         this.setData({ submitError: submitFailure(res?.statusCode) })
         return
       }
       wx.showToast({ title: '已提交', icon: 'success' })
-      this.setData({ title: '', content: '', contact: '', reportUrl: '', reportTarget: '' })
+      this.setData({ title: '', content: '', contact: '', reportUrl: '', reportTarget: '', hasDraft: !cleared,
+        draftNotice: cleared ? '提交成功，已清除本机草稿。' : '提交成功，但旧草稿清除失败，请手动清除，勿重复提交。' })
       this.loadFeedback()
     } catch (_) {
+      if (this._isUnloaded || token !== authSession.getToken() || draft !== this._draft) return
       this.setData({ submitError: '网络异常，未确认提交结果。内容仍保留，请先查看“我的反馈”再决定是否重试。' })
-    } finally { this.setData({ submitting: false }) }
+    } finally { if (!this._isUnloaded) this.setData({ submitting: false }) }
   }
 })
 

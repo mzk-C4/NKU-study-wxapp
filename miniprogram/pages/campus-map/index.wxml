@@ -5,20 +5,25 @@
     <scroll-view class="category-scroll" scroll-x enhanced><view class="category-row"><button wx:for="{{categoryOptions}}" wx:key="value" class="category-chip {{category === item.value ? 'active' : ''}}" data-value="{{item.value}}" bindtap="changeCategory">{{item.label}}</button></view></scroll-view>
   </view>
   <view class="map-area">
-    <map id="campus-map" class="campus-map" longitude="{{longitude}}" latitude="{{latitude}}" scale="{{scale}}" markers="{{markers}}" bindmarkertap="selectMarker" bindcallouttap="selectMarker" enable-zoom enable-scroll />
+    <map wx:if="{{mapVisible}}" id="campus-map" class="campus-map" longitude="{{longitude}}" latitude="{{latitude}}" scale="{{scale}}" markers="{{markers}}" binderror="mapFailed" bindmarkertap="selectMarker" bindcallouttap="selectMarker" enable-zoom enable-scroll />
+    <cover-view wx:if="{{mapError}}" class="map-error" bindtap="retryMap">地图加载失败，点此重试；也可从列表选择地点导航</cover-view>
+    <cover-view class="map-reload" bindtap="retryMap">重新加载</cover-view>
     <cover-view class="map-reset" bindtap="resetMap">校区全景</cover-view>
   </view>
   <view class="places-panel" wx:if="{{!selected}}">
-    <view class="panel-title">校园地点 <text class="count">{{places.length}} 处</text></view>
+    <view class="place-modes"><button class="place-mode {{placeMode === 'all' ? 'chosen' : ''}}" data-mode="all" bindtap="changePlaceMode">全部</button><button class="place-mode {{placeMode === 'favorites' ? 'chosen' : ''}}" data-mode="favorites" bindtap="changePlaceMode">常用</button><button class="place-mode {{placeMode === 'recent' ? 'chosen' : ''}}" data-mode="recent" bindtap="changePlaceMode">最近</button><text class="count">{{places.length}} 处</text></view>
     <scroll-view class="places-list" scroll-y enhanced>
-      <button wx:for="{{places}}" wx:key="id" class="place-row" data-id="{{item.markerId}}" bindtap="selectPlace"><view class="place-info"><view class="place-name">{{item.name}}</view><view class="place-desc">{{item.categoryLabel}} · {{item.desc}}</view></view><text class="arrow">›</text></button>
-      <view wx:if="{{!places.length}}" class="empty">没有找到地点，试试其他关键词或分类</view>
+      <button wx:for="{{places}}" wx:key="id" class="place-row" data-id="{{item.markerId}}" bindtap="selectPlace"><view class="place-info"><view class="place-name">{{item.name}} <text wx:if="{{item.favorite}}" class="favorite-mark">常用</text></view><view class="place-desc">{{item.categoryLabel}} · {{item.desc}}</view></view><text class="arrow">›</text></button>
+      <view wx:if="{{!places.length}}" class="empty"><view>{{placeMode === 'favorites' ? '这里还没有符合筛选的常用地点，打开详情即可添加。' : placeMode === 'recent' ? '这里还没有符合筛选的最近地点，点选地点后会记录。' : '没有找到地点，试试其他关键词或分类。'}}</view><button class="empty-action" bindtap="showAllPlaces">查看本校区全部地点</button></view>
     </scroll-view>
-    <view class="map-note">学生共建点位 · 请以现场标识为准</view>
+    <view class="map-note">学生共建点位 · 常用与最近仅存本机</view>
   </view>
   <view wx:else class="detail-panel">
     <view class="detail-heading"><view class="place-info"><view class="detail-title">{{selected.name}}</view><view class="detail-category">{{selected.categoryLabel}}</view></view><button class="close" bindtap="closeDetail" aria-label="关闭地点详情">×</button></view>
-    <scroll-view class="detail-content" scroll-y><view class="detail-description">{{selected.desc}}</view><view wx:for="{{selected.images}}" wx:key="src"><image class="place-image" src="{{item.src}}" mode="widthFix" data-src="{{item.src}}" bindtap="previewImage" /><view class="image-caption">{{item.caption}}</view></view></scroll-view>
+    <view class="detail-tools"><button class="detail-tool {{selectedFavorite ? 'chosen' : ''}}" bindtap="toggleFavorite">{{selectedFavorite ? '★ 已设常用' : '☆ 设为常用'}}</button><button class="detail-tool" aria-expanded="{{detailExpanded}}" bindtap="toggleDetail">{{detailExpanded ? '收起介绍 −' : '展开介绍 +'}}</button></view>
+    <scroll-view class="detail-content {{detailExpanded ? 'detail-content--expanded' : ''}}" scroll-y><view class="detail-description">{{selected.desc}}</view><view wx:for="{{selected.images}}" wx:key="src"><image class="place-image" src="{{item.src}}" mode="widthFix" data-src="{{item.src}}" bindtap="previewImage" /><view class="image-caption">{{item.caption}}</view></view></scroll-view>
     <button class="navigate" bindtap="navigate">去这里 · 打开导航</button>
   </view>
+  <view wx:if="{{storageNotice}}" class="map-note storage-note" aria-live="polite">{{storageNotice}}</view>
+  <view class="map-credit">地图内容由 cure 学长的 wiki 项目组提供，感谢贡献！</view>
 </view>

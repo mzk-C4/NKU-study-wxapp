@@ -11,30 +11,39 @@ function displayDate(value) {
 }
 
 Page({
-  data: { loading: true, error: '', favorites: [] },
+  data: { loading: true, error: '', favorites: [], loggedIn: false },
 
   onLoad() { reportVisit('/mp/favorites') },
   onShow() { theme.onPageShow(); this.load() },
+  onUnload() { this._requestId = (this._requestId || 0) + 1 },
   onPullDownRefresh() { this.load().finally(() => wx.stopPullDownRefresh()) },
 
   async load() {
-    if (!authSession.readSession()) {
-      this.setData({ loading: false, error: '', favorites: [] })
+    const requestId = this._requestId = (this._requestId || 0) + 1
+    const session = authSession.readSession()
+    if (!session) {
+      this.setData({ loading: false, error: '', favorites: [], loggedIn: false })
       return
     }
-    this.setData({ loading: true, error: '' })
+    this.setData({ loading: true, error: '', favorites: [], loggedIn: true })
     try {
       const result = await publicApi.getFavorites({ page: 1, page_size: 100 })
+      if (requestId !== this._requestId) return
+      if (authSession.getToken() !== session.token) return this.load()
       this.setData({
         loading: false,
         favorites: result.items.map(item => ({ ...item, favorited_date: displayDate(item.favorited_at) }))
       })
     } catch (error) {
+      if (requestId !== this._requestId) return
+      if (authSession.getToken() !== session.token) return this.load()
       this.setData({ loading: false, error: error.message || '收藏加载失败' })
     }
   },
 
   retry() { this.load() },
+  goLogin() { wx.switchTab({ url: '/pages/profile/index' }) },
+  browseCourses() { wx.switchTab({ url: '/pages/courses/index' }) },
 
   openFavorite(event) {
     const id = event.currentTarget.dataset.id

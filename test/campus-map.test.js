@@ -8,7 +8,7 @@ function page() {
   delete require.cache[modulePath]
   require(modulePath)
   delete global.Page
-  const instance = { ...definition, data: JSON.parse(JSON.stringify(definition.data)), setData(patch) { Object.assign(this.data, patch) } }
+  const instance = { ...definition, data: JSON.parse(JSON.stringify(definition.data)), setData(patch, callback) { Object.assign(this.data, patch); if (callback) callback() } }
   instance.onLoad()
   return instance
 }
@@ -47,5 +47,31 @@ test('navigation uses selected longitude and latitude in correct order and handl
     instance.navigate()
     assert.equal(options.latitude, place.coord[1]); assert.equal(options.longitude, place.coord[0])
     options.fail(); assert.equal(toast.icon, 'none')
+  } finally { delete global.wx }
+})
+
+test('map failure can remount while preserving selection and ignores callbacks after unload', () => {
+  const instance = page()
+  const place = instance.data.places[0]
+  instance.selectById(place.markerId)
+  instance.mapFailed()
+  assert.equal(instance.data.mapError, true)
+  const pending = []
+  global.wx = { nextTick(callback) { pending.push(callback) } }
+  try {
+    instance.retryMap()
+    assert.equal(instance.data.mapVisible, false)
+    instance.retryMap()
+    assert.equal(pending.length, 1)
+    pending.shift()()
+    assert.equal(instance.data.mapVisible, true)
+    assert.equal(instance.data.mapError, false)
+    assert.equal(instance.data.selected.id, place.id)
+    instance.retryMap()
+    instance.onUnload()
+    pending.shift()()
+    assert.equal(instance.data.mapVisible, false)
+    instance.mapFailed()
+    assert.equal(instance.data.mapError, false)
   } finally { delete global.wx }
 })

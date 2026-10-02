@@ -46,3 +46,11 @@ button::after { border: 0; }
 /* 手动亮色（系统暗色时覆盖回来） */
 
 /* 系统暗色（跟随手机，不用开关） */
+/* Shared local-draft status: native controls, NKU purple, warm-white surfaces. */
+.draft-bar { display:flex; align-items:center; gap:12rpx; padding:14rpx 18rpx; margin-bottom:20rpx; border-radius:18rpx; background:#EFE8F4; }
+.draft-note { flex:1; min-width:0; color:#4B1F6F; font-size:24rpx; line-height:1.6; }
+.draft-clear { width:auto !important; flex:none; margin:0 !important; padding:0 12rpx; min-height:72rpx; line-height:72rpx; font-size:24rpx; color:#4B1F6F; background:transparent; }
+.draft-clear::after, .feedback-type::after { border:0; }
+.field-counter { margin-top:10rpx; color:#6F6972; text-align:right; font-size:22rpx; font-variant-numeric:tabular-nums; }
+.feedback-type { width:auto !important; max-width:100%; margin:0 !important; padding:14rpx 22rpx; min-height:72rpx; border:1rpx solid #DED5E2; border-radius:18rpx; color:#6F6972; background:#FFFDF8; font-size:24rpx; line-height:1.5; }
+.feedback-type--active { color:#4B1F6F; border-color:#4B1F6F; background:#EFE8F4; font-weight:700; }

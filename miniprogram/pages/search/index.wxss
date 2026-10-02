@@ -38,3 +38,12 @@
 .result-arrow { color: #817A84; font-size: 44rpx; }
 .load-more { padding: 30rpx 0 10rpx; text-align: center; color: #817A84; font-size: 22rpx; }
 .load-more-retry { min-height: 80rpx; margin: 10rpx auto 0; padding: 0 24rpx; border: 0; color: #4B1F6F; background: transparent; font-size: 22rpx; line-height: 80rpx; }
+.search-intro { margin-top:20rpx; color:#6F6972; font-size:24rpx; line-height:1.6; }
+.history-panel { padding-top:10rpx; }
+.history-items { display:flex; flex-wrap:wrap; gap:12rpx; margin:8rpx 0 18rpx; }
+.history-chip { width:auto !important; max-width:100%; margin:0 !important; padding:14rpx 24rpx; border-radius:18rpx; background:#EFE8F4; color:#4B1F6F; font-size:26rpx; line-height:1.5; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.history-chip::after, .filter-toggle::after { border:0; }
+.filter-toggle { display:flex; flex:1; justify-content:space-between; align-items:center; min-width:0; margin:0 !important; padding:0; background:transparent; color:#312C34; font-size:26rpx; font-weight:700; text-align:left; line-height:72rpx; }
+.filter { font-size:24rpx; }
+.type-tab, .active-filter { font-size:24rpx; }
+.type-tab { font-variant-numeric:tabular-nums; }

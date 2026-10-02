@@ -5,3 +5,7 @@
 .retry { margin-top: 24rpx; padding: 0 34rpx; height: 88rpx; line-height: 88rpx; color: #FFFFFF; background: #4B1F6F; border-radius: 18rpx; font-size: 24rpx; }
 .retry--pressed { opacity: .82; transform: scale(.98); }
 @keyframes spin { to { transform: rotate(360deg); } }
+.skeleton { width:100%; margin-bottom:20rpx; }
+.skeleton-card { padding:24rpx; margin-bottom:16rpx; border:1rpx solid #E8E2EC; border-radius:24rpx; background:#FFFDF8; }
+.skeleton-line { height:24rpx; border-radius:8rpx; background:#E8E2EC; }
+.skeleton-line.short { width:60%; height:18rpx; margin-top:20rpx; }

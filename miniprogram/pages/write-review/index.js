@@ -2,6 +2,7 @@ const { reportVisit } = require('../../utils/visit-report')
 const theme = require('../../utils/theme')
 const { publicApi } = require('../../services/public-api')
 const authSession = require('../../utils/auth-session')
+const drafts = require('../../utils/form-draft')
 
 const PICKER_LIMIT = 30
 
@@ -137,27 +138,53 @@ function createWriteReviewPage(api = publicApi) {
   return {
     onShow() {
       theme.onPageShow()
+      const changedAccount = this._draft && drafts.owner(false) && this._draft.account !== drafts.owner(false)
+      this.startDraft()
       const wasLoggedIn = this.data.isLoggedIn
-      if (this.checkLogin() && !wasLoggedIn && !this.data.loading && !this.data.course) this.prepare()
+      if (this.checkLogin() && (changedAccount || (!wasLoggedIn && !this.data.loading && !this.data.course))) this.prepare()
     },
   data: {
     courseId: '', loading: true, submitting: false, course: null,
     error: '',
     teacher: '', scoreOptions: [1, 2, 3, 4, 5], rating: 0,
-    body: '', isLoggedIn: false,
+    body: '', isLoggedIn: false, hasDraft: false, draftNotice: '',
     loginMessage: '发表评价必须先使用微信登录，浏览评价无需登录。',
     minLength: 12, moderationRequired: true,
     pickerMode: false, pickerKeyword: '', pickerEntries: [], pickerFiltered: [],
     isGroupMode: false, isCatalogMode: false, groupCourseTitle: '', catalogCourseId: '', teacherOptions: []
   },
-  onLoad(options) {
+  onLoad(options = {}) {
+    this._isUnloaded = false
     reportVisit('/mp/write-review')
     this.setData({
       courseId: options.course_id || '',
       groupCourseTitle: options.course_title || '',
       isGroupMode: Boolean(options.course_title) && !options.course_id
     })
+    this.startDraft()
     this.prepare()
+  },
+  onHide() { if (this._draft) this._draft.flush() },
+  onUnload() { if (this._draft) this._draft.flush(); this._isUnloaded = true; this._prepareId = (this._prepareId || 0) + 1 },
+  startDraft() {
+    const context = this.data.courseId ? `course:${this.data.courseId}` : this.data.catalogCourseId ? `catalog:${this.data.catalogCourseId}` : this.data.groupCourseTitle ? `group:${this.data.groupCourseTitle}` : ''
+    const account = drafts.owner(false)
+    // Logging out hides the form but does not discard its in-memory draft.
+    // A different authenticated account is restored independently below.
+    if (!account) return
+    if (this._draft && this._draft.account === account && this._draft.context === context) return
+    if (this._draft) { if (this._draft.context === context) this._draft.flush(); this._draft.stop(); this.setData({ teacher: '', rating: 0, body: '' }) }
+    this._draft = drafts.createFormDraft(this, { kind: 'review', context })
+    this._draft.restore()
+  },
+  discardDraft() {
+    if (this.data.submitting || !this._draft) return
+    const draft = this._draft
+    wx.showModal({ title: '清除这门课程的草稿？', content: '只清除本机未提交内容，不影响已发表的评价。', success: result => {
+      if (!result.confirm || this._isUnloaded || draft !== this._draft || this.data.submitting) return
+      if (!draft.clear()) { this.setData({ draftNotice: '清除失败，草稿仍保留，请稍后重试。' }); return }
+      this.setData({ teacher: '', rating: 0, body: '', hasDraft: false, draftNotice: '已清除本机草稿。' })
+    } })
   },
   checkLogin() {
     const isLoggedIn = Boolean(authSession.getToken())
@@ -171,22 +198,31 @@ function createWriteReviewPage(api = publicApi) {
     })
   },
   async prepare() {
+    this.startDraft()
     if (!this.checkLogin()) return
+    const requestId = this._prepareId = (this._prepareId || 0) + 1
+    const token = authSession.getToken()
+    const stale = () => this._isUnloaded || requestId !== this._prepareId || token !== authSession.getToken()
     this.setData({ loading: true, error: '' })
     try {
       const home = await (typeof api.getHome === 'function' ? api.getHome().catch(() => null) : Promise.resolve(null))
+      if (stale()) return
       const submission = home && home.review_submission ? home.review_submission : null
       const rules = {
         minLength: submission ? submission.min_length : 12,
         moderationRequired: submission ? submission.moderation_required : true
       }
-      if (this.data.courseId) {
+      if (this.data.catalogCourseId && this.data.course) {
+        this.setData({ pickerMode: false, isGroupMode: false, isCatalogMode: true, loading: false, error: '', ...rules })
+      } else if (this.data.courseId) {
         const course = await api.getCourse(this.data.courseId)
+        if (stale()) return
         const teacherOptions = [...new Set((course.teacher_groups || []).map(item => item && item.teacher_name).filter(Boolean))]
         this.setData({ course, teacherOptions, pickerMode: false, isGroupMode: false, isCatalogMode: false, loading: false, error: '', ...rules })
       } else if (this.data.groupCourseTitle) {
         // 从历史评价组进入：course_title 精确命中已有评价组
         const groupsResult = await api.getReviewGroups().catch(() => ({ items: [] }))
+        if (stale()) return
         const teachers = (groupsResult.items || [])
           .filter(group => String(group.course_name || '').trim() === this.data.groupCourseTitle.trim())
           .map(group => String(group.teacher_name || '').trim())
@@ -203,11 +239,13 @@ function createWriteReviewPage(api = publicApi) {
           api.getReviewGroups().catch(() => ({ items: [] })),
           loadSearchData(api)
         ])
+        if (stale()) return
         this._pickerGroups = groupsResult.items || []
         const entries = buildPickerEntries(groupsResult, { items: searchData.courses }, { items: searchData.catalog })
         this.setData({ pickerEntries: entries, pickerFiltered: filterEntries(entries, '') })
       }
     } catch (error) {
+      if (stale()) return
       this.setData({ loading: false, error: error.message || '暂时无法加载评价页面' })
     }
   },
@@ -216,11 +254,14 @@ function createWriteReviewPage(api = publicApi) {
     this.setData({ pickerKeyword: keyword, pickerFiltered: filterEntries(this.data.pickerEntries, keyword) })
   },
   tapPickerEntry(event) {
+    if (this.data.submitting) return
     const index = Number(event.currentTarget.dataset.index)
     const entry = this.data.pickerFiltered[index]
     if (!entry) return
+    if (this._draft) this._draft.flush()
     if (entry.type === 'course') {
       this.setData({ courseId: entry.id, groupCourseTitle: '', catalogCourseId: '', pickerMode: false, teacher: '', rating: 0, body: '' })
+      this.startDraft()
       this.prepare()
       return
     }
@@ -239,13 +280,18 @@ function createWriteReviewPage(api = publicApi) {
         isGroupMode: false,
         isCatalogMode: true
       })
+      this.startDraft()
       return
     }
     this.setData({ groupCourseTitle: entry.name, courseId: '', catalogCourseId: '', pickerMode: false, teacher: '', rating: 0, body: '' })
+    this.startDraft()
     this.prepare()
   },
   reselectCourse() {
+    if (this.data.submitting) return
+    if (this._draft) this._draft.flush()
     this.setData({ courseId: '', groupCourseTitle: '', catalogCourseId: '', course: null, pickerMode: true })
+    this.startDraft()
     this.prepare()
   },
   reportMissingCourse() {
@@ -256,20 +302,25 @@ function createWriteReviewPage(api = publicApi) {
       : '我想评价的课程在列表中找不到，请补充收录。课程名称与信息：'
     wx.navigateTo({ url: `/pages/feedback/index?prefill_title=${encodeURIComponent(title)}&prefill_content=${encodeURIComponent(content)}` })
   },
-  inputTeacher(event) { this.setData({ teacher: event.detail.value }) },
-  chooseTeacher(event) { this.setData({ teacher: event.currentTarget.dataset.teacher }) },
-  setRating(event) { this.setData({ rating: Number(event.currentTarget.dataset.score) }) },
-  inputBody(event) { this.setData({ body: event.detail.value }) },
+  updateDraftField(patch) { if (this.data.submitting) return; this.setData(patch); if (this._draft) this._draft.changed() },
+  inputTeacher(event) { this.updateDraftField({ teacher: String(event.detail.value || '').slice(0, 100) }) },
+  chooseTeacher(event) { this.updateDraftField({ teacher: String(event.currentTarget.dataset.teacher || '').slice(0, 100) }) },
+  setRating(event) { const rating = Number(event.currentTarget.dataset.score); if (rating >= 1 && rating <= 5 && Number.isInteger(rating)) this.updateDraftField({ rating }) },
+  inputBody(event) { this.updateDraftField({ body: String(event.detail.value || '').slice(0, 800) }) },
   async submit() {
     if (this.data.submitting) return
     if (!this.checkLogin()) return
     if (this.data.loading || this.data.error || !this.data.course) return
+    if (this._draft && this._draft.account !== drafts.owner(false)) { this.startDraft(); return }
     const { course, isGroupMode, groupCourseTitle, teacher, rating, body, minLength } = this.data
     if (!teacher.trim() || !rating || body.trim().length < minLength) {
       wx.showToast({ title: `请填写教师、完成评分并填写至少 ${minLength} 字`, icon: 'none' })
       return
     }
     this.setData({ submitting: true })
+    const token = authSession.getToken()
+    const draft = this._draft
+    if (draft) draft.flush()
     try {
       const base = { teacher: teacher.trim(), rating, body: body.trim(), anonymous: false }
       const payload = this.data.isCatalogMode && this.data.catalogCourseId
@@ -278,11 +329,16 @@ function createWriteReviewPage(api = publicApi) {
           ? { course_title: groupCourseTitle, ...base }
           : { course_id: course.id, ...base }
       await api.submitReview(payload)
-      const content = this.data.moderationRequired
+      const cleared = !draft || draft.submitted()
+      if (this._isUnloaded || authSession.getToken() !== token || draft !== this._draft) return
+      this.setData({ hasDraft: !cleared, draftNotice: cleared ? '提交成功，已清除本机草稿。' : '提交成功，但旧草稿清除失败，请手动清除，勿重复提交。' })
+      const resultMessage = this.data.moderationRequired
         ? '评价已进入审核，通过后将公开展示。可在“我的评价”查看处理状态。'
         : '评价已提交。可在“我的评价”查看处理状态。'
+      const content = resultMessage + (cleared ? '' : ' 本机旧草稿清除失败，再次进入时请先核对“我的评价”，勿重复提交。')
       wx.showModal({ title: '提交成功', content, showCancel: false, success: () => wx.navigateBack() })
     } catch (error) {
+      if (this._isUnloaded || authSession.getToken() !== token || draft !== this._draft) return
       if (error.statusCode === 401 || error.code === 'AUTH_REQUIRED') {
         authSession.clearSession()
         this.checkLogin()
@@ -291,7 +347,7 @@ function createWriteReviewPage(api = publicApi) {
       }
       wx.showToast({ title: error.message, icon: 'none' })
     } finally {
-      this.setData({ submitting: false })
+      if (!this._isUnloaded) this.setData({ submitting: false })
     }
   }
   }

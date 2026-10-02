@@ -1,5 +1,7 @@
 <view class="page">
-  <view class="card empty-record" wx:if="{{!loading && !error && !favorites.length}}">登录后收藏的课程会显示在这里</view>
+  <view class="section-head"><view class="section-title">我的课程收藏</view><text class="micro">云端同步</text></view>
+  <state-view loading="{{loading}}" skeleton="{{true}}" error="{{error}}" bindretry="retry"></state-view>
+  <view class="card empty-record" wx:if="{{!loading && !error && !favorites.length}}"><view class="section-title">{{loggedIn ? '把感兴趣的课程留在这里' : '登录后查看你的收藏'}}</view><view class="micro section">{{loggedIn ? '在课程详情中点收藏，下次选课时更容易找到。' : '课程收藏随账号同步，登录后可继续查看。'}}</view><button wx:if="{{loggedIn}}" class="button button--primary section" bindtap="browseCourses">去找课程</button><button wx:else class="button button--primary section" bindtap="goLogin">去微信登录</button></view>
   <view class="card record-row" wx:for="{{favorites}}" wx:key="course_id" data-id="{{item.course_id}}" bindtap="openFavorite">
     <view class="record-main">
       <view class="history-name">{{item.name}}</view>
