@@ -1,0 +1,26 @@
+<view class="page">
+  <view class="card">
+    <view class="title">网页登录确认</view>
+    <view class="desc">确认后，发起扫码的网页将以你的身份登录 NKUStudy。</view>
+
+    <block wx:if="{{done}}">
+      <view class="ok">✓ 已确认</view>
+      <view class="desc">请回到网页继续，页面会自动登录。</view>
+    </block>
+    <block wx:else>
+      <view wx:if="{{ticket}}" class="ticket-box">
+        <text class="ticket-label">登录码</text>
+        <text class="ticket" user-select>{{ticket}}</text>
+      </view>
+      <view wx:else class="manual">
+        <input class="input" placeholder="输入网页上显示的登录码" value="{{manualInput}}" bindinput="onManualInput" />
+        <button class="btn secondary" size="mini" bindtap="useManualTicket">填入</button>
+      </view>
+
+      <view wx:if="{{loggedIn && !phoneVerified}}" class="warn">该账号尚未完成手机号验证，请先到「我的」页验证后再确认。</view>
+
+      <button class="btn primary" loading="{{confirming}}" bindtap="confirmLogin">确认登录</button>
+      <view wx:if="{{error}}" class="error">{{error}}</view>
+    </block>
+  </view>
+</view>

@@ -638,6 +638,11 @@ function createPublicApi(client = request, options = {}) {
       if (isReference) return authenticatedFeatureUnavailable()
       return mapAuthResult(await client.post('/auth/wechat', { code: toText(code) }))
     },
+    async confirmWebLogin(ticket) {
+      if (isReference) return authenticatedFeatureUnavailable()
+      const data = await client.post('/auth/web-login/confirm', { ticket: toText(ticket) }, { auth: 'required' })
+      return { confirmed: data && data.confirmed === true }
+    },
     async getMe() {
       if (isReference) return authenticatedFeatureUnavailable()
       const data = await client.get('/me', undefined, { auth: 'required' })
