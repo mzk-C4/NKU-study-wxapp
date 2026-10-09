@@ -2,6 +2,7 @@ const navigation = require('../../utils/navigation')
 const learningProfile = require('../../utils/learning-profile')
 const { TOPICS } = require('../../features/learning-compass/catalog')
 const { PDF_DOCUMENTS } = require('../../features/learning-compass/documents')
+const { openHinku } = require('../../utils/partner-mini-program')
 
 Page({
   data: {
@@ -15,6 +16,7 @@ Page({
     if (!this._isUnloaded) this.setData({ guideContextLabel: learningProfile.formatLabel(learningProfile.read()) })
   },
   openCampusMap() { navigation.openCampusMap() },
+  openHinku,
   openSearch() { navigation.openGuideSearch() },
   openDocuments() { navigation.openGuideDocuments() },
   openHomeCategory(event) {

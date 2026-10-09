@@ -1,5 +1,5 @@
 const { publicApi } = require('./services/public-api')
-const { announcementView, createAnnouncementReader } = require('./features/home-announcement')
+const { homeAnnouncementView, announcementText, createAnnouncementReader } = require('./features/home-announcement')
 
 function createApp(api = publicApi) {
   return {
@@ -26,9 +26,13 @@ function createApp(api = publicApi) {
         const home = await api.getHome()
         if (!this.noticeForeground || this.noticeEpoch !== epoch) return
         this.noticeReader = this.noticeReader || createAnnouncementReader(wx)
-        const notice = announcementView(home.announcement)
+        const notice = homeAnnouncementView(home.announcement)
         this.presentNoticeWhenReady(notice, epoch, 0)
-      } catch (_) { /* An unavailable notice must not interrupt normal app use. */ }
+      } catch (_) {
+        if (!this.noticeForeground || this.noticeEpoch !== epoch) return
+        this.noticeReader = this.noticeReader || createAnnouncementReader(wx)
+        this.presentNoticeWhenReady(homeAnnouncementView(null), epoch, 0)
+      }
     },
     presentNoticeWhenReady(notice, epoch, attempts) {
       if (!this.noticeForeground || this.noticeEpoch !== epoch || this.noticeModal) return
@@ -46,7 +50,7 @@ function createApp(api = publicApi) {
       this.noticeModal = true
       try {
         wx.showModal({
-          title: 'NKUStudy 新公告', content: notice.parts.map(part => part.text).join('').slice(0, 1200),
+          title: 'NKUStudy 新公告', content: announcementText(notice).slice(0, 1200),
           confirmText: '查看全文', cancelText: '知道了',
           success: result => {
             if (result.confirm) wx.switchTab({ url: '/pages/home/index' })

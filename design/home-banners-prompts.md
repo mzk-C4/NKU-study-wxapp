@@ -1,6 +1,22 @@
 # 首页主题轮播图生成记录
 
+## NKUStudy × HiNKU 公告联合主视觉（2026-10-08）
+
+用户提供 NKU STUDY 徽章与 HiNKU 标识，内置 image_gen 以二者为品牌输入合成一张纸感联合图。原图保留为 `design/nkustudy-hinku-cooperation-source.png`；交付 `miniprogram/assets/home/nkustudy-hinku-cooperation.jpg`，仅等比例缩小到 1100px 宽并编码 JPEG，公告使用 `widthFix` 完整显示。原始品牌图为设计参考，图片内徽章与标识为生成合成版本。
+
+完整提示词：
+
+Use case: compositing / brand partnership announcement. Create ONE horizontal 2.2:1 co-brand illustration for a WeChat mini-program announcement, visually uniting NKUStudy and HiNKU. Reference 1 is the supplied NKU STUDY purple/gold/ivory badge; reference 2 is the supplied HiNKU purple handwritten mark and exact HiNKU wordmark. Treat both as actual brand inserts, preserve their shapes, lettering, colors, and legibility faithfully; do not invent a new spelling, substitute logo or stretch them. Single unified editorial paper design, warm ivory #F7F0E4 canvas, deep Nankai purple #4B1F6F and restrained matte golden ochre. Place the NKU STUDY badge on left, full badge visible at a comfortable size with no crop, and the HiNKU mark/wordmark on right, sized to have equal visual importance. Both sit inside the SAME composition, not two separate screenshots or split-screen rectangles. A single continuous purple and gold interlocking paper ribbon flows elegantly from the open book on the left towards the HiNKU mark on right, suggesting shared campus learning and daily services. Very subtle paper-layer details with a small campus roof outline and book/timetable motifs along the lower edge, airy whitespace, restrained premium paper-cut illustration matching the project's warm campus carousels. Center a small simple purple multiplication sign × between the marks, a partnership rather than university official endorsement. No additional heading, slogan, Chinese text, fake UI, QR code, button or watermark. No gradients, neon, glass or glossy 3D; no extra outer frame. Entire original crest outline and right logotype must fit fully inside safe margins. The output is one co-brand header image intended to be embedded into a scrolling announcement; at mobile size both brands must remain instantly recognizable.
+
 使用内置 image_gen 生成三张独立插画。原图保留在工具输出目录；交付 JPEG 仅缩小和压缩，未改变画面内容。中文文案由 WXML 叠加，避免文字乱码并保持可维护性。插画为概念画，不宣称准确复刻校园建筑。
+
+## hinku（2026-10-08，统一风格）
+
+内置 image_gen 生成第四张；前三张作为风格/构图参考，用户提供的 HiNKU 界面和标识作为支持素材。生成原图保留为 `design/hinku-banner-source.png`，仅缩小到 1200×400 并编码 JPEG（88% 质量），交付 `miniprogram/assets/home/hinku-banner.jpg`（57488 字节）。概念插画内的界面并非功能页面，用户原始图片原字节另存 `hinku-logo.png` 和 `hinku-preview.png` 并用于合作公告。第四张沿用前三张的 WXML 文案和布局。
+
+完整提示词：
+
+Create ONE matching fourth carousel illustration for the same NKUStudy series. Images 1,2,3 are the exact STYLE AND COMPOSITION references, image 4 is the real HiNKU mini-program screenshot to place on an illustrated phone screen, image 5 is its exact HiNKU logo. The user's central correction: this fourth banner MUST look like the first three, not a separate purple UI promotion. Wide landscape banner 3:1. Match the warm ivory solid background #F7F0E4, editorial cut-paper illustration, subtle matte paper texture, deep Nankai purple #4B1F6F, restrained muted ochre details and gentle grounding shadows of images 1-3. Keep leftmost 58 percent EMPTY ivory, no text, no logos there; real WXML title and description will be layered there by app code. On the RIGHTMOST 42 percent only, create a compact campus-service scene: a vertical paper-cut smartphone prominently showing the mini-program screenshot of image 4 (retain its visual features and icon grid rather than inventing a different app), the HiNKU logo image 5 visible at the top of the phone, a small purple-and-muted-gold campus shuttle bus, a cream campus payment card and a simple timetable sheet tucked behind. A few tiny purple plant leaves echo the first three images. These should feel like the same illustrator drew all four. Phone should be warm cream and purple, no glossy 3D frame, no device marketing mockup, no floating pill buttons, no large lavender panel, no gradients outside supplied screen pixels, no glows. Supplied screen and logo are supporting inserts inside the paper scene, do not turn entire banner into screenshot. Keep scene restrained with 3-4 recognisable objects, nothing outside safe margins. No added slogans, headings, watermark or text beyond the referenced UI and exact HiNKU logo. Full bleed background without outer rounded frame. Match paper treatment, lighting, simplicity, illustration scale and negative space from images 1-3 closely.
 
 ## resources
 

@@ -11,6 +11,7 @@
     "pages/search/index",
     "pages/course-overview/index",
     "pages/course-resources/index",
+    "pages/resource-detail/index",
     "pages/course-reviews/index",
     "pages/guide-detail/index",
     "pages/guide-category/index",

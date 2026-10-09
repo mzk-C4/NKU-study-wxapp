@@ -74,6 +74,54 @@ function mockDownload(t, overrides = {}) {
 
 const sample = { title: '测试资料.pdf', extension: 'PDF', size: 54217512, download_url: 'https://resources.nkustudy.top/resources/test.pdf' }
 
+function loadResourcePage(t, name) {
+  const originalPage = global.Page
+  const modulePath = require.resolve(`../miniprogram/pages/${name}/index`)
+  let page
+  global.Page = definition => { page = definition }
+  delete require.cache[modulePath]
+  require(modulePath)
+  global.Page = originalPage
+  t.after(() => { delete require.cache[modulePath] })
+  return page
+}
+
+test('resource card opens a registered, packaged detail page with encoded identifiers', t => {
+  const calls = mockDownload(t)
+  global.wx.navigateTo = options => { calls.navigation = options }
+  const page = loadResourcePage(t, 'course-resources')
+  page.data = { id: 'course &/中文', resources: [{ id: 'resource +&#' }] }
+  page.openResource({ currentTarget: { dataset: { id: 'resource +&#' } } })
+  const url = new URL(calls.navigation.url, 'https://local.test')
+  const route = url.pathname.slice(1)
+  const root = path.join(__dirname, '..')
+  const app = JSON.parse(fs.readFileSync(path.join(root, 'miniprogram/app.json'), 'utf8'))
+  const project = JSON.parse(fs.readFileSync(path.join(root, 'project.config.json'), 'utf8'))
+  assert.ok(app.pages.includes(route), 'download detail page must be registered')
+  for (const extension of ['js', 'json', 'wxml', 'wxss']) {
+    assert.ok(fs.existsSync(path.join(root, 'miniprogram', `${route}.${extension}`)))
+  }
+  assert.ok(!project.packOptions.ignore.some(item => item.value === route || item.value === 'pages/resource-detail'))
+  assert.equal(url.searchParams.get('courseId'), page.data.id)
+  assert.equal(url.searchParams.get('resourceId'), page.data.resources[0].id)
+  calls.navigation.fail({ errMsg: 'internal navigation error' })
+  assert.match(calls.modals[0].content, /重试/)
+  assert.doesNotMatch(calls.modals[0].content, /internal/)
+})
+
+test('related resource navigation encodes identifiers and reports navigation failure', t => {
+  const calls = mockDownload(t)
+  global.wx.redirectTo = options => { calls.navigation = options }
+  const page = loadResourcePage(t, 'resource-detail')
+  page.data.courseId = 'course &/中文'
+  page.openRelated({ currentTarget: { dataset: { id: 'related +&#' } } })
+  const url = new URL(calls.navigation.url, 'https://local.test')
+  assert.equal(url.searchParams.get('courseId'), page.data.courseId)
+  assert.equal(url.searchParams.get('resourceId'), 'related +&#')
+  calls.navigation.fail({ errMsg: 'internal navigation error' })
+  assert.match(calls.modals[0].content, /重试/)
+})
+
 test('resource download retains exact HTTPS host validation', async t => {
   const calls = mockDownload(t)
   for (const url of ['https://resources.nkustudy.top.evil/a', 'https://resources.nkustudy.top:443/a', 'http://resources.nkustudy.top/a', 'https://resources.nkustudy.top/a b', 'https://resources.nkustudy.top/a\\b']) {

@@ -1,7 +1,7 @@
 const { reportVisit } = require('../../utils/visit-report')
 const theme = require('../../utils/theme')
 const { publicApi } = require('../../services/public-api')
-const { downloadResource, validDownloadUrl } = require('../../utils/resource-download')
+const { downloadResource } = require('../../utils/resource-download')
 const { reportDeadLink } = require('../../utils/resource-report')
 
 Page({
@@ -68,7 +68,12 @@ Page({
   openRelated(event) {
     const id = event.currentTarget.dataset.id
     wx.redirectTo({
-      url: `/pages/resource-detail/index?courseId=${this.data.courseId}&resourceId=${id}`
+      url: `/pages/resource-detail/index?courseId=${encodeURIComponent(this.data.courseId)}&resourceId=${encodeURIComponent(id)}`,
+      fail: () => wx.showModal({
+        title: '资料详情打开失败',
+        content: '请重试；若仍无法打开，请在“我的 → 意见反馈”中告知课程和资料名称。',
+        showCancel: false
+      })
     })
   }
 })

@@ -2,7 +2,7 @@ const test = require('node:test')
 const assert = require('node:assert/strict')
 const fs = require('node:fs')
 const path = require('node:path')
-const { SEEN_KEY, NKUCS_URL, announcementView, createAnnouncementReader } = require('../miniprogram/features/home-announcement')
+const { SEEN_KEY, NKUCS_URL, announcementView, homeAnnouncementView, announcementText, createAnnouncementReader } = require('../miniprogram/features/home-announcement')
 const { publicApi } = require('../miniprogram/services/public-api')
 const feedbackApi = require('../miniprogram/utils/feedback-api')
 const auth = require('../miniprogram/utils/auth-session')
@@ -46,9 +46,18 @@ test('announcement renders only NKUCS as a trusted clickable destination', () =>
   assert.ok(notice.parts.some(x => x.text.includes('https://evil.example')))
   assert.equal(notice.preview.includes('[NKUCS'), false)
   const markup = fs.readFileSync(path.join(__dirname, '../miniprogram/pages/home/index.wxml'), 'utf8')
-  assert.ok(markup.indexOf('announcement-bar') < markup.indexOf('class="hero"'))
+  assert.ok(markup.indexOf('class="search-box home-search"') < markup.indexOf('class="announcement-bar"'))
+  assert.ok(markup.indexOf('class="announcement-bar"') < markup.indexOf('class="home-carousel section"'))
   assert.match(markup, /!announcementOpen/)
   assert.match(markup, /bindtap="openNkuCs"/)
+})
+
+test('home header keeps site statistics beside the brand and limits announcement spacing', () => {
+  const styles = fs.readFileSync(path.join(__dirname, '../miniprogram/pages/home/index.wxss'), 'utf8')
+  assert.match(styles, /\.brand-row\s*\{[^}]*flex-wrap:\s*nowrap/)
+  assert.doesNotMatch(styles, /\.site-status\s*\{[^}]*flex-basis:\s*100%/)
+  assert.match(styles, /\.announcement-bar\s*\{[^}]*margin:\s*20rpx 0 0 !important/)
+  assert.match(styles, /\.announcement-bar\s*\+\s*\.home-carousel\s*\{[^}]*margin-top:\s*16rpx/)
 })
 
 test('home refresh deduplicates, shows changed notices, keeps content on transient failures', async t => {
@@ -75,7 +84,7 @@ test('home refresh deduplicates, shows changed notices, keeps content on transie
   t.mock.method(publicApi, 'getHome', async () => { throw Error('offline') })
   await home.loadHome(true)
   assert.equal(home.data.error, '')
-  assert.equal(home.data.announcement.revision, '第二条内测公告')
+  assert.equal(home.data.announcement.revision, homeAnnouncementView('第二条内测公告').revision)
 })
 
 test('native submission requires a valid session and reports actual content-feedback acceptance', async t => {
@@ -101,6 +110,67 @@ test('native submission requires a valid session and reports actual content-feed
   assert.equal(form.data.submitting, false)
   assert.equal(form.data.form.title, '')
   assert.equal(stored.has('nkustudy_submissions'), false)
+})
+
+test('partnership notice stays dismissed across online and offline launches without forgetting remote notices', () => {
+  const store = new Map()
+  const storage = { getStorageSync: key => store.get(key), setStorageSync: (key, value) => store.set(key, value) }
+  const reader = createAnnouncementReader(storage)
+  const notice = homeAnnouncementView('已有平台公告 NKUCS.ICU')
+  assert.equal(reader.isUnread(notice), true)
+  assert.deepEqual(notice.partner.services, ['课表查询', '班车查询', '校园卡余额', '电费查询'])
+  assert.match(announcementText(notice), /学校公告和场地预约/)
+  assert.ok(notice.parts.some(part => part.link))
+  reader.dismiss(notice)
+  const reopened = createAnnouncementReader(storage)
+  assert.equal(reopened.isUnread(homeAnnouncementView(null)), false)
+  reopened.dismiss(homeAnnouncementView(null))
+  assert.equal(store.get(SEEN_KEY), '已有平台公告 NKUCS.ICU')
+  assert.equal(reopened.isUnread(notice), false)
+  assert.equal(reopened.isUnread(homeAnnouncementView('更新后的平台公告')), true)
+})
+
+test('first home request failure still opens the local partnership notice and dismissal survives a reload', async t => {
+  const old = global.wx
+  t.after(() => { global.wx = old })
+  const stored = new Map()
+  global.wx = { getStorageSync: key => stored.get(key), setStorageSync: (key, value) => stored.set(key, value) }
+  t.mock.method(publicApi, 'getHome', async () => { throw Error('offline') })
+  const home = page('home')
+  home.announcementReader = createAnnouncementReader(global.wx)
+  await home.loadHome()
+  assert.equal(home.data.announcementOpen, true)
+  assert.match(home.data.announcement.partner.title, /HiNKU/)
+  assert.equal(home.data.announcement.parts.length, 0)
+  home.closeAnnouncement()
+  const reopened = page('home')
+  reopened.announcementReader = createAnnouncementReader(global.wx)
+  await reopened.loadHome()
+  assert.equal(reopened.data.announcementOpen, false)
+  reopened.openAnnouncement()
+  assert.equal(reopened.data.announcementOpen, true)
+})
+
+test('non-home entry can show the partnership notice offline without switching away from the page', async t => {
+  const old = { wx: global.wx, App: global.App, pages: global.getCurrentPages }
+  t.after(() => { global.wx = old.wx; global.App = old.App; global.getCurrentPages = old.pages })
+  global.App = () => {}
+  const { createApp } = require('../miniprogram/app')
+  const stored = new Map()
+  let modal, switched = false
+  global.getCurrentPages = () => [{ route: 'pages/course-resources/index' }]
+  global.wx = {
+    getStorageSync: key => stored.get(key), setStorageSync: (key, value) => stored.set(key, value),
+    showModal: options => { modal = options }, switchTab: () => { switched = true }
+  }
+  const app = createApp({ getHome: async () => { throw Error('offline') } })
+  await app.onShow()
+  assert.match(modal.content, /课表、班车、校园卡余额、电费/)
+  assert.equal(switched, false)
+  modal.success({ cancel: true }); modal.complete()
+  modal = null
+  await app.onShow()
+  assert.equal(modal, null)
 })
 
 test('native submission preserves bounded drafts on rejection and never assumes malformed responses succeeded', async t => {
@@ -155,7 +225,7 @@ test('warm resume on another page announces a new notice without discarding that
   let content = '更新一'
   const app = createApp({ getHome: async () => { calls++; return { announcement: content } } })
   await app.onShow()
-  assert.equal(modal.content, '更新一')
+  assert.equal(modal.content, announcementText(homeAnnouncementView('更新一')))
   assert.equal(switched, '')
   modal.success({ cancel: true }); modal.complete()
   modal = null
@@ -224,7 +294,7 @@ test('late responses from an old foreground visit never announce stale content',
   const second = app.onShow()
   resolves[1]({ announcement: '新公告' }); await second
   resolves[0]({ announcement: '旧公告' }); await first
-  assert.deepEqual(displayed, ['新公告'])
+  assert.deepEqual(displayed, [announcementText(homeAnnouncementView('新公告'))])
 })
 
 test('submission freezes edited fields in-flight and does not leave when saving draft fails', t => {

@@ -1,7 +1,6 @@
 const { reportVisit } = require('../../utils/visit-report')
 const theme = require('../../utils/theme')
 const { publicApi } = require('../../services/public-api')
-const { downloadResource } = require('../../utils/resource-download')
 
 Page({
     onShow() { theme.onPageShow() },
@@ -40,7 +39,14 @@ Page({
   openResource(event) {
     const resource = this.data.resources.find(item => item.id === event.currentTarget.dataset.id)
     if (resource) {
-      wx.navigateTo({ url: `/pages/resource-detail/index?courseId=${this.data.id}&resourceId=${resource.id}` })
+      wx.navigateTo({
+        url: `/pages/resource-detail/index?courseId=${encodeURIComponent(this.data.id)}&resourceId=${encodeURIComponent(resource.id)}`,
+        fail: () => wx.showModal({
+          title: '资料详情打开失败',
+          content: '请返回后重试；若仍无法打开，请在“我的 → 意见反馈”中告知课程和资料名称。',
+          showCancel: false
+        })
+      })
     }
   }
 })

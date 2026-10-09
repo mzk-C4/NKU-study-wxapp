@@ -2,7 +2,7 @@
 const KEYS = Object.freeze({ search: 'nkustudy_search_history_v1', favorites: 'nkustudy_map_favorites_v1', recent: 'nkustudy_map_recent_v1' })
 
 function cleanList(value, normalize, limit) {
-  const source = Array.isArray(value) ? value.slice(0, 200) : []
+  const source = Array.isArray(value) ? value.slice(0, Math.max(200, limit)) : []
   const seen = new Set()
   return source.map(normalize).filter(item => {
     if (item === null || item === '') return false
@@ -28,6 +28,6 @@ function recordHistory(query, previous) {
   return { items, saved: writeList(KEYS.search, items) }
 }
 function placeId(value) { return Number.isSafeInteger(value) && value > 0 ? value : null }
-function readPlaces(kind, validIds) { return readList(KEYS[kind], value => validIds.has(value) ? placeId(value) : null, kind === 'recent' ? 12 : 76) }
-function savePlaces(kind, items) { return writeList(KEYS[kind], cleanList(items, placeId, kind === 'recent' ? 12 : 76)) }
+function readPlaces(kind, validIds) { return readList(KEYS[kind], value => validIds.has(value) ? placeId(value) : null, kind === 'recent' ? 12 : validIds.size) }
+function savePlaces(kind, items, maximum = 200) { return writeList(KEYS[kind], cleanList(items, placeId, kind === 'recent' ? 12 : maximum)) }
 module.exports = { KEYS, cleanList, readHistory, recordHistory, writeList, readPlaces, savePlaces }

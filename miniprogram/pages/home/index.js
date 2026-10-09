@@ -4,7 +4,8 @@ const theme = require('../../utils/theme')
 const { publicApi } = require('../../services/public-api')
 const navigation = require('../../utils/navigation')
 const { HOME_SLIDES } = require('../../features/home-carousel')
-const { announcementView, createAnnouncementReader } = require('../../features/home-announcement')
+const { homeAnnouncementView, createAnnouncementReader } = require('../../features/home-announcement')
+const { openHinku } = require('../../utils/partner-mini-program')
 
 Page({
   data: {
@@ -21,6 +22,7 @@ Page({
     latestUpdates: [],
     announcement: null,
     announcementOpen: false,
+    partnerPreviewOpen: false,
     collaborators: [
       { id: 'mzk', name: '马兆坤', identity: '2512538', account: 'M_zepher_king' },
       { id: 'nkulife', name: '南开指南针', identity: 'nkulife_', account: 'guideNO1' },
@@ -76,19 +78,30 @@ Page({
     this.homeRequest = (async () => { try {
       const home = await publicApi.getHome()
       if (this.unloaded) return
-      const announcement = announcementView(home.announcement)
-      const unread = this.announcementReader && this.announcementReader.isUnread(announcement)
-      this.setData({ home, announcement, announcementOpen: Boolean(announcement && (this.data.announcementOpen || unread)), latestUpdates: this.buildUpdates(home.latest_updates), loading: false, error: '' })
+      this.updateAnnouncement(home.announcement)
+      this.setData({ home, latestUpdates: this.buildUpdates(home.latest_updates), loading: false, error: '' })
     } catch (error) {
+      if (!this.unloaded && !this.data.announcement) this.updateAnnouncement(null)
       if (!this.unloaded && (silent !== true || !this.data.home)) this.setData({ loading: false, error: error.message })
     } finally { this.homeRequest = null } })()
     return this.homeRequest
   },
 
+  updateAnnouncement(value) {
+    const announcement = homeAnnouncementView(value)
+    const unread = this.announcementReader && this.announcementReader.isUnread(announcement)
+    this.setData({ announcement, announcementOpen: Boolean(this.data.announcementOpen || unread) })
+  },
   openAnnouncement() { if (this.data.announcement) this.setData({ announcementOpen: true }) },
   closeAnnouncement() {
     if (this.announcementReader) this.announcementReader.dismiss(this.data.announcement)
-    this.setData({ announcementOpen: false })
+    this.setData({ announcementOpen: false, partnerPreviewOpen: false })
+  },
+  togglePartnerPreview() { this.setData({ partnerPreviewOpen: !this.data.partnerPreviewOpen }) },
+  previewBetaQr() {
+    const image = this.data.announcement.partner.group.image
+    wx.previewImage({ current: image, urls: [image], showmenu: true,
+      fail: () => wx.showToast({ title: '暂时无法打开二维码，请重试', icon: 'none' }) })
   },
   openNkuCs() { wx.navigateTo({ url: '/pages/nkucs-web/index' }) },
   noop() {},
@@ -136,11 +149,13 @@ Page({
   openSlide(event) {
     const slide = HOME_SLIDES.find(item => item.id === event.currentTarget.dataset.id)
     if (slide) {
-      if (slide.kind === 'page') wx.navigateTo({ url: slide.url })
+      if (slide.kind === 'miniProgram') openHinku()
+      else if (slide.kind === 'page') wx.navigateTo({ url: slide.url })
       else wx.switchTab({ url: slide.url })
     }
   },
   openFeishuDocument() { wx.navigateTo({ url: '/pages/feishu-document/index' }) },
+  openHinku,
   openUpdate(event) {
     const id = event.currentTarget.dataset.id
     if (id) navigation.openCourse(id)

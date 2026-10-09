@@ -6,16 +6,17 @@
       <view class="site-status-line"><text class="site-status-label">累计访问</text><text class="site-status-value">{{siteStatus.visitValue}}次</text></view>
     </view>
   </view>
-  <button wx:if="{{announcement}}" class="announcement-bar" bindtap="openAnnouncement" aria-label="查看平台公告">
-    <text class="announcement-badge">公告</text><text class="announcement-preview">{{announcement.preview}}</text><text class="announcement-arrow">›</text>
-  </button>
   <view class="hero">
     <view class="hero-kicker">南开学生共建 · 允公允能，日新月异</view>
     <view class="hero-title">选课前，先来查一查</view>
     <button class="search-box home-search" bindtap="openSearch" aria-label="搜索课程、教师、资料和指南"><view class="search-icon"></view><text>查课程 · 找资料 · 读指南</text></button>
   </view>
 
-  <view class="home-carousel section" aria-label="课程资料、选课评价与指南推荐">
+  <button wx:if="{{announcement}}" class="announcement-bar" bindtap="openAnnouncement" aria-label="查看平台公告">
+    <text class="announcement-badge">公告</text><text class="announcement-preview">{{announcement.preview}}</text><text class="announcement-arrow">›</text>
+  </button>
+
+  <view class="home-carousel section" aria-label="课程资料、选课评价、指南、hinku 校园服务与飞书内测群">
     <swiper class="banner-swiper" current="{{currentSlide}}" autoplay="{{carouselVisible && !carouselPaused && !carouselTouching && !announcementOpen}}" circular="{{true}}" interval="6000" duration="300" bindchange="changeSlide" bindtouchstart="startCarouselTouch" bindtouchend="endCarouselTouch" bindtouchcancel="endCarouselTouch">
       <swiper-item wx:for="{{slides}}" wx:key="id">
         <button class="banner-card" data-id="{{item.id}}" bindtap="openSlide" hover-class="banner-card--pressed" aria-label="{{item.title}}，{{item.description}}，{{item.action}}">
@@ -79,12 +80,31 @@
   <view class="build-note">津ICP备2026009194号-3</view>
   <view wx:if="{{announcementOpen && announcement}}" class="announcement-mask" catchtouchmove="noop">
     <view class="announcement-dialog" role="dialog" aria-label="平台公告">
-      <view class="announcement-heading"><view><view class="announcement-eyebrow">NKUSTUDY · 同学共建</view><view class="announcement-title">平台公告</view></view><button class="announcement-close" bindtap="closeAnnouncement" aria-label="关闭公告">×</button></view>
+      <view class="announcement-heading"><view><view class="announcement-title">平台公告</view><view class="announcement-eyebrow">合作动态 · 新功能体验 · 同学共建</view></view><button class="announcement-close" bindtap="closeAnnouncement" aria-label="关闭公告">×</button></view>
       <scroll-view scroll-y="{{true}}" class="announcement-body">
-        <text user-select="{{true}}"><block wx:for="{{announcement.parts}}" wx:key="id"><text wx:if="{{item.link}}" class="announcement-link" bindtap="openNkuCs" role="link">{{item.text}} ↗</text><text wx:else>{{item.text}}</text></block></text>
+        <view class="partner-notice" wx:if="{{announcement.partner}}">
+          <image src="{{announcement.partner.image}}" mode="widthFix" class="partner-cooperation-image" aria-label="NKUStudy 与 HiNKU 联合合作主视觉，两个品牌标识由紫金色纸带连接"></image>
+          <view class="partner-notice-brand"><view class="partner-notice-title">{{announcement.partner.title}}</view><text class="partner-notice-badge">合作上线</text></view>
+          <view class="partner-notice-intro">{{announcement.partner.intro}}</view>
+          <view class="partner-services"><button class="partner-service" wx:for="{{announcement.partner.services}}" wx:key="*this" bindtap="openHinku" aria-label="前往 HiNKU 首页，再选择{{item}}">{{item}} <text aria-hidden="{{true}}">↗</text></button></view>
+          <view class="partner-notice-detail">{{announcement.partner.detail}}</view>
+          <view class="partner-notice-note">{{announcement.partner.note}}</view>
+          <button class="announcement-partner-action" bindtap="openHinku" aria-label="打开 HiNKU 小程序首页，查询课表、班车、校园卡余额和电费">前往 HiNKU 查询 <text aria-hidden="{{true}}">↗</text></button>
+          <button class="partner-preview-toggle" bindtap="togglePartnerPreview" aria-expanded="{{partnerPreviewOpen}}">{{partnerPreviewOpen ? '收起 HiNKU 界面' : '看看 HiNKU 有哪些服务'}} <text aria-hidden="{{true}}">{{partnerPreviewOpen ? '−' : '+'}}</text></button>
+          <image wx:if="{{partnerPreviewOpen}}" class="partner-notice-screen" src="/assets/home/hinku-preview.png" mode="widthFix" aria-label="HiNKU 小程序服务界面截图"></image>
+        </view>
+        <view wx:if="{{announcement.parts.length}}" class="platform-notice"><view class="platform-notice-title">平台最新公告</view><text user-select="{{true}}"><block wx:for="{{announcement.parts}}" wx:key="id"><text wx:if="{{item.link}}" class="announcement-link" bindtap="openNkuCs" role="link">{{item.text}} ↗</text><text wx:else>{{item.text}}</text></block></text></view>
+        <view wx:if="{{announcement.partner.group}}" class="announcement-community">
+          <view class="platform-notice-title">{{announcement.partner.group.title}}</view>
+          <view class="partner-notice-intro">{{announcement.partner.group.intro}}</view>
+          <button class="announcement-qr" bindtap="previewBetaQr" aria-label="查看 NKUStudy 飞书内测群原始二维码大图并保存">
+            <image class="announcement-qr-source" src="{{announcement.partner.group.image}}" mode="scaleToFill" aria-hidden="{{true}}"></image>
+          </button>
+          <button class="announcement-qr-link" bindtap="previewBetaQr">查看原图 / 保存二维码 <text aria-hidden="{{true}}">↗</text></button>
+          <view class="partner-notice-note">{{announcement.partner.group.note}}</view>
+        </view>
       </scroll-view>
-      <view class="announcement-footnote">公告更新后会再次提醒，可随时从首页顶部查看。</view>
-      <button class="announcement-confirm" bindtap="closeAnnouncement">我知道了</button>
+      <view class="announcement-footer"><button class="announcement-confirm" bindtap="closeAnnouncement">我知道了</button></view>
     </view>
   </view>
 </view>
