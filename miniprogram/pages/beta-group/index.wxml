@@ -1,3 +1,4 @@
+<page-meta page-style="{{themePageStyle}}" background-color="{{themeBackground}}" background-text-style="{{themeLoading}}"><navigation-bar front-color="{{themeFront}}" background-color="{{themeNavigation}}" /></page-meta>
 <view class="page beta-page">
   <view class="beta-kicker">NKUSTUDY · 学生共建</view>
   <view class="beta-title">一起把它变得更好</view>

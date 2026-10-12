@@ -1,3 +1,4 @@
+<page-meta page-style="{{themePageStyle}}" background-color="{{themeBackground}}" background-text-style="{{themeLoading}}"><navigation-bar front-color="{{themeFront}}" background-color="{{themeNavigation}}" /></page-meta>
 <view class="course-detail">
   <state-view loading="{{loading}}" error="{{error}}" bindretry="loadCourse"></state-view>
   <block wx:if="{{course}}">

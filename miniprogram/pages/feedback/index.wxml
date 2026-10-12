@@ -1,3 +1,4 @@
+<page-meta page-style="{{themePageStyle}}" background-color="{{themeBackground}}" background-text-style="{{themeLoading}}"><navigation-bar front-color="{{themeFront}}" background-color="{{themeNavigation}}" /></page-meta>
 <view class="page">
 
   <view class="card section">
@@ -21,49 +22,49 @@
   <view class="card" wx:if="{{loggedIn}}" wx:for="{{myFeedbacks}}" wx:key="id" style="margin-bottom: 16rpx;">
     <view style="display:flex;justify-content:space-between;align-items:center;">
       <view style="display:flex;align-items:center;gap:10rpx;min-width:0;">
-        <text class="micro" style="flex-shrink:0;padding:2rpx 12rpx;border:1rpx solid #DED5E2;border-radius:999rpx;color:#6F6972;">{{item.typeLabel}}</text>
+        <text class="micro" style="flex-shrink:0;padding:2rpx 12rpx;border:1rpx solid var(--nk-line, #DED5E2);border-radius:999rpx;color:var(--nk-muted, #6F6972);">{{item.typeLabel}}</text>
         <text style="font-weight:700;font-size:28rpx;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{item.title}}</text>
       </view>
-      <text class="micro" style="flex-shrink:0;color:{{item.status === 'completed' ? '#16a34a' : item.status === 'rejected' ? '#dc2626' : '#6F6972'}};">{{item.statusLabel}}</text>
+      <text class="micro" style="flex-shrink:0;color:{{item.status === 'completed' ? 'var(--nk-green, #16a34a)' : item.status === 'rejected' ? 'var(--nk-red, #dc2626)' : 'var(--nk-muted, #6F6972)'}};">{{item.statusLabel}}</text>
     </view>
     <view class="micro" style="margin-top: 8rpx;">{{item.content}}</view>
     <view wx:if="{{item.reply}}" style="margin-top: 12rpx;padding: 14rpx;border-radius: 12rpx;background: rgba(75, 31, 111, 0.06);">
-      <view class="micro" style="color: #4B1F6F;font-weight: 700;">管理员回复</view>
+      <view class="micro" style="color: var(--nk-accent, #4B1F6F);font-weight: 700;">管理员回复</view>
       <view class="micro" style="margin-top: 6rpx;">{{item.reply}}</view>
-      <view wx:if="{{item.repliedAt}}" class="micro" style="margin-top: 4rpx;color: #9CA3AF;">{{item.repliedAt}}</view>
+      <view wx:if="{{item.repliedAt}}" class="micro" style="margin-top: 4rpx;color: var(--nk-muted, #9CA3AF);">{{item.repliedAt}}</view>
     </view>
-    <view class="micro" style="margin-top: 8rpx;color: #9CA3AF;">{{item.createdAtLabel}}</view>
+    <view class="micro" style="margin-top: 8rpx;color: var(--nk-muted, #9CA3AF);">{{item.createdAtLabel}}</view>
   </view>
-  <view class="card" wx:if="{{loggedIn && !loading && !myFeedbacks.length}}" style="text-align:center;color:#9CA3AF;padding: 28rpx 0;">你还没有提交过反馈</view>
+  <view class="card" wx:if="{{loggedIn && !loading && !myFeedbacks.length}}" style="text-align:center;color:var(--nk-muted, #9CA3AF);padding: 28rpx 0;">你还没有提交过反馈</view>
 
   <view class="feedback-mine-head">其他反馈</view>
   <state-view loading="{{loading}}" skeleton="{{true}}" error="{{error}}" empty="{{!loading && !error && !visibleFeedbacks.length && !searchKeyword}}" empty-text="暂无反馈" bindretry="loadFeedback"></state-view>
   <view class="card" style="padding: 20rpx 24rpx;">
     <view style="display:flex;gap:14rpx;align-items:center;">
       <input class="input" style="flex:1;margin-bottom:0;" placeholder="搜索反馈标题、内容或回复" value="{{searchKeyword}}" bindinput="inputSearchKeyword" />
-      <view wx:if="{{searchKeyword}}" class="micro" style="padding:8rpx 16rpx;color:#6F6972;" bindtap="clearSearchKeyword">清除</view>
+      <view wx:if="{{searchKeyword}}" class="micro" style="padding:8rpx 16rpx;color:var(--nk-muted, #6F6972);" bindtap="clearSearchKeyword">清除</view>
     </view>
     <scroll-view scroll-x style="margin-top:14rpx;white-space:nowrap;">
-      <view wx:for="{{statusOptions}}" wx:key="value" class="micro" style="display:inline-block;padding:8rpx 24rpx;margin-right:12rpx;border:1rpx solid {{filterStatus === item.value ? '#4B1F6F' : '#DED5E2'}};border-radius:999rpx;color:{{filterStatus === item.value ? '#4B1F6F' : '#6F6972'}};background:{{filterStatus === item.value ? '#F4EEF7' : '#FFFFFF'}};font-weight:{{filterStatus === item.value ? '700' : '400'}};" data-value="{{item.value}}" bindtap="chooseStatus">{{item.label}}</view>
+      <view wx:for="{{statusOptions}}" wx:key="value" class="micro" style="display:inline-block;padding:8rpx 24rpx;margin-right:12rpx;border:1rpx solid {{filterStatus === item.value ? 'var(--nk-accent, #4B1F6F)' : 'var(--nk-line, #DED5E2)'}};border-radius:999rpx;color:{{filterStatus === item.value ? 'var(--nk-accent, #4B1F6F)' : 'var(--nk-muted, #6F6972)'}};background:{{filterStatus === item.value ? 'var(--nk-soft, #F4EEF7)' : 'var(--nk-surface, #FFFFFF)'}};font-weight:{{filterStatus === item.value ? '700' : '400'}};" data-value="{{item.value}}" bindtap="chooseStatus">{{item.label}}</view>
     </scroll-view>
   </view>
 
   <view class="card" wx:for="{{visibleFeedbacks}}" wx:key="id" style="margin-bottom: 16rpx;">
     <view style="display:flex;justify-content:space-between;align-items:center;">
       <view style="display:flex;align-items:center;gap:10rpx;min-width:0;">
-        <text class="micro" style="flex-shrink:0;padding:2rpx 12rpx;border:1rpx solid #DED5E2;border-radius:999rpx;color:#6F6972;">{{item.typeLabel}}</text>
+        <text class="micro" style="flex-shrink:0;padding:2rpx 12rpx;border:1rpx solid var(--nk-line, #DED5E2);border-radius:999rpx;color:var(--nk-muted, #6F6972);">{{item.typeLabel}}</text>
         <text style="font-weight:700;font-size:28rpx;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{item.title}}</text>
       </view>
-      <text class="micro" style="flex-shrink:0;color:{{item.status === 'completed' ? '#16a34a' : item.status === 'rejected' ? '#dc2626' : '#6F6972'}};">{{item.statusLabel}}</text>
+      <text class="micro" style="flex-shrink:0;color:{{item.status === 'completed' ? 'var(--nk-green, #16a34a)' : item.status === 'rejected' ? 'var(--nk-red, #dc2626)' : 'var(--nk-muted, #6F6972)'}};">{{item.statusLabel}}</text>
     </view>
     <view class="micro" style="margin-top: 8rpx;">{{item.content}}</view>
     <view wx:if="{{item.reply}}" style="margin-top: 12rpx;padding: 14rpx;border-radius: 12rpx;background: rgba(75, 31, 111, 0.06);">
-      <view class="micro" style="color: #4B1F6F;font-weight: 700;">管理员回复</view>
+      <view class="micro" style="color: var(--nk-accent, #4B1F6F);font-weight: 700;">管理员回复</view>
       <view class="micro" style="margin-top: 6rpx;">{{item.reply}}</view>
-      <view wx:if="{{item.repliedAt}}" class="micro" style="margin-top: 4rpx;color: #9CA3AF;">{{item.repliedAt}}</view>
+      <view wx:if="{{item.repliedAt}}" class="micro" style="margin-top: 4rpx;color: var(--nk-muted, #9CA3AF);">{{item.repliedAt}}</view>
     </view>
-    <view class="micro" style="margin-top: 8rpx;color: #9CA3AF;">{{item.createdAtLabel}}</view>
+    <view class="micro" style="margin-top: 8rpx;color: var(--nk-muted, #9CA3AF);">{{item.createdAtLabel}}</view>
   </view>
 
-  <view class="micro" wx:if="{{!loading && !error && searchKeyword && !visibleFeedbacks.length}}" style="text-align:center;padding:32rpx;color:#9CA3AF;">没有匹配「{{searchKeyword}}」的反馈</view>
+  <view class="micro" wx:if="{{!loading && !error && searchKeyword && !visibleFeedbacks.length}}" style="text-align:center;padding:32rpx;color:var(--nk-muted, #9CA3AF);">没有匹配「{{searchKeyword}}」的反馈</view>
 </view>

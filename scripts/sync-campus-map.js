@@ -100,6 +100,11 @@ function adapt(source, config) {
     if (!Object.hasOwn(campuses, place.campusId) || !Object.hasOwn(categories, place.category) || !coordValid(place.coord) || typeof place.name !== 'string' || !place.name || typeof place.desc !== 'string') throw Error(`Invalid place: ${place.id}`)
     if (!Object.hasOwn(markerIds, place.id)) markerIds[place.id] = nextId++
     const result = { id: place.id, name: place.name, category: place.category, campusId: place.campusId, coord: place.coord, desc: place.desc }
+    if (Object.hasOwn(place, 'aliases')) {
+      if (!Array.isArray(place.aliases) || place.aliases.length > 32 || place.aliases.some(alias =>
+        typeof alias !== 'string' || !alias.trim() || alias.length > 80 || /[\u0000-\u001F\u007F]/.test(alias))) throw Error(`Invalid aliases: ${place.id}`)
+      result.aliases = [...new Set(place.aliases.map(alias => alias.trim()))]
+    }
     const photos = place.photos || (place.photo ? [place.photo] : [])
     if (!Array.isArray(photos)) throw Error(`Invalid photos: ${place.id}`)
     if (photos.length) result.images = photos.map(photo => {

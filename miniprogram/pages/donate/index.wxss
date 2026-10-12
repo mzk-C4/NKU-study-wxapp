@@ -1,4 +1,4 @@
 .website-card { padding: 28rpx 30rpx; }
-.website-title { font-size: 34rpx; font-weight: 700; color: #2A232E; }
-.website-description { margin-top: 18rpx; font-size: 28rpx; line-height: 1.7; color: #6F6972; }
-.website-url { display: block; margin-top: 24rpx; font-size: 28rpx; line-height: 1.7; color: #4B1F6F; word-break: break-all; }
+.website-title { font-size: 34rpx; font-weight: 700; color: var(--nk-text, #2A232E); }
+.website-description { margin-top: 18rpx; font-size: 28rpx; line-height: 1.7; color: var(--nk-muted, #6F6972); }
+.website-url { display: block; margin-top: 24rpx; font-size: 28rpx; line-height: 1.7; color: var(--nk-accent, #4B1F6F); word-break: break-all; }

@@ -1,3 +1,4 @@
+const { registerPage: registerThemedPage } = require('../../utils/theme')
 const { reportVisit } = require('../../utils/visit-report')
 const theme = require('../../utils/theme')
 const feedbackApi = require('../../utils/feedback-api')
@@ -29,7 +30,7 @@ function submitFailure(status) {
   return '未确认提交成功，内容仍保留。请先查看“我的反馈”，确认没有收到后再重试。'
 }
 
-Page({
+registerThemedPage({
   data: {
     loading: true, error: '', submitting: false, submitError: '', loggedIn: false, hasDraft: false, draftNotice: '',
     feedbacks: [], visibleFeedbacks: [], myFeedbacks: [], searchKeyword: '', title: '', content: '', contact: '',
@@ -63,7 +64,6 @@ Page({
     this.loadFeedback()
   },
   onShow() {
-    theme.onPageShow()
     const changedAccount = this._draft && this._draft.account !== drafts.owner(true)
     this.startDraft()
     if (changedAccount) this.loadFeedback()

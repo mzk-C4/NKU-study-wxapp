@@ -20,7 +20,8 @@ test('website entry only copies the fixed homepage URL and handles copy failures
   require(modulePath)
   page.setData = patch => Object.assign(page.data, patch)
   page.onShow()
-  assert.equal(page.onLoad, undefined)
+  page.onLoad() // Global theme lifecycle must not introduce a business request.
+  assert.equal(page.data.themeDark, false)
   assert.equal(page.pay, undefined)
   assert.equal(page.confirmDonate, undefined)
   page.copyWebsite()

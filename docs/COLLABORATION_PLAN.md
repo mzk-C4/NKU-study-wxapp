@@ -2,9 +2,13 @@
 
 > 计划周期：2026-08-17 至 2026-08-30
 >
-> 状态基准：2026-10-09（最新源码与完善后的 README 已以功能提交 c1f04e3 推送 GitHub main，远端提交独立核对一致，CI 37937418827 completed/success。本轮本地 310/310、26 页面/5 Tab、34 WXML 零错误、README 本地引用检查通过。纳入地图更新、资料入口修复、HiNKU 合作与首页紧凑布局，不启用本地 HTML 新设计稿。本轮未上传微信开发版、提交审核或正式发布；真机及登录网络状态仍需独立验收。）
+> 状态基准：2026-10-12（按用户“更新到云端 git”整理当前源码、测试和文档；纳入全局浅深色主题、资料库/课评列表及 MiniSearch 地图搜索。提交前全量 328/328、26 页面/5 Tab、34 WXML 零错误及 scoped diff 检查通过，远端 main 与本地无分叉；Git 提交/远端/CI 回执在本次交付后核对。保留独立微信 2.2.0 版本纠正与旧上传结果未知记录，本次不操作微信上传、审核或发布。）
 >
 > 当前任务与跨聊天交接的唯一状态 owner：本文件
+>
+> 主题任务补充基准：2026-10-12（已实现全局手动浅色/深色及「我的 → 外观设置」，保留上述地图任务与其他聊天的在途改动。当前本地 327 项测试、26 页面/5 Tab 静态检查和 34 份 WXML 检查通过；模拟器验收范围及边界见下。未提交、推送或上传微信。）
+>
+> 列表任务补充基准：2026-10-12（资料库/课评按用户批准提案完成本地样式调整，指南首页、目录、详情及地图页统一浅粉紫底色；99 项相关测试通过。底部原图标及写评价按钮保留。浏览量与反馈标签只预留真实数据条件展示；未提交、推送、上传或进行本轮原生模拟器/真机验收。）
 >
 > 当前小程序公开契约摘要：[`docs/API.md`](./API.md)
 >
@@ -15,6 +19,59 @@
 > 页面参考：`design/mini-program-ui/index.html`
 
 ## 零、当前交接快照与同步机制
+
+### 2026-10-12 最新工作区 Git 同步
+
+- 用户明确授权“更新到云端 git”。目标为当前 `main` → `origin/main`，纳入已实现的主题适配、现有原生页面/组件配色与列表呈现、公开可选字段校验、MiniSearch 地图搜索/来源/许可/维护脚本、对应测试与两张既有地图验收图；不另改业务实现，不启用 `design/nku-study-v2/`。
+- 提交前核对 API、README、现有状态与脚本/测试调用链；同步模块导入不会发起网络或写文件，新增测试使用本地 fixture 与 mock。PASS：`npm.cmd test` 328/328（36 + 122 + 93 + 27 + 50），静态门禁 26 页面/5 Tab；`python scripts/check-wxml.py miniprogram` 为 34 文件/0 错误；scoped diff 检查加入 cr-at-eol 兼容既有 Windows 换行后通过。没有批量格式化用户文件、重复安装依赖或重新运行生产检查。
+- README 补齐当前主题/列表能力与本轮测试成绩，不将可选浏览量/标签预留描述为后端已上线。MiniSearch 7.2.0 的 MIT 许可副本与来源随代码保留；两张地图图像只作为 10 月 11 日既有模拟器记录，不当作本轮真机或主题验收。
+- Git 预检通过电脑已启用的回环代理进行单次命令读取/fetch，main...origin/main=0/0；未修改系统代理、全局 Git 配置、证书或 SSL 校验。提交后核对精确 SHA、远端 main 与对应 GitHub CI，不把仅发起推送当作成功。
+- 排除并原样保留：`project.config.json` 的既有换行差异（忽略行尾空白后无内容差异）及停用的 `design/nku-study-v2/`。没有删除原图、旧截图或本机资料；不暂存私有开发者工具配置或微信上传任务上下文。
+- 本次只执行 Git 交付与本地验证，不调用微信工具、生产写接口或发布操作。当前独立微信任务的用户版本为 2.2.0，旧 2.1.0 请求结果未知，以下记录完整保留；本次 Git 推送不改变其上传结论或授权门禁。
+
+### 2026-10-12 用户纠正版本为 2.2.0 与上传状态核对
+
+- 用户明确当前项目版本为 `2.2.0`，此前代理自行填写的 `2.1.0` 不作为用户指定版本。后续版本说明和上传目标应采用 `2.2.0`，下面保留实际发起过的 `2.1.0` 请求历史，不将其改写为已上传 2.2.0。
+- 用户返回后查询原上传确认任务；CLI 首先报告 WechatIDE 连接失效并自动重新认证，随后返回 `ok=false / Task not found`。当前没有成功回执，上传结果未知；未重复发起上传，未审核或正式发布。
+- 本次更新说明：资料库卡片标签与紧凑布局、课评评分和样本数层级、指南等页面统一浅粉紫背景；当前整包还包含全局手动浅深色主题与校园地图搜索更新。底部原导航图标和写评价按钮保留。生产接口尚未提供浏览量或课评标签汇总，不将这两项预留能力描述为已上线。
+
+### 2026-10-12 当前更新开发版 2.1.0 上传（等待工具内确认）
+
+- 用户明确要求上传本轮更新版本，沿用 `D:\NKU platform\NKU-study-wxapp`、AppID `wx4fe2a7554180e903`，版本 `2.1.0`；备注为“更新资料库和课评列表样式，统一浅粉紫底色；包含当前全局浅深色主题及地图搜索更新，保留底部导航图标和写评价按钮。”没有改动业务代码或 Git 状态，没有发起审核或正式发布。
+- 上传前 PASS：`npm.cmd run release:check` 退出码 0（当前全量测试、26 页面/5 Tab 静态检查、生产 `/api/v1/home` 只读检查）；已安装 wechatide 0.3.11 状态为 `loginExpired=false/versionRelation=equal`，CLI 无令牌要求。工具直接编译课评 WXML、课程卡片 WXML 与指南 WXSS 均 `success=true`，这些局部编译不等于整包或真机验收。
+- 上传任务已发起但尚未成功：`wechatide -c Codex upload` 返回 `taskId=confirmation_upload_6f66859e-f981-4b55-b5a8-fc27a9ed515c`、`taskType=confirmation_upload`、`status=pending`、`Waiting for user confirmation.`。已提示用户到开发者工具确认，按技能要求不主动轮询上传确认、不重复提交。该响应的 `success=true` 只表示创建了确认任务，不能写成代码已上传。
+- 恢复时先执行 `polling_task_result --task-id confirmation_upload_6f66859e-f981-4b55-b5a8-fc27a9ed515c` 核对原任务；pending/未知状态不得重新 upload，只有真实成功回执后同步上传结论。非敏感任务上下文保存在工作区 `outputs/wechat-upload-2.1.0-pending.json`。
+
+### 2026-10-12 资料库/课评列表与页面底色统一（本地实现）
+
+- 授权范围：按本聊天两页提案调整列表；用户要求底部导航与图标、课评“写评价”按钮保持原样，并补充统一页面淡粉底色。目标为现有 `NKU-study-wxapp`，没有修改独立的参赛候选目录。
+- 实现：`components/course-card` 增加去重、最多两个真实课程标签及资料数量标记，空行收起并移除虚线；`pages/courses` 收紧布局与标题/总数层级；`pages/reviews-tab` 调整统计栏、卡片、评分 /5 与评价样本量，预留可选标签/浏览量行。`utils/list-card-presentation.js` 持有展示规则，`services/public-api.js` 只读取经过校验的可选公开字段。没有改动搜索、分页、课程跳转或写评价鉴权流程。
+- 底色：浅色页面统一 `var(--nk-bg, #F6F3F7)`，修正 `pages/guides/index.wxss`、`features/learning-compass/catalog.wxss`（分类/搜索/PDF 目录复用）、`pages/guide-detail/index.wxss` 与 `pages/campus-map/index.wxss` 的白色覆盖；深色统一既有 `#19161E`，卡片与页头继续使用 surface 颜色。
+- 数据边界：只读核对生产 `/courses?page_size=2` 与 `/review-groups` 为 HTTP 200，当前未返回 `view_count/tag_counts`。浏览量显示口径为次数；评价标签需服务端汇总，当前不显示假数据、不用全站总量替代、不逐卡拉取评价详情。字段兼容见 `docs/API.md`。
+- PASS：`node --test test/list-card-presentation.test.js test/public-api.test.js test/public-api-contract.test.js test/reviews-tab-search.test.js test/courses-multiselect.test.js test/write-review-entry.test.js test/theme.test.js test/guide-pages.test.js test/campus-map.test.js` **99/99**；`node scripts/check-miniprogram.js` 为 26 页面/5 Tab；三个改动 WXML 目录均 1 文件/0 错误；scoped diff 使用 `cr-at-eol` 兼容既有 CRLF 后空白检查通过。新增展示测试已加入 `test:pages`，保留同时进行的主题测试入口。
+- PASS：本地浏览器对当前 WXML/WXSS 的辅助布局检查在 320、390、840px、浅/深两种模式下无横向溢出；首页、资料、课评、指南、我的、指南目录与详情的计算背景分别一致为 `rgb(246,243,247)` / `rgb(25,22,30)`。快照逐文件 SHA-256 核对底部导航配置、图标、既有主题模块及课评 JS 未变，写评价按钮 WXML/WXSS 原样保留。辅助浏览器渲染不能代替微信原生模拟器或真机验证。
+- 未运行：本轮微信开发者工具/真机验收、全量测试、CI 与上传；仅本地修改，无提交/推送/生产写入。人工验收：开发者工具重新编译，切换五个 Tab 与指南目录/详情，查看浅粉底色、资料库标签和卡片间距；再切深色主题，并核对底部原图标和写评价按钮。
+
+### 2026-10-12 全局浅色/深色主题（本地实现，未上传）
+
+- 用户确认补齐整套深色模式并在「我的」切换。原根因为 `features/learning-compass/catalog.wxss` 独立跟随 `prefers-color-scheme`，但 `utils/theme.js` 固定浅色。现移除该独立规则，由 `utils/theme.js` 统一持有本机布尔偏好 `nkustudy_theme_dark`，默认浅色，不自动跟随系统，不需要登录、不修改账号数据。
+- 范围：26 个已注册页面使用 `registerThemedPage` 保留原页面生命周期并在加载/显示时同步主题；各页 `page-meta` 统一页面底色、导航栏与 CSS 配色变量，Tab 栏同步。已在「我的」增加浅色/深色选择；应用内卡片、表单、目录、指南详情、地图周边界面和自定义弹层使用公共配色，浅色保留原颜色 fallback。二维码、头像、轮播原图不反色。深色 Tab 使用原中性图标与浅紫选中文字，浅色恢复原紫色选中图标。
+- 边界：只适配当前已注册的原生页面，不重新启用历史 AI 页面；外部 web-view 内容、微信原生弹窗/PDF 阅读器、地图底图由各自容器控制，不承诺随手动主题变色。未改变资料、登录、搜索或反馈 API；保留其他聊天的地图与列表呈现改动，本任务不修改 API 契约。
+- 自动化 PASS：`npm.cmd test` 327/327（36 契约、121 页面含 6 项主题专项、93 搜索指南、27 内容、50 历史学习指南针）；静态检查 26 页面/5 Tab；`python scripts/check-wxml.py miniprogram` 34 文件/0 错误。主题专项覆盖畸形/失效存储、全栈页面同步、再次创建页面、生命周期参数/返回值、保存失败提示、全部路由接入与配色对比度。原网站入口测试改为验证主题 onLoad 不发业务请求，而非要求 onLoad 不存在。
+- 模拟器已实测：在「我的」点深色，导航栏/Tab/卡片同步；首页、资料库（含独立组件）、指南首页、新生分类及 PDF 学生资料列表深色截图可读。学生资料曾取得过渡白屏截图，随后等待 `.catalog-title` 后实图正常；期间自动化导航也出现超时，不把过渡截图或超时算作通过。未做手机真机、全部页面截图或线上版本验收。
+- 10 月 12 日继续验收 PASS：重新打开项目后首页及「我的」保持浅色，读取 `themeDark=false`；实际点击深色再点击浅色，分别读取 true/false，再进入 PDF 学生资料列表取得浅色实图（导航栏与内容一致）。项目刚打开时自动化导航/选择器曾超时，待实际首页稳定后正常，未通过修改业务代码掩盖工具暂态。再次完整测试 327/327、静态 26 页面/5 Tab、WXML 34/0 通过；scoped diff 检查采用 `core.whitespace=cr-at-eol` 兼容工作区既有 Windows 换行，未统一格式化用户文件。
+- 验收方法：重新编译 → 我的 → 外观设置 → 深色，进入指南分类、PDF 学生资料及课程详情；返回我的切浅色，再重启检查本机记忆。主题选择不改变已有业务内容。本地完成不等于微信体验版/正式版更新；本轮没有暂存、提交、推送、上传、审核或发布。
+
+### 2026-10-11 NKUwiki 地图智能搜索融合（本地实现，未上传）
+
+- 用户确认“地图修好了”，要求继续融合 `packages/wiki-map` 与 `docs/.vitepress/data/map-data.js`。固定核对上游 main `20ad5fcb42de480192df8aa480936f4409d2dc45`，与原 `53db8ef` 相比仍为八里台 42 点、津南 34 点，名称、描述、GCJ02 坐标、分类、图标和图片无变化；同步来源基准与永久 ID 注册表的 revision，既有 1～76 数字 ID 不变。
+- 实现 owner：`miniprogram/features/campus-map/search.js` 适配上游 MiniSearch 7.2.0 的中文单字/二元组、前缀及模糊召回，复用本地文本归一化；加入每个查询词组的连续近似匹配约束，避免原始 OR 搜索“不存在的建筑”也召回大量常见字点位。名称直接命中优先，其余按相关性排序。索引首次搜索时建立，页面继续使用原生腾讯地图；地图启动/重载、布局、校区切换清空查询、收藏/最近时间顺序与导航逻辑保持。
+- 数据与依赖：`scripts/sync-campus-map.js` 支持可选 aliases 数组（校验、trim、去重），当前上游实际没有别名，不声称所有点位支持拼音。官方 npm MiniSearch 7.2.0 tarball SHA-512 已核对，CommonJS 引擎保存在 `miniprogram/lib/minisearch.js`，含完整 MIT 许可头，另存许可副本；NKUwiki MIT 与既有许可证 SHA-256 一致。没有安装网页 Vue/高德 SDK，没有复制网页 Key、增加搜索 API、运行时 GitHub 请求或搜索账号要求。维护边界见 [SOURCE.md](../miniprogram/features/campus-map/SOURCE.md)。
+- 自动化 PASS：`node --test test/campus-map-search.test.js test/campus-map.test.js test/local-experience.test.js test/guide-pages.test.js` **61/61**，包括全部 76 个完整名称召回、错字/漏字、组合词、空/无结果、别名/拼音/首字母 fixture、分类名称、查询上限、别名非法输入、常用/最近交集、地图重载以及微信 JS-only 模块加载后的实际搜索。新专项已纳入 `test:search-guide`。首次新增测试将已有分类键 `sports` 误写成 `sport`，修正测试数据后通过；没有更改真实分类或放宽搜索逻辑来掩盖错误。
+- 静态 PASS：新增/修改业务 JS 语法检查，`node scripts/check-miniprogram.js` 为 26 页面/5 Tab，`python scripts/check-wxml.py miniprogram/pages/campus-map` 为 1 文件/0 错误；scoped diff 空白检查通过。固定上游数据 dry-run 无增删变化，执行生成后业务数据及 17 个图标无语义差异。未重复运行全量测试、CI 或生产请求。
+- 开发者工具 PASS：从指南真实地图按钮进入，搜索“图书官”首项为八里台图书馆，腾讯底图正常；切到津南搜索“图书 自习”只返回津南校区图书馆（1 marker），点击后标记、名称气泡、详情、导航按钮可见；“不存在的建筑”显示空态，再点“查看本校区全部地点”恢复 34 点/34 markers，query 清空、mapError 为 false。当前 error 关键词控制台结果为空。首次自动化连接因项目未打开/启动超时未计入通过，开窗并核实当前页后继续正常验证；未改代理、域名校验、设备或字体设置。
+- 截图：[错字搜索](./assets/campus-map-20261011/typo-search.jpg)、[组合词及选中详情](./assets/campus-map-20261011/combined-search-detail.jpg)。手机输入法、大字、导航跳转及线上版本本轮未验收；模拟器证据不替代真机。
+- 文档与交付：README、地图 SOURCE、许可及本状态 owner 已同步；`docs/API.md` 无契约变化。保留 `project.config.json` 与 `design/nku-study-v2/` 的既有改动。未暂存/提交/推送、上传开发版、提交审核或发布。人工验收：重新编译进入「指南 → 校园地图」，依次试搜“图书”“图书官”“图书 自习”和无结果词，再切校区/分类/常用检查结果与地图标记。
 
 ### 2026-10-09 最新源码与 README 的 Git 交付
 

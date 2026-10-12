@@ -1,3 +1,4 @@
+<page-meta page-style="{{themePageStyle}}" background-color="{{themeBackground}}" background-text-style="{{themeLoading}}"><navigation-bar front-color="{{themeFront}}" background-color="{{themeNavigation}}" /></page-meta>
 <view class="home">
   <view class="brand-row">
     <view class="brand-copy"><view class="brand-name">NKUStudy</view><view class="brand-sub">课程资料与选课参考</view></view>

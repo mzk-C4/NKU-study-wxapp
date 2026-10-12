@@ -1,3 +1,4 @@
+<page-meta page-style="{{themePageStyle}}" background-color="{{themeBackground}}" background-text-style="{{themeLoading}}"><navigation-bar front-color="{{themeFront}}" background-color="{{themeNavigation}}" /></page-meta>
 <view class="resource-page">
   <view class="detail-tabs"><view class="detail-tab" data-tab="overview" bindtap="openTab">概览</view><view class="detail-tab detail-tab--active">资料 {{course.resource_count || 0}}</view><view class="detail-tab" data-tab="reviews" bindtap="openTab">评价 {{course.review_count || 0}}</view></view>
   <view class="page resource-body">

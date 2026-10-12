@@ -1,3 +1,4 @@
+<page-meta page-style="{{themePageStyle}}" background-color="{{themeBackground}}" background-text-style="{{themeLoading}}"><navigation-bar front-color="{{themeFront}}" background-color="{{themeNavigation}}" /></page-meta>
 <view class="page">
   <view class="document-kicker">外部文档 · 保留原文</view>
   <view class="document-title">NKU 计网 软件 人智大类生存手册</view>

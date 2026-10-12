@@ -1,3 +1,4 @@
+const { registerPage: registerThemedPage } = require('../../utils/theme')
 const { reportVisit } = require('../../utils/visit-report')
 const theme = require('../../utils/theme')
 const { publicApi } = require('../../services/public-api')
@@ -137,7 +138,6 @@ async function loadSearchData(api) {
 function createWriteReviewPage(api = publicApi) {
   return {
     onShow() {
-      theme.onPageShow()
       const changedAccount = this._draft && drafts.owner(false) && this._draft.account !== drafts.owner(false)
       this.startDraft()
       const wasLoggedIn = this.data.isLoggedIn
@@ -353,6 +353,6 @@ function createWriteReviewPage(api = publicApi) {
   }
 }
 
-Page(createWriteReviewPage())
+registerThemedPage(createWriteReviewPage())
 
 module.exports = { createWriteReviewPage, buildPickerEntries, filterEntries, aggregateReviewStats, statsSubLine }

@@ -1,10 +1,11 @@
+const { registerPage: registerThemedPage } = require('../../utils/theme')
 const navigation = require('../../utils/navigation')
 const learningProfile = require('../../utils/learning-profile')
 const { TOPICS } = require('../../features/learning-compass/catalog')
 const { PDF_DOCUMENTS } = require('../../features/learning-compass/documents')
 const { openHinku } = require('../../utils/partner-mini-program')
 
-Page({
+registerThemedPage({
   data: {
     homeCategories: TOPICS, activeHomeCategory: '', pdfCount: PDF_DOCUMENTS.length,
     guideContextLabel: learningProfile.formatLabel(learningProfile.emptyProfile())

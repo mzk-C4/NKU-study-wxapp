@@ -71,6 +71,10 @@
 
 ## 课程与评价
 
+2026-10-11 列表样式更新：客户端可条件展示课程/评价分组的可选 `view_count`（非负安全整数，含真实 0），文案为“次浏览”；缺失或非法值隐藏，不用全站总量替代。评价分组可选 `tag_counts: [{tag, count}]` 表示公开评价标签汇总，客户端校验正整数频次不超过分组评价总数、去重并展示最高的两个标签。本轮只预留读取与展示兼容，已只读核对当前生产 `/courses` 和 `/review-groups`，它们未提供这些新增字段；不表示后端已上线，不发起逐卡详情请求或新增埋点。
+
+课程类别标签来自既有 `tags/group/category_name`，“资料较多”只在 `resource_count >= 10` 时展示；不推测课程内容或学生主观评价。
+
 `GET /courses` 只发送 `page`、`page_size`、`q`、`term`、`group`、`tag`、`assessment`。客户端不发送旧 `category`、`sort`、学年或校区；`page_size` 不超过 100。
 
 课程 `id` 是服务器不可变 UUID。简称和别名分别来自 `short_name` 与 `aliases`，客户端不自行猜测。页面使用服务端 `teacher_groups`，不建立第二套教师或开课安排模型。

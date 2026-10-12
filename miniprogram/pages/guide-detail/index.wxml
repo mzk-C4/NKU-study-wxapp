@@ -1,3 +1,4 @@
+<page-meta page-style="{{themePageStyle}}" background-color="{{themeBackground}}" background-text-style="{{themeLoading}}"><navigation-bar front-color="{{themeFront}}" background-color="{{themeNavigation}}" /></page-meta>
 <view class="detail-page">
   <view class="detail-nav" style="padding-top: {{statusBarHeight}}px;">
     <button class="detail-back" aria-label="返回上一页" hover-class="icon-pressed" bindtap="goBack"><view class="back-arrow"></view></button>

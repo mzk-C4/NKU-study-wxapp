@@ -1,3 +1,4 @@
+const { registerPage: registerThemedPage } = require('../../utils/theme')
 const { reportVisit } = require('../../utils/visit-report')
 const theme = require('../../utils/theme')
 const { publicApi } = require('../../services/public-api')
@@ -21,7 +22,7 @@ function presentReview(review) {
   return { ...review, rating, stars: starStates(rating), created_date: displayDate(review.created_at) }
 }
 
-Page({
+registerThemedPage({
   onShareAppMessage() {
     return {
       title: `「${this.data.course?.name || 'NKUStudy 课程'}」评价 - NKUStudy`,
@@ -35,7 +36,7 @@ Page({
     id: '', groupKey: '', loading: true, error: '', course: null, reviews: [], visibleReviews: [], teacherGroups: [], teacher: '', standaloneGroup: null, scoreStars: starStates(0), reactingReviewId: '', scoreNumber: '—', scoreLabel: '总体评分', scoreCount: 0
   },
   onLoad(options) { reportVisit('/mp/course-reviews'); this.setData({ id: options.id || '', groupKey: options.group_key || '' }); this.loadReviews() },
-  onShow() { theme.onPageShow() },
+  onShow() { },
   applySelectionScore(teacher) {
     const { course, reviews } = this.data
     if (!teacher) {

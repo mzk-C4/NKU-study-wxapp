@@ -1,9 +1,10 @@
+const { registerPage: registerThemedPage } = require('../../utils/theme')
 const { reportVisit } = require('../../utils/visit-report')
 const theme = require('../../utils/theme')
 const { publicApi } = require('../../services/public-api')
 
-Page({
-    onShow() { theme.onPageShow() },
+registerThemedPage({
+    onShow() { },
   onShareAppMessage() {
     return {
       title: `「${this.data.course?.name || 'NKUStudy 课程'}」资料 - NKUStudy`,

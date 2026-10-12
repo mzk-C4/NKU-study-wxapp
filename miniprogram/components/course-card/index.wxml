@@ -3,6 +3,10 @@
     <view class="course-main"><view class="course-name">{{course.name}}</view><view class="course-sub">{{course.term || '学期待补充'}}{{course.assessment ? ' · ' + course.assessment : ''}}</view></view>
     <view class="arrow">›</view>
   </view>
-  <view class="tags"><tag-chip wx:for="{{course.tags}}" wx:key="*this" text="{{item}}"></tag-chip></view>
-  <view class="stats"><text>{{course.resource_count}} 份资料</text><text>{{course.review_count}} 条评价</text></view>
+  <view class="course-tags" wx:if="{{displayTags.length}}"><text wx:for="{{displayTags}}" wx:key="text" class="course-tag course-tag--{{item.tone}}">{{item.text}}</text></view>
+  <view class="course-stats">
+    <text wx:if="{{course.resource_count}}"><text class="course-resource-count">{{course.resource_count}}</text> 份资料</text><text wx:else>暂无资料</text>
+    <text>{{course.review_count ? course.review_count + ' 条评价' : '暂无评价'}}</text>
+    <text class="course-views" wx:if="{{browseCountLabel}}">{{browseCountLabel}} 次浏览</text>
+  </view>
 </view>

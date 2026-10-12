@@ -1,3 +1,4 @@
+<page-meta page-style="{{themePageStyle}}" background-color="{{themeBackground}}" background-text-style="{{themeLoading}}"><navigation-bar front-color="{{themeFront}}" background-color="{{themeNavigation}}" /></page-meta>
 <view class="page courses-page">
   <view class="search-box" bindtap="openSearch"><view class="search-icon"></view><text>搜索课程、教师或标签</text></view>
 
@@ -17,7 +18,7 @@
     <view class="filter-panel-head"><view><view class="filter-panel-title">课程类别</view><view class="micro">可同时勾选多个类别，匹配其中任一类别</view></view><button class="panel-close" bindtap="closeFilterPanel" aria-label="关闭课程类别选择">完成</button></view>
     <checkbox-group class="option-list" bindchange="changeGroups" aria-label="课程类别多选">
       <label wx:for="{{groupOptions}}" wx:key="value" class="checkbox-option {{item.selected ? 'checkbox-option--active' : ''}}">
-        <checkbox class="option-checkbox" value="{{item.value}}" checked="{{item.selected}}" color="#4B1F6F" />
+        <checkbox class="option-checkbox" value="{{item.value}}" checked="{{item.selected}}" color="{{themeControlColor}}" />
         <text>{{item.label}}</text>
       </label>
     </checkbox-group>
@@ -29,7 +30,7 @@
     <scroll-view scroll-y class="tag-option-scroll">
       <checkbox-group class="option-list" bindchange="changeTags" aria-label="课程标签多选">
         <label wx:for="{{tagOptions}}" wx:key="value" class="checkbox-option tag-option {{item.selected ? 'checkbox-option--active' : ''}}">
-          <checkbox class="option-checkbox" value="{{item.value}}" checked="{{item.selected}}" color="#4B1F6F" />
+          <checkbox class="option-checkbox" value="{{item.value}}" checked="{{item.selected}}" color="{{themeControlColor}}" />
           <text>{{item.label}}</text>
         </label>
       </checkbox-group>
@@ -41,7 +42,7 @@
     <view class="filter-panel-head"><view><view class="filter-panel-title">学期</view><view class="micro">选择一个学期，或选全部学期取消筛选</view></view><button class="panel-close" bindtap="closeFilterPanel" aria-label="关闭学期选择">完成</button></view>
     <radio-group class="option-list" bindchange="chooseTerm" aria-label="学期单选">
       <label wx:for="{{termOptions}}" wx:key="*this" class="checkbox-option {{(term === item || (!term && index === 0)) ? 'checkbox-option--active' : ''}}">
-        <radio class="option-checkbox" value="{{index}}" checked="{{term === item || (!term && index === 0)}}" color="#4B1F6F" />
+        <radio class="option-checkbox" value="{{index}}" checked="{{term === item || (!term && index === 0)}}" color="{{themeControlColor}}" />
         <text>{{item}}</text>
       </label>
     </radio-group>
@@ -51,14 +52,14 @@
     <view class="filter-panel-head"><view><view class="filter-panel-title">考核方式</view><view class="micro">选择一种考核，或选全部考核取消筛选</view></view><button class="panel-close" bindtap="closeFilterPanel" aria-label="关闭考核方式选择">完成</button></view>
     <radio-group class="option-list" bindchange="chooseAssessment" aria-label="考核方式单选">
       <label wx:for="{{assessmentOptions}}" wx:key="*this" class="checkbox-option {{(assessment === item || (!assessment && index === 0)) ? 'checkbox-option--active' : ''}}">
-        <radio class="option-checkbox" value="{{index}}" checked="{{assessment === item || (!assessment && index === 0)}}" color="#4B1F6F" />
+        <radio class="option-checkbox" value="{{index}}" checked="{{assessment === item || (!assessment && index === 0)}}" color="{{themeControlColor}}" />
         <text>{{item}}</text>
       </label>
     </radio-group>
   </view>
 
   <view class="active-filter-row" wx:if="{{hasFilters}}"><text>已应用筛选</text><button class="clear-all" bindtap="clearFilters">清空全部</button></view>
-  <view class="section-head section"><view class="section-title">筛选结果</view><view class="micro">共 {{total}} 门</view></view>
+  <view class="section-head course-list-head"><view class="course-list-title">{{hasFilters ? '筛选结果' : '课程资料'}} <text class="course-list-total">{{total}} 门</text></view><view class="micro">按课程浏览</view></view>
   <state-view loading="{{loading}}" error="{{error}}" empty="{{!loading && !error && !courses.length}}" empty-text="没有找到相关课程" bindretry="loadCourses"></state-view>
   <course-card wx:for="{{courses}}" wx:key="id" course="{{item}}" bindselect="openCourse"></course-card>
   <view class="load-more-button section" wx:if="{{hasMore}}" bindtap="showMore">显示更多课程</view>

@@ -1,9 +1,10 @@
+const { registerPage: registerThemedPage } = require('../../utils/theme')
 const theme = require('../../utils/theme')
 const DOCUMENT_URL = 'https://nankai.feishu.cn/wiki/O36Dw5fQVibzsnkx4ptcZreDnAf'
 
-Page({
+registerThemedPage({
   data: { documentUrl: DOCUMENT_URL, copying: false, copied: false, copyError: '' },
-  onShow() { theme.onPageShow() },
+  onShow() { },
   copyLink() {
     if (this.data.copying) return
     this.setData({ copying: true, copied: false, copyError: '' })

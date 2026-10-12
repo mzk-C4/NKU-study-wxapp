@@ -1,10 +1,11 @@
+const { registerPage: registerThemedPage } = require('../../utils/theme')
 const { reportVisit } = require('../../utils/visit-report')
 const theme = require('../../utils/theme')
 const { parseMarkdown } = require('../../utils/markdown')
 const { publicApi } = require('../../services/public-api')
 
 // 与网页关于页同源（GET /api/v1/about），后台"关于页面管理"改一次两边同步
-Page({
+registerThemedPage({
   data: {
     loading: true,
     error: '',
@@ -16,7 +17,7 @@ Page({
     reportVisit('/mp/about')
     this.loadAbout()
   },
-  onShow() { theme.onPageShow() },
+  onShow() { },
   onPullDownRefresh() {
     this.loadAbout().finally(() => wx.stopPullDownRefresh())
   },

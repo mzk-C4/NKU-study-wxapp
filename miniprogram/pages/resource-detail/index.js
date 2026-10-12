@@ -1,11 +1,12 @@
+const { registerPage: registerThemedPage } = require('../../utils/theme')
 const { reportVisit } = require('../../utils/visit-report')
 const theme = require('../../utils/theme')
 const { publicApi } = require('../../services/public-api')
 const { downloadResource } = require('../../utils/resource-download')
 const { reportDeadLink } = require('../../utils/resource-report')
 
-Page({
-    onShow() { theme.onPageShow() },
+registerThemedPage({
+    onShow() { },
   data: {
     courseId: '',
     resourceId: '',

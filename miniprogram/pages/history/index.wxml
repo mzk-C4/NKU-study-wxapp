@@ -1,3 +1,4 @@
+<page-meta page-style="{{themePageStyle}}" background-color="{{themeBackground}}" background-text-style="{{themeLoading}}"><navigation-bar front-color="{{themeFront}}" background-color="{{themeNavigation}}" /></page-meta>
 <view class="page">
   <view class="history-toolbar" wx:if="{{history.length}}">
     <text class="micro">最近浏览保存在本机，最多 20 条</text>

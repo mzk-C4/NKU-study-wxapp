@@ -99,6 +99,9 @@ test('map boots with the mini-program JS-only module loader, including source at
   assert.equal(instance.data.places.length, 42)
   assert.equal(instance.data.markers.length, 42)
   assert.equal(typeof instance.showSource, 'function')
+  instance.search({ detail: { value: '图书官' } })
+  assert.equal(instance.data.places[0].id, 'n_library_01')
+  assert.equal(instance.data.markers[0].id, buildings.find(place => place.id === 'n_library_01').markerId)
 })
 
 test('category assets exist, IDs stay compatible, and unused categories are hidden', () => {
@@ -225,4 +228,45 @@ test('sync validates coordinates, duplicate IDs, image mappings, article origin 
   assert.throws(() => adapt(upstreamFixture([place], '<script>alert(1)</script>'), config), /Unsafe SVG/)
   const adapted = adapt(upstreamFixture([{ ...place, photos: ['/map/pic/nankai-main-building.png'], article: '/pages/BalitaiCampus/#主楼' }]), config)
   assert.equal(adapted.data.buildings[0].images[0].caption, '南开大学主楼与周恩来总理塑像')
+})
+
+test('sync preserves and validates optional aliases for future upstream search data', () => {
+  const config = require('../scripts/campus-map-source.json')
+  const place = { ...buildings[1], aliases: ['别名', ' pinyin ', 'py', '别名'] }
+  const adapted = adapt(upstreamFixture([place]), config).data.buildings[0]
+  assert.deepEqual(adapted.aliases, ['别名', 'pinyin', 'py'])
+  assert.equal(adapted.markerId, place.markerId)
+  for (const aliases of [null, 'not an array', [1], [''], ['x'.repeat(81)], ['a\n'], new Array(33).fill('a')]) {
+    assert.throws(() => adapt(upstreamFixture([{ ...place, aliases }]), config), /Invalid aliases/)
+  }
+})
+
+test('smart search ranks names first while composing with campus/category/favorites/recent and map reload', () => {
+  const instance = page()
+  instance.search({ detail: { value: '图书官' } })
+  assert.equal(instance.data.places[0].id, 'n_library_01')
+  assert.ok(instance.data.places.every(place => place.campusId === 'n'))
+  const id = instance.data.places[0].markerId
+  instance.selectById(id); instance.toggleFavorite(); instance.closeDetail()
+  instance.changePlaceMode({ currentTarget: { dataset: { mode: 'favorites' } } })
+  assert.deepEqual(instance.data.places.map(place => place.markerId), [id])
+  instance.changePlaceMode({ currentTarget: { dataset: { mode: 'recent' } } })
+  assert.deepEqual(instance.data.places.map(place => place.markerId), [id])
+  instance.selectById(id)
+  global.wx = { nextTick: fn => fn() }
+  try { instance.mapFailed(); instance.retryMap() } finally { delete global.wx }
+  assert.equal(instance.data.query, '图书官')
+  assert.equal(instance.data.selected.markerId, id)
+  assert.equal(instance.data.mapError, false)
+  instance.changePlaceMode({ currentTarget: { dataset: { mode: 'all' } } })
+  instance.changeCampus({ currentTarget: { dataset: { id: 'j' } } })
+  assert.equal(instance.data.query, '')
+  instance.changeCategory({ currentTarget: { dataset: { value: 'library' } } })
+  instance.search({ detail: { value: '图书 自习' } })
+  assert.deepEqual(instance.data.places.map(place => place.id), ['j_library_01'])
+  assert.equal(instance.data.markers.length, 1)
+  instance.clearSearch()
+  assert.equal(instance.data.category, 'library')
+  instance.showAllPlaces()
+  assert.equal(instance.data.places.length, 34)
 })

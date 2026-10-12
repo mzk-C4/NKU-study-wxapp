@@ -1,5 +1,6 @@
+const { registerPage: registerThemedPage } = require('../../utils/theme')
 const QR_IMAGE = '/assets/home/beta-group.jpg'
-Page({
+registerThemedPage({
   data: { image: QR_IMAGE, error: '' },
   preview() {
     wx.previewImage({ current: QR_IMAGE, urls: [QR_IMAGE], showmenu: true,

@@ -1,3 +1,4 @@
+const { registerPage: registerThemedPage } = require('../../utils/theme')
 const { reportVisit } = require('../../utils/visit-report')
 const theme = require('../../utils/theme')
 const { publicApi, validateAvatarUrl } = require('../../services/public-api')
@@ -94,10 +95,13 @@ function createProfilePage(api = publicApi, sessionStore = authSession) {
     },
 
     onLoad() { reportVisit('/mp/profile') },
+    changeTheme(event) {
+      const dark = event.currentTarget.dataset.mode === 'dark'
+      theme.setDark(dark, this)
+    },
     onShow() {
       this.setData({ avatarSupported: typeof wx.canIUse === 'function' && wx.canIUse('button.open-type.chooseAvatar') })
-      this.refreshLearningProfile(); this.refresh(); theme.onPageShow()
-    },
+      this.refreshLearningProfile(); this.refresh(); },
     onUnload() { unloaded = true; refreshId++; avatarAttempt++; draftSession = null; uploadedDraft = null },
 
     refreshLearningProfile() {
@@ -523,6 +527,6 @@ function createProfilePage(api = publicApi, sessionStore = authSession) {
   }
 }
 
-Page(createProfilePage())
+registerThemedPage(createProfilePage())
 
 module.exports = { createProfilePage, displayDate, presentFavorite, presentReview, getWechatLoginCode }

@@ -1,3 +1,4 @@
+const { registerPage: registerThemedPage } = require('../../utils/theme')
 const { reportVisit, getVisitStats } = require('../../utils/visit-report')
 const { buildSiteStatus } = require('../../utils/site-status')
 const theme = require('../../utils/theme')
@@ -7,7 +8,7 @@ const { HOME_SLIDES } = require('../../features/home-carousel')
 const { homeAnnouncementView, createAnnouncementReader } = require('../../features/home-announcement')
 const { openHinku } = require('../../utils/partner-mini-program')
 
-Page({
+registerThemedPage({
   data: {
     loading: true,
     error: '',
@@ -42,7 +43,6 @@ Page({
     this.loadHome()
   },
   onShow() {
-    theme.onPageShow()
     this.setData({ carouselVisible: true })
     this.refreshSiteStatus()
     if (this.homeStarted && !this.homeRequest) this.loadHome(true)

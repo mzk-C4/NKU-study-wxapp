@@ -1,3 +1,4 @@
+const { registerPage: registerThemedPage } = require('../../utils/theme')
 const { createCatalogPage } = require('../../features/learning-compass/catalog-page')
-Page(createCatalogPage('search'))
+registerThemedPage(createCatalogPage('search'))
 

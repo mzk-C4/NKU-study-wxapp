@@ -1,12 +1,18 @@
+const { registerPage: registerThemedPage } = require('../../utils/theme')
 const { categories, campuses, buildings } = require('../../features/campus-map/data')
 const local = require('../../utils/local-preferences')
 const source = require('../../features/campus-map/source')
+const { createBuildingSearch } = require('../../features/campus-map/search')
 const validIds = new Set(buildings.map(place => place.markerId))
 const ALL = { value: '', label: '全部' }
+let searchBuildings
 function filterPlaces(campusId, category, query) {
-  const keyword = String(query || '').trim().toLowerCase()
-  return buildings.filter(place => place.campusId === campusId && (!category || place.category === category) &&
-    (!keyword || [place.name, place.desc, categories[place.category].label].join(' ').toLowerCase().includes(keyword)))
+  const places = buildings.filter(place => place.campusId === campusId && (!category || place.category === category))
+  if (!String(query || '').trim()) return places
+  // Build once, on the first search; page entry and map reload do not rebuild it.
+  if (!searchBuildings) searchBuildings = createBuildingSearch(buildings, categories)
+  const ranks = new Map(searchBuildings(query).map((id, index) => [id, index]))
+  return places.filter(place => ranks.has(place.id)).sort((a, b) => ranks.get(a.id) - ranks.get(b.id))
 }
 function markersFor(places, selected) {
   const visible = places.slice()
@@ -20,7 +26,7 @@ function markersFor(places, selected) {
         color: '#2B174A', bgColor: '#FFFFFF', fontSize: 13 } }
   })
 }
-Page({
+registerThemedPage({
   data: { campusId: 'n', campusOptions: [{ id: 'n', label: '八里台' }, { id: 'j', label: '津南' }],
     category: '', query: '', categoryOptions: [], places: [], markers: [], selected: null,
     categoryIndex: 0, categoryLabel: '全部分类', panelCollapsed: false, keyboardFocused: false, keyboardHeight: 0, includePoints: [],
@@ -158,7 +164,7 @@ Page({
   },
   showSource() {
     wx.showModal({ title: '感谢地图贡献者',
-      content: `地图内容由 ${source.contributor} 提供，感谢贡献！\n来源：NKUwiki（${source.revision.slice(0, 7)}）\n内容许可：${source.contentLicense}\n本小程序适配了原生地图、图标与布局。`,
+      content: `地图内容由 ${source.contributor} 提供，感谢贡献！\n来源：NKUwiki（${source.revision.slice(0, 7)}）\n内容许可：${source.contentLicense}\n本小程序适配了原生地图、图标、布局与 MiniSearch 本地搜索。`,
       confirmText: '复制来源', cancelText: '关闭',
       success: result => {
         if (!result.confirm || this._isUnloaded) return

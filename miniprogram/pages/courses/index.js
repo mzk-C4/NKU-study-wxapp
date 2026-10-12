@@ -1,3 +1,4 @@
+const { registerPage: registerThemedPage } = require('../../utils/theme')
 const { reportVisit } = require('../../utils/visit-report')
 const theme = require('../../utils/theme')
 const { publicApi } = require('../../services/public-api')
@@ -57,7 +58,7 @@ function calculateScrollbar(scrollLeft, scrollWidth, viewportWidth) {
   }
 }
 
-Page({
+registerThemedPage({
   data: {
     loading: true,
     loadingMore: false,
@@ -91,7 +92,7 @@ Page({
     reportVisit('/mp/courses')
     this.loadCourses()
   },
-    onShow() { theme.onPageShow() },
+    onShow() { },
 
   onReady() { this.measureFilterScroll() },
 

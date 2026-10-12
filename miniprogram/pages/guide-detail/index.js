@@ -1,3 +1,4 @@
+const { registerPage: registerThemedPage } = require('../../utils/theme')
 const publicApi = require('../../features/learning-compass/api')
 const navigation = require('../../utils/navigation')
 const { getCategoryInfo, cleanSourceText } = require('../../utils/learning-compass')
@@ -238,7 +239,7 @@ function openSourceFile(source) {
   })
 }
 
-Page({
+registerThemedPage({
   data: {
     statusBarHeight: 20,
     id: '',

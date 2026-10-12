@@ -1,3 +1,4 @@
+<page-meta page-style="{{themePageStyle}}" background-color="{{themeBackground}}" background-text-style="{{themeLoading}}"><navigation-bar front-color="{{themeFront}}" background-color="{{themeNavigation}}" /></page-meta>
 <view class="map-page {{keyboardFocused ? 'map-page--typing' : ''}}" style="bottom:{{keyboardHeight}}px">
   <view class="map-toolbar">
     <view class="toolbar-row">
@@ -10,7 +11,7 @@
     </view>
     <view class="search-row">
       <view class="search-symbol" aria-hidden="true"></view>
-      <input class="map-search" value="{{query}}" placeholder="搜索建筑、食堂、学院…" maxlength="80" confirm-type="search" adjust-position="{{false}}" bindinput="search" bindfocus="searchFocus" bindblur="searchBlur" bindconfirm="confirmSearch" bindkeyboardheightchange="keyboardChanged" aria-label="搜索校园地点" />
+      <input class="map-search" value="{{query}}" placeholder="搜地点或用途，如图书、自习…" maxlength="80" confirm-type="search" adjust-position="{{false}}" bindinput="search" bindfocus="searchFocus" bindblur="searchBlur" bindconfirm="confirmSearch" bindkeyboardheightchange="keyboardChanged" aria-label="搜索校园地点名称、介绍或别名" />
       <button wx:if="{{query}}" class="clear-search" bindtap="clearSearch" aria-label="清空搜索">×</button>
     </view>
   </view>

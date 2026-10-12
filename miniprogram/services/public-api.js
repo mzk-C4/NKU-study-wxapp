@@ -2,6 +2,7 @@ const request = require('../utils/request')
 const config = require('../config')
 const authSession = require('../utils/auth-session')
 const { validateAvatarFile } = require('../utils/avatar-file')
+const { formatBrowseCount } = require('../utils/list-card-presentation')
 
 const RESOURCE_DOWNLOAD_HOST = 'resources.nkustudy.top'
 const COURSE_QUERY_KEYS = Object.freeze(['q', 'term', 'group', 'tag', 'assessment', 'page', 'page_size'])
@@ -26,6 +27,24 @@ function toNullableNumber(value) {
   if (value === null || value === undefined || value === '') return null
   const number = Number(value)
   return Number.isFinite(number) ? number : null
+}
+
+function publicBrowseFields(raw) {
+  if (!Number.isSafeInteger(raw.view_count) || raw.view_count < 0) return {}
+  return { view_count: raw.view_count, browse_count_label: formatBrowseCount(raw.view_count) }
+}
+
+function mapReviewTagCounts(value, reviewCount) {
+  if (!Array.isArray(value)) return []
+  const counts = new Map()
+  value.forEach(item => {
+    if (!item || typeof item !== 'object') return
+    const tag = toText(item.tag).slice(0, 40)
+    if (!tag || !Number.isSafeInteger(item.count) || item.count < 1 || item.count > reviewCount) return
+    counts.set(tag, Math.max(counts.get(tag) || 0, item.count))
+  })
+  return [...counts].map(([tag, count]) => ({ tag, count }))
+    .sort((left, right) => right.count - left.count).slice(0, 2)
 }
 
 function toPositiveInteger(value, fallback, maximum) {
@@ -151,6 +170,7 @@ function mapCourse(rawCourse) {
     review_count: reviewCount,
     offering_count: toCount(raw.offering_count == null ? teacherGroups.length : raw.offering_count),
     ratings: mapRatings(raw.ratings, reviewCount),
+    ...publicBrowseFields(raw),
     updated: toText(raw.updated || raw.updated_at)
   }
 }
@@ -373,8 +393,10 @@ function mapReviewGroup(rawGroup, includeItems = false) {
     submittable: raw.submittable !== false,
     catalog_course_id: toText(raw.catalog_course_id),
     review_count: toCount(raw.review_count),
-    rating_average: ratingAverage === null ? null : ratingAverage.toFixed(1)
+    rating_average: ratingAverage === null ? null : ratingAverage.toFixed(1),
+    ...publicBrowseFields(raw)
   }
+  if (Array.isArray(raw.tag_counts)) mapped.tag_counts = mapReviewTagCounts(raw.tag_counts, mapped.review_count)
   if (includeItems) mapped.items = Array.isArray(raw.items) ? raw.items.map(item => mapReviewItem(item, groupKey)) : []
   return mapped
 }

@@ -1,3 +1,4 @@
+const { registerPage: registerThemedPage } = require('../../utils/theme')
 const { reportVisit } = require('../../utils/visit-report')
 const theme = require('../../utils/theme')
 const publicApi = require('../../services/public-api')
@@ -88,7 +89,7 @@ function userErrorMessage(error, target) {
   return target === 'index' ? '暂时无法加载搜索索引，请稍后重试。' : '暂时无法加载课程，请稍后重试。'
 }
 
-Page({
+registerThemedPage({
   data: {
     query: '',
     searchHistory: [], historyNotice: '', filtersExpanded: false,
@@ -144,7 +145,7 @@ Page({
     const facetsPromise = this.loadFacetOptions()
     return Promise.all([indexPromise, facetsPromise])
   },
-  onShow() { theme.onPageShow() },
+  onShow() { },
   onUnload() {
     this._isUnloaded = true
     this._requestId = (this._requestId || 0) + 1

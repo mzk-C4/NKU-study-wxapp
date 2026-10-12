@@ -1,5 +1,6 @@
+const { registerPage: registerThemedPage } = require('../../utils/theme')
 const { NKUCS_URL } = require('../../features/home-announcement')
-Page({
+registerThemedPage({
   data: { url: NKUCS_URL, failed: false, copyError: '' },
   failed() { this.setData({ failed: true }) },
   retry() { this.setData({ failed: false }) },

@@ -1,13 +1,13 @@
+const { registerPage: registerThemedPage } = require('../../utils/theme')
 const { reportVisit } = require('../../utils/visit-report')
 const theme = require('../../utils/theme')
 
 // 最近浏览为本机数据（browse_history），仅在本地保存
-Page({
+registerThemedPage({
   data: { history: [] },
 
   onLoad() { reportVisit('/mp/history') },
   onShow() {
-    theme.onPageShow()
     this.setData({ history: wx.getStorageSync('browse_history') || [] })
   },
 

@@ -1,10 +1,11 @@
+const { registerPage: registerThemedPage } = require('../../utils/theme')
 const theme = require('../../utils/theme')
 const WEBSITE_URL = 'https://nkustudy.top/'
 
 // 保留原路由兼容已有入口；页面仅提供网站链接，不加载支付或资金数据。
-Page({
+registerThemedPage({
   data: { websiteUrl: WEBSITE_URL, copying: false, copied: false, copyError: '' },
-  onShow() { theme.onPageShow() },
+  onShow() { },
   copyWebsite() {
     if (this.data.copying) return
     this.setData({ copying: true, copied: false, copyError: '' })

@@ -1,3 +1,4 @@
+const { registerPage: registerThemedPage } = require('../../utils/theme')
 const { reportVisit } = require('../../utils/visit-report')
 const theme = require('../../utils/theme')
 const { publicApi } = require('../../services/public-api')
@@ -8,7 +9,7 @@ const {
   searchReviewGroups
 } = require('./search')
 
-Page({
+registerThemedPage({
   data: { loading: true, error: '', keyword: '', hasSearchQuery: false, allGroups: [], filteredGroups: [], visibleGroups: [], page: 1, pageSize: 20, hasMore: false, statCourses: 0, statReviews: 0 },
   onLoad() { reportVisit('/mp/reviews-tab'); this.loadGroups() },
   onPullDownRefresh() { this.loadGroups().finally(() => wx.stopPullDownRefresh()) },

@@ -1,3 +1,4 @@
+<page-meta page-style="{{themePageStyle}}" background-color="{{themeBackground}}" background-text-style="{{themeLoading}}"><navigation-bar front-color="{{themeFront}}" background-color="{{themeNavigation}}" /></page-meta>
 <view class="reviews-page">
   <view class="detail-tabs" wx:if="{{course}}"><view class="detail-tab" data-tab="overview" bindtap="openTab">概览</view><view class="detail-tab" data-tab="resources" bindtap="openTab">资料 {{course.resource_count || 0}}</view><view class="detail-tab detail-tab--active">评价 {{course.review_count || 0}}</view></view>
   <view class="page reviews-body">

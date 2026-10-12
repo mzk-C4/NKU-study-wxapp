@@ -1,3 +1,4 @@
+const { registerPage: registerThemedPage } = require('../../utils/theme')
 const { reportVisit } = require('../../utils/visit-report')
 const theme = require('../../utils/theme')
 const { publicApi } = require('../../services/public-api')
@@ -10,11 +11,11 @@ function displayDate(value) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
 }
 
-Page({
+registerThemedPage({
   data: { loading: true, error: '', favorites: [], loggedIn: false },
 
   onLoad() { reportVisit('/mp/favorites') },
-  onShow() { theme.onPageShow(); this.load() },
+  onShow() { this.load() },
   onUnload() { this._requestId = (this._requestId || 0) + 1 },
   onPullDownRefresh() { this.load().finally(() => wx.stopPullDownRefresh()) },
 

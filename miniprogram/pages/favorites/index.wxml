@@ -1,3 +1,4 @@
+<page-meta page-style="{{themePageStyle}}" background-color="{{themeBackground}}" background-text-style="{{themeLoading}}"><navigation-bar front-color="{{themeFront}}" background-color="{{themeNavigation}}" /></page-meta>
 <view class="page">
   <view class="section-head"><view class="section-title">我的课程收藏</view><text class="micro">云端同步</text></view>
   <state-view loading="{{loading}}" skeleton="{{true}}" error="{{error}}" bindretry="retry"></state-view>

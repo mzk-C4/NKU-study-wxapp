@@ -1,3 +1,4 @@
+<page-meta page-style="{{themePageStyle}}" background-color="{{themeBackground}}" background-text-style="{{themeLoading}}"><navigation-bar front-color="{{themeFront}}" background-color="{{themeNavigation}}" /></page-meta>
 <view class="page review-form-page">
   <view wx:if="{{!isLoggedIn}}" class="card section">
     <view class="rule-title">微信登录后发表评价</view>

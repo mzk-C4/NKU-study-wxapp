@@ -1,3 +1,4 @@
+<page-meta page-style="{{themePageStyle}}" background-color="{{themeBackground}}" background-text-style="{{themeLoading}}"><navigation-bar front-color="{{themeFront}}" background-color="{{themeNavigation}}" /></page-meta>
 <web-view wx:if="{{!failed}}" src="{{url}}" binderror="failed"></web-view>
 <view wx:else class="page">
   <view class="card">
