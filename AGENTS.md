@@ -108,5 +108,5 @@
 - `docs/API.md` 是本仓库当前实际使用的公开 API 契约摘要；生产事实仍由 NKUStudy.top 的生产 owner 持有。
 - 开始处理项目状态、搜索、指南、API 对接、任务完成度或发布证据前，按第 3.1 节读取 `README.md`、`docs/COLLABORATION_PLAN.md` 和 `docs/API.md` 并核对 Git 状态。
 - 相关事实发生变化时，任务结束前必须同步 `docs/COLLABORATION_PLAN.md` 的状态基准、任务判定、证据、阻塞和下一步；契约变化时同时更新 `docs/API.md`。
-- `docs/COLLABORATION_PLAN-formatted.md` 是历史副本，不再更新，不能作为当前状态来源。
+- 原 `docs/COLLABORATION_PLAN-formatted.md` 历史副本已移除；只能使用 `docs/COLLABORATION_PLAN.md` 作为当前状态来源。
 - 文档不会自动感知外部变化；如果后端 owner 只在聊天中提供新事实，必须先核验正式契约或实现证据，再写入状态 owner。

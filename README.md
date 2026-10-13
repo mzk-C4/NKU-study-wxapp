@@ -14,7 +14,7 @@
 [![CI](https://github.com/mzk-C4/NKU-study-wxapp/actions/workflows/ci.yml/badge.svg)](https://github.com/mzk-C4/NKU-study-wxapp/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/License-MIT-8A6D3B?style=flat-square)](./LICENSE)
 
-[🌐 访问 NKUStudy](https://nkustudy.top) · [📖 API 契约](./docs/API.md) · [✅ 验收清单](./docs/ACCEPTANCE.md) · [🤝 协作计划](./docs/COLLABORATION_PLAN.md)
+[🌐 访问上游网站](https://nkustudy.top) · [🧩 网站与 API 仓库](https://github.com/shview/NKU-study-resources) · [🎬 观看宣传片](#-宣传片) · [📖 API 契约](./docs/API.md) · [✅ 验收清单](./docs/ACCEPTANCE.md) · [🤝 协作计划](./docs/COLLABORATION_PLAN.md)
 
 </div>
 
@@ -26,6 +26,20 @@
 NKUStudy 希望解决一个很朴素的问题：**同学真正需要的信息，不该散落在多个网页、群聊和文件夹里。**
 
 这个仓库提供原生微信小程序客户端，围绕“查课程、看评价、找资料、读指南”构建统一体验。生产课程、教师、资料、评价和指南由 NKUStudy 网站服务维护；小程序只读取公开业务接口，不复制第二套生产内容，也不提供后台管理能力。
+
+上游网站是 [NKUStudy.top](https://nkustudy.top)，其网站与公共 API 源码在 [shview/NKU-study-resources](https://github.com/shview/NKU-study-resources)；当前仓库是微信小程序客户端。
+
+## 🎬 宣传片
+
+<div align="center">
+  <a href="./docs/assets/video/nkustudy-promo-v2.mp4">
+    <img src="./docs/assets/video/nkustudy-promo-v2-poster.jpg" alt="NKUStudy 宣传片封面：选课参考与课程资料平台" width="720" />
+  </a>
+  <br />
+  <a href="./docs/assets/video/nkustudy-promo-v2.mp4">▶ 观看完整宣传片（60 秒，含配乐）</a>
+</div>
+
+视频画面拍摄于 2026 年 10 月，课程与资料数量等展示数据会变化，请以上游网站的实时内容为准。
 
 ## 🆕 当前源码更新 · 2026-10-12
 
