@@ -2,7 +2,7 @@
 
 > 计划周期：2026-08-17 至 2026-08-30
 >
-> 状态基准：2026-10-12（最新源码与文档已以功能提交 7fd80a4 推送 GitHub main，远端 SHA 核对一致，CI 38195703934 completed/success。纳入全局浅深色主题、资料库/课评列表及 MiniSearch 地图搜索；本地全量 328/328、26 页面/5 Tab、34 WXML 零错误及 scoped diff 检查通过。保留独立微信 2.2.0 版本纠正与旧上传结果未知记录，本次没有操作微信上传、审核或发布。）
+> 状态基准：2026-10-13（README 宣传片、上游网站/仓库链接与 7 个过期文件清理已以内容提交 266c8cf 推送 GitHub main，远端 SHA 核对一致，CI 38363572218 completed/success。2026-10-12 功能提交 7fd80a4 的实现与验收证据见下；本轮不改变小程序代码、API 契约、微信上传或发布状态。）
 >
 > 当前任务与跨聊天交接的唯一状态 owner：本文件
 >
@@ -19,6 +19,14 @@
 > 页面参考：`design/mini-program-ui/index.html`
 
 ## 零、当前交接快照与同步机制
+
+### 2026-10-13 README 宣传片与仓库整理
+
+- 用户提供 `宣传片/NKUStudy宣传片 第二版/工程/out/final-bgm.mp4`，要求放入 README，并补上上游网站及仓库。已核实 `https://nkustudy.top` 与网站/公共 API 仓库 `https://github.com/shview/NKU-study-resources`；当前仓库仍是原生微信小程序客户端。
+- 原视频为 60.1 秒、H.264/AAC、50,212,129 字节（约 47.89 MiB）；原字节复制为 `docs/assets/video/nkustudy-promo-v2.mp4`，SHA-256 与来源一致。封面从原视频截帧为 `docs/assets/video/nkustudy-promo-v2-poster.jpg`。README 提供可点击封面及 MP4 链接，注明展示画面与统计信息并非实时数据。
+- 按用户确认的精确清单，移除 6 张已无 Git 跟踪文本引用的 `docs/assets/readme/` 旧截图，以及已停用的 `docs/COLLABORATION_PLAN-formatted.md` 历史副本；`AGENTS.md` 的 owner 描述随之更新。当前协作状态继续只由本文件持有。删除前已在仓库外保存 Git 跟踪内容快照，原文件也可由父提交恢复。历史交接文档中的旧文件名保留为当时记录，不作为当前入口。
+- Git 交付：仅暂存本轮 11 项相关文件；`project.config.json` 的既有本地换行差异及未跟踪的 `design/nku-study-v2/` 保持原样。提交 [266c8cf](https://github.com/mzk-C4/NKU-study-wxapp/commit/266c8cfcc0ca4d3b98b64632b97a482aa7b66d13) 已推送 `origin/main`，`ls-remote` 与本地 HEAD 完全一致，`main...origin/main=0/0`。[CI 38363572218](https://github.com/mzk-C4/NKU-study-wxapp/actions/runs/38363572218) 对应同一 headSha，completed/success。媒体 SHA-256、视频元数据、7 个目标不存在和 scoped staged diff 空白检查均通过；本轮未重复本地全量测试，CI 已独立执行。
+- GitHub README 渲染已确认封面、MP4 与上游仓库链接出现，远端媒体文件为 50,212,129 字节；实际浏览器播放可从仓库首页点击封面手工确认。本轮未修改小程序运行代码、API 契约或生产数据，未执行微信开发者工具上传、审核、真机验收或发布。
 
 ### 2026-10-12 最新工作区 Git 同步
 
