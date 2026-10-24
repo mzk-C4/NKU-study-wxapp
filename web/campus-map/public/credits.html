@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>校园地图 · 数据来源与使用说明</title>
+  <style>body{margin:0;background:#f7f4ec;color:#51483f;font:16px/1.8 system-ui,sans-serif}main{max-width:660px;margin:auto;padding:32px 22px}h1{font-size:25px}h2{font-size:18px;margin-top:28px}code{overflow-wrap:anywhere;font-size:13px}button,a{font:inherit;color:#775676}button{padding:10px 16px;border:1px solid #d9d1c6;border-radius:9px;background:#fffdf9}.note{padding:14px;background:#f1e4da;border-radius:10px}footer{margin-top:30px}</style>
+</head>
+<body><main>
+  <button id="back">← 返回校园地图</button>
+  <h1>数据来源与使用说明</h1>
+  <p class="note">这是待核验的校园导览试验模型，不是官方或实测地图，不用于精确导航。建筑高度、部分轮廓与雕像位置包含视觉估计。</p>
+  <h2>开放数据来源</h2>
+  <p>© OpenStreetMap contributors。基础道路、建筑轮廓及景观数据采用 OpenStreetMap 候选导入数据，受 Open Database License（ODbL）约束。</p>
+  <p>版权与许可证说明（可复制到浏览器查看）：<br><code>https://www.openstreetmap.org/copyright</code></p>
+  <h2>人工补绘与参考模型</h2>
+  <p>旅游与服务学院、周恩来政府管理学院、学生宿舍1和周总理雕像为用户参考资料的近似补绘。来源授权、校园现状、学校标志使用及公开展示要求仍须在正式发布前核验。</p>
+  <h2>浏览方式</h2>
+  <p>3D 需要 WebGL2。2D 模式使用同一建筑目录绘制，并保留搜索和选中功能；不支持3D的设备会使用2D浏览。首版不申请位置权限，也不提供路线导航。</p>
+  <footer>NKUlawer · 津南校区地图实验</footer>
+</main><script>document.getElementById('back').addEventListener('click',function(){if(history.length>1){history.back()}else{location.href='./?embed=wechat'}})</script></body>
+</html>

@@ -19,6 +19,7 @@ registerThemedPage({
   openCampusMap() { navigation.openCampusMap() },
   openHinku,
   openSearch() { navigation.openGuideSearch() },
+  openAssistant() { navigation.openGuideAssistant() },
   openDocuments() { navigation.openGuideDocuments() },
   openHomeCategory(event) {
     const value = event.currentTarget.dataset.value

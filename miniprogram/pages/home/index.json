@@ -1,1 +1,4 @@
-{ "navigationBarTitleText": "NKUStudy" }
+{
+  "navigationBarTitleText": "NKUStudy",
+  "usingComponents": { "launch-intro": "../../components/launch-intro/index" }
+}

@@ -1,0 +1,10 @@
+{
+  "pages": ["pages/home/index", "pages/campus-map/index"],
+  "window": {
+    "navigationBarTitleText": "NKUStudy 校园地图",
+    "navigationBarBackgroundColor": "#f5f1f8",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#f5f1f8"
+  },
+  "sitemapLocation": "sitemap.json"
+}

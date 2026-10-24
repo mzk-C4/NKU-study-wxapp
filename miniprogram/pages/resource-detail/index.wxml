@@ -1,4 +1,5 @@
 <page-meta page-style="{{themePageStyle}}" background-color="{{themeBackground}}" background-text-style="{{themeLoading}}"><navigation-bar front-color="{{themeFront}}" background-color="{{themeNavigation}}" /></page-meta>
+<community-support mode="thanks" />
 <view class="page">
   <state-view loading="{{loading}}" error="{{error}}" empty="{{!loading && !error && !resource}}" empty-text="资源不存在" bindretry="loadDetail"></state-view>
 

@@ -44,6 +44,7 @@ function installWx(t, implementation = {}) {
   const hadWx = Object.hasOwn(global, 'wx')
   const previousWx = global.wx
   global.wx = {
+    getAccountInfoSync() { return { miniProgram: { envVersion: 'develop' } } },
     getWindowInfo() { return { statusBarHeight: 22 } },
     getStorageSync() { return null },
     setStorageSync() {},
@@ -58,6 +59,10 @@ function installWx(t, implementation = {}) {
     showToast() {},
     ...implementation
   }
+  const readStorage = global.wx.getStorageSync
+  global.wx.getStorageSync = key => key === 'nkustudy_auth_session'
+    ? { token: 'test-session-token-0001', expires_at: Date.now() + 600000, user: { id: 1 } }
+    : readStorage(key)
   t.after(() => {
     if (hadWx) global.wx = previousWx
     else delete global.wx
@@ -67,14 +72,14 @@ function installWx(t, implementation = {}) {
 const assistantDefinition = capturePage('miniprogram/pages/guide-assistant/index.js')
 const guidesDefinition = capturePage('miniprogram/pages/guides/index.js')
 
-test('legacy AI page is unregistered while its historical implementation remains recoverable', () => {
+test('AI page is registered with accessible controls and recoverable history', () => {
   const app = JSON.parse(fs.readFileSync(path.join(projectRoot, 'miniprogram/app.json'), 'utf8'))
   const config = JSON.parse(fs.readFileSync(path.join(projectRoot, 'miniprogram/pages/guide-assistant/index.json'), 'utf8'))
   const template = fs.readFileSync(path.join(projectRoot, 'miniprogram/pages/guide-assistant/index.wxml'), 'utf8')
   const styles = fs.readFileSync(path.join(projectRoot, 'miniprogram/pages/guide-assistant/index.wxss'), 'utf8')
   const source = fs.readFileSync(path.join(projectRoot, 'miniprogram/pages/guide-assistant/index.js'), 'utf8')
 
-  assert.equal(app.pages.includes('pages/guide-assistant/index'), false)
+  assert.equal(app.pages.includes('pages/guide-assistant/index'), true)
   assert.equal(config.navigationStyle, 'custom')
   assert.match(template, /学习和生活指南针/)
   assert.match(template, /对话记录/)
@@ -493,14 +498,14 @@ test('answer preview renders locally without checking the network or calling an 
   assert.equal(page.data.history[0].state, 'answer')
 })
 
-test('answer actions copy the approved response while source stays a future navigation entry', async t => {
+test('answer preview copies its explicit sample and missing sources stay recoverable', async t => {
   const copied = []
   const toasts = []
   installWx(t, {
     setClipboardData(options) { copied.push(options.data); options.success() },
     showToast(options) { toasts.push(options.title) }
   })
-  const page = createPage(assistantDefinition, { answerMode: true })
+  const page = createPage(assistantDefinition, { answerMode: true, previewMode: true })
 
   assert.equal(await page.copyAnswer(), true)
   assert.equal(await page.openAnswerSource(), false)
@@ -589,10 +594,13 @@ test('manual retry only leaves the offline state after a confirmed connection', 
   assert.deepEqual(toasts.map(item => item.title), ['网络已恢复，请再次发送'])
 })
 
-test('guide AI entry and navigation helper are removed', () => {
+test('guide AI entry opens the registered route without sending a question', t => {
+  const routes = []
+  installWx(t, { navigateTo(options) { routes.push(options.url) } })
   const page = createPage(guidesDefinition)
-  assert.equal(page.openAssistant, undefined)
-  assert.equal(navigation.openGuideAssistant, undefined)
+  page.openAssistant()
+  navigation.openGuideAssistant('成绩复核 & 学院')
+  assert.deepEqual(routes, ['/pages/guide-assistant/index', '/pages/guide-assistant/index?question=' + encodeURIComponent('成绩复核 & 学院')])
 })
 
 test('network-error preview renders the approved state even while the developer machine is online', async t => {
@@ -614,16 +622,20 @@ test('network-error preview renders the approved state even while the developer 
   assert.equal(page.data.networkHint, '请检查网络或重试')
 })
 
-test('release excludes legacy AI folders and exposes no catalog AI entry', () => {
+test('release includes AI folders and catalog search passes only a draft', t => {
   const config = JSON.parse(fs.readFileSync(path.join(projectRoot, 'project.config.json'), 'utf8'))
   const ignores = config.packOptions.ignore.filter(item => item.type === 'folder').map(item => item.value)
-  assert.ok(ignores.includes('pages/guide-assistant'))
-  assert.ok(ignores.includes('features/guide-assistant'))
+  assert.equal(ignores.includes('pages/guide-assistant'), false)
+  assert.equal(ignores.includes('features/guide-assistant'), false)
   const { createCatalogPage } = require('../miniprogram/features/learning-compass/catalog-page')
-  for (const mode of ['search', 'category', 'documents']) assert.equal(createCatalogPage(mode).askAssistant, undefined)
+  const routes = []
+  installWx(t, { navigateTo(options) { routes.push(options.url) } })
+  const page = createPage(createCatalogPage('search'), { query: '复学' })
+  page.openAssistant()
+  assert.deepEqual(routes, ['/pages/guide-assistant/index?question=' + encodeURIComponent('复学')])
   for (const relative of ['pages/guides/index.wxml', 'features/learning-compass/catalog.wxml']) {
     const markup = fs.readFileSync(path.join(projectRoot, 'miniprogram', relative), 'utf8')
-    assert.doesNotMatch(markup, /openAssistant|askAssistant|assistant-card|开始AI提问|开始提问|问问学习/)
+    assert.match(markup, /bindtap="openAssistant"/)
   }
 })
 

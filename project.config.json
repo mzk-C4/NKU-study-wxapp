@@ -24,14 +24,6 @@
       },
       {
         "type": "folder",
-        "value": "pages/guide-assistant"
-      },
-      {
-        "type": "folder",
-        "value": "features/guide-assistant"
-      },
-      {
-        "type": "folder",
         "value": "design"
       },
       {

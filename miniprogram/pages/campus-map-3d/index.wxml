@@ -1,0 +1,8 @@
+<page-meta page-style="{{themePageStyle}}" background-color="{{themeBackground}}" background-text-style="{{themeLoading}}"><navigation-bar front-color="{{themeFront}}" background-color="{{themeNavigation}}" /></page-meta>
+<web-view wx:if="{{available && webVisible}}" src="{{url}}" data-attempt="{{attempt}}" binderror="webFailed" />
+<view wx:else class="map-status">
+  <view class="status-title">{{!available ? '校园导览暂未开放' : failed ? '校园地图加载失败' : '正在打开校园导览'}}</view>
+  <view class="status-description">{{!available ? '你可以使用腾讯地图查找地点和导航。' : failed ? '请检查网络后重试，或返回选择腾讯地图。' : '首次加载可能需要一点时间。'}}</view>
+  <button wx:if="{{available && failed}}" class="retry" bindtap="retry">重新加载</button>
+  <button class="return" bindtap="returnToMap">{{fromSelection ? '返回地图选择' : '返回腾讯地图'}}</button>
+</view>

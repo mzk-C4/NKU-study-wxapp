@@ -1,0 +1,34 @@
+<page-meta page-style="{{themePageStyle}}" background-color="{{themeBackground}}" background-text-style="{{themeLoading}}"><navigation-bar front-color="{{themeFront}}" background-color="{{themeNavigation}}" /></page-meta>
+<view class="map-choice-page">
+  <view class="page-header">
+    <view class="page-eyebrow">校园出行与探索</view>
+    <view class="page-title">找路，或逛逛校园</view>
+    <view class="page-description">需要路线导航选腾讯地图，浏览建筑选校园导览。</view>
+  </view>
+
+  <view class="map-card">
+    <view class="card-heading">
+      <view class="map-symbol" aria-hidden="true">2D</view>
+      <view class="card-heading-main"><view class="card-title">腾讯地图</view><view class="card-scope">八里台 · 津南校区</view></view>
+      <text class="card-purpose">路线导航</text>
+    </view>
+    <view class="card-description">查地点、看介绍，导航到目的地。</view>
+    <view class="card-tags"><text class="tag">二维平面</text><text class="tag">支持导航</text></view>
+    <view class="card-credit"><text class="credit-label">地图贡献</text><text class="credit-name">cure 学长</text><text class="credit-team">· NKUwiki 项目组</text></view>
+    <button id="open-tencent-map" class="map-action" bindtap="openTencent" hover-class="map-action--pressed" aria-label="打开腾讯地图，cure 学长提供，二维地图，支持导航"><text>打开腾讯地图</text><text class="action-arrow" aria-hidden="true">→</text></button>
+  </view>
+
+  <view class="map-card">
+    <view class="card-heading">
+      <view class="map-symbol map-symbol--spatial" aria-hidden="true">3D</view>
+      <view class="card-heading-main"><view class="card-title">2D / 3D 校园地图</view><view class="card-scope">津南校区</view></view>
+      <text class="card-purpose">校园导览</text>
+    </view>
+    <view class="card-description">切换二维、三维视角，探索建筑与地标。</view>
+    <view class="card-tags"><text class="tag">2D / 3D 切换</text><text class="tag">建筑搜索</text></view>
+    <view class="card-credit"><text class="credit-label">地图贡献</text><text class="credit-name">绅右同学</text></view>
+    <button id="open-campus-tour" class="map-action map-action--soft" bindtap="openCampus3d" disabled="{{!map3dAvailable}}" hover-class="map-action--pressed" aria-label="打开 2D / 3D 校园地图，绅右同学提供，支持二维三维切换{{map3dAvailable ? '' : '，暂未开放'}}"><text>{{map3dAvailable ? '打开校园导览' : '校园导览暂未开放'}}</text><text wx:if="{{map3dAvailable}}" class="action-arrow" aria-hidden="true">→</text></button>
+  </view>
+
+  <view class="page-note"><view class="note-line"></view><text>感谢同学们共建校园地图</text><view class="note-line"></view></view>
+</view>

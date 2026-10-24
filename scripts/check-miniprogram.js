@@ -8,10 +8,11 @@ const app = JSON.parse(fs.readFileSync(path.join(miniRoot, 'app.json'), 'utf8'))
 const failures = []
 
 function fail(message) { failures.push(message) }
-function walk(directory) {
+function walk(directory, skipGenerated = false) {
   return fs.readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
+    if (skipGenerated && entry.isDirectory() && ['.git', 'node_modules', 'dist', 'artifacts'].includes(entry.name)) return []
     const target = path.join(directory, entry.name)
-    return entry.isDirectory() ? walk(target) : [target]
+    return entry.isDirectory() ? walk(target, skipGenerated) : [target]
   })
 }
 
@@ -73,6 +74,7 @@ const publicApiOwner = path.join(miniRoot, 'services', 'public-api.js')
 const learningCompassApiOwner = path.join(miniRoot, 'features', 'learning-compass', 'api.js')
 const publicApiOwners = new Set([publicApiOwner, learningCompassApiOwner])
 const adapterOnlyEndpoints = [
+  ['指南AI', /['"`]\/guide-assistant\/answers(?:['"`?#])/],
   ['搜索索引', /['"`]\/search-index(?:['"`?#])/],
   ['指南读取', /['"`]\/guides(?:\/|\?|['"`])/],
   ['微信登录', /['"`]\/auth\/(?:wechat|logout)(?:['"`?#])/],
@@ -113,7 +115,7 @@ if (/127\.0\.0\.1|localhost|\d+\.\d+\.\d+\.\d+/.test(apiBaseUrls.join(''))) {
 const projectConfig = JSON.parse(fs.readFileSync(path.join(root, 'project.config.json'), 'utf8'))
 if (projectConfig.setting?.urlCheck !== true) fail('微信开发者工具必须开启合法域名校验')
 
-const trackedText = walk(root).filter(file => !file.includes(`${path.sep}.git${path.sep}`) && !/\.(png|jpg|jpeg|gif|ico)$/i.test(file) && !file.endsWith('runtime.json'))
+const trackedText = walk(root, true).filter(file => !/\.(png|jpg|jpeg|gif|ico)$/i.test(file) && !file.endsWith('runtime.json'))
 const secretPatterns = [
   { name: '服务器明文密码', pattern: /pwd\s*[:=]\s*\S+/i },
   { name: '私钥', pattern: /BEGIN (?:RSA |OPENSSH )?PRIVATE KEY/ },

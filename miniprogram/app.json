@@ -6,7 +6,10 @@
     "pages/feishu-document/index",
     "pages/courses/index",
     "pages/guides/index",
+    "pages/guide-assistant/index",
+    "pages/campus-map-select/index",
     "pages/campus-map/index",
+    "pages/campus-map-3d/index",
     "pages/profile/index",
     "pages/search/index",
     "pages/course-overview/index",
@@ -73,6 +76,7 @@
     ]
   },
   "usingComponents": {
+    "community-support": "components/community-support/index",
     "state-view": "components/state-view/index",
     "course-card": "components/course-card/index",
     "tag-chip": "components/tag-chip/index"

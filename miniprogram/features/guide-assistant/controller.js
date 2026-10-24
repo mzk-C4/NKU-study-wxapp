@@ -140,6 +140,9 @@ function createGuideAssistantController(options = {}) {
       if (!question) return { accepted: false, state: 'invalid-question', message: '请输入问题后再发送。' }
       if (completedRounds(messages) >= MAX_ROUNDS) return { accepted: false, state: 'round-limit' }
       if (!api || typeof api.askGuideAssistant !== 'function') return { accepted: false, state: 'service-error' }
+      const identity = auth && typeof auth.getSessionIdentity === 'function' ? auth.getSessionIdentity() : undefined
+      if (identity === '') return { accepted: false, state: 'auth-required' }
+      const changedSession = () => identity !== undefined && auth.getSessionIdentity() !== identity
 
       const currentRequestId = requestId + 1
       requestId = currentRequestId
@@ -150,7 +153,7 @@ function createGuideAssistantController(options = {}) {
           history: buildHistory(messages),
           profile: input.profile
         })
-        if (destroyed || requestId !== currentRequestId) return { accepted: true, stale: true }
+        if (destroyed || requestId !== currentRequestId || changedSession()) return { accepted: true, stale: true }
         if (!response || !normalizeText(response.answer, MAX_ANSWER_LENGTH)) {
           return { accepted: true, stale: false, state: 'service-error' }
         }
@@ -164,9 +167,9 @@ function createGuideAssistantController(options = {}) {
           rounds: completedRounds(nextMessages)
         }
       } catch (error) {
-        if (destroyed || requestId !== currentRequestId) return { accepted: true, stale: true }
+        if (destroyed || requestId !== currentRequestId || (changedSession() && auth.getSessionIdentity())) return { accepted: true, stale: true }
         const state = classifyError(error)
-        if (state === 'auth-required' && auth && typeof auth.clearSession === 'function') auth.clearSession()
+        // The request owner clears only the token attached to its own 401.
         return { accepted: true, stale: false, state, error }
       } finally {
         if (requestId === currentRequestId) pending = false

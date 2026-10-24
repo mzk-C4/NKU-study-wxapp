@@ -2,6 +2,8 @@
 
 地图内容由 **cure 学长的 wiki 项目组 / NKUwiki** 提供，感谢贡献！
 
+本说明对应八里台、津南原生地图。2026-10-17 新增的津南三维网页来自用户提供的独立接入包，模型、地点 ID、搜索与记录分别维护；来源、许可、模型保护和构建方法见 [三维接入说明](../../../web/campus-map/INTEGRATION.md)，不把原生 GCJ02 坐标与三维平面坐标混用。
+
 - 站点：https://freshnkuer.wiki
 - 数据：[NKUwiki map-data.js](https://github.com/NKUwiki/NKUwiki/blob/20ad5fcb42de480192df8aa480936f4409d2dc45/docs/.vitepress/data/map-data.js)
 - 参考交互：[独立 wiki-map 包](https://github.com/NKUwiki/NKUwiki/tree/20ad5fcb42de480192df8aa480936f4409d2dc45/packages/wiki-map)

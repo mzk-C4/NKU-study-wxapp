@@ -1,4 +1,6 @@
 const publicApi = require('../features/learning-compass/api')
+const communitySupport = require('../features/community-support/index')
+const auth = require('./auth-session')
 
 const OPENABLE_FILE_TYPES = new Set(['pdf', 'doc', 'docx'])
 
@@ -72,6 +74,7 @@ function createSourceOpener(options = {}) {
     if (opening.has(normalized.fileUrl)) return false
     if (typeof wxApi.downloadFile !== 'function' || typeof wxApi.openDocument !== 'function') return fail(source, 'unsupported', openOptions)
     opening.add(normalized.fileUrl)
+    const downloadAccount = auth.getToken()
     if (typeof openOptions.onState === 'function') openOptions.onState({ phase: 'opening', canCopy: Boolean(normalized.copyUrl) })
     try {
       const download = await new Promise(resolve => {
@@ -80,6 +83,7 @@ function createSourceOpener(options = {}) {
       if (!download || !download.tempFilePath || (download.statusCode && download.statusCode !== 200)) {
         return fail(source, 'download-failed', openOptions)
       }
+      if (download.statusCode === 200 && openOptions.reportSupport !== false) communitySupport.downloaded(normalized, 'guide_source', downloadAccount).catch(() => {})
       const opened = await new Promise(resolve => {
         wxApi.openDocument({
           filePath: download.tempFilePath,

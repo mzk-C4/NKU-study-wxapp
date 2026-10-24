@@ -8,6 +8,22 @@
 
 失败响应使用 `{ "code": "ERROR_CODE", "message": "说明" }`。网络失败与服务端错误由请求层转换为受控提示，页面不得直接展示 provider、路径、Token 或堆栈细节。
 
+## 2026-10-24 社区贡献计数：正式 v1 契约
+
+用户于2026-10-24追加要求：全社区以现有资料数/公开评价数作为初始花币，不补个人。维护方通过 `COMMUNITY_SUPPORT_BASELINE_RESULT_20261024.md` 回交生产版本 `20261024-community-baseline-r3`，迁移标识 `community-baseline-20261024-v1` 已应用。本轮独立无凭据GET确认/home=200、no-store，公共鲜花991、硬币1477、revision=1，三个能力开关均true。客户端直接显示已含基数的最终公共量，不额外叠加常数。实施和核验见 [历史基数交接](./COMMUNITY_SUPPORT_BASELINE_HANDOFF.md)。
+
+此前版本 `20261024-community-ui11-r2` 首次上线时，已无凭据核验health=200、home=200、me/community-support=401/AUTH_REQUIRED，公共量和revision当时为0；该0值是迁移前历史证据。最新基数以r3及上方独立读取为准。公开读取不等同真实账号下载或评价审核联调。
+
+`/home.data.community_support` 为 `{version:1, enabled:true, revision, flowers, coins, review_rule:"approved", download_reporting:true, personal_stats:true}`；数字为非负安全整数。关闭返回 `{version:1, enabled:false}`，缺失、失败或不可用显示“—”，不能补零；客户端保持 revision 高水位并拒绝迟到旧快照。
+
+`POST /community-support/downloads` 只提交 `{event_id,kind,resource_id,course_id,attribution}`，JSON≤4096字节、无查询参数。event_id 为16～96位 `[A-Za-z0-9_-]`；kind=resource 要求稳定资料ID及对应课程ID，kind=guide_source 使用公开指南来源ID且课程ID为空。内置学生 PDF 未在后台目录注册，暂不上报。仅 HTTP 200 且取得本地路径后上报，同事件复用ID/正文/归属；无持久化自动重试，超时不能断定未入账。
+
+attribution=account 必须 Bearer；community 禁止 Authorization。游客后登录不补个人归属；下载中切换到另一个账号按 community，原账号已失效/退出则停止该次上报，不静默转匿名。401/429不自动重发；503/SUPPORT_UNAVAILABLE 清除可用统计。响应 `data={event_id,recorded:true,community_support:完整能力统计}`；仅匹配事件回执可说已记花，显示数字取服务器快照。错误码：INVALID_SUPPORT_EVENT、AUTH_REQUIRED、RESOURCE_NOT_FOUND、EVENT_CONFLICT、RATE_LIMITED、SUPPORT_UNAVAILABLE。
+
+`GET /me/community-support` 必须 Bearer、无参数，返回 `{flowers,coins}`，仅本人可见；客户端计算 `1 + floor(min(flowers, coins) / 10)`。有效公开评价由服务端审核流程计币，无额外加币接口、无提交即到账回执约定。公共鲜花含固定991条资料沉淀基数并叠加成功下载事件，公共硬币含历史与新增评价的有效公开贡献；旧评价隐藏/恢复仍调整公共有效数。历史贡献不补个人，个人统计/等级规则保持；个人有效贡献冲正可降级。注销清除个人归属，公共有效总量保留。
+
+后端报告评价JSON和SQLite统计采用可恢复一致性，异常时关闭统计能力，不能宣称为原生跨存储事务。支持入口仍复用网站。限额、验证边界与人工验收见 [社区贡献接线记录](./COMMUNITY_SUPPORT_HANDOFF.md)。
+
 ## API profile
 
 - `develop` 默认使用固定 production profile。
@@ -21,10 +37,13 @@
 |---|---|---|
 | GET | `/health` | 发布与运维检查 |
 | GET | `/home` | 公告、热门课程、最近更新 |
+| POST | `/community-support/downloads` | 下载完成记花；按账号/游客归属，能力门禁 |
+| GET | `/me/community-support` | 登录本人花币统计及等级计算 |
 | GET | `/search-index` | 同一版本的课程、教师、资料和指南搜索快照 |
 | GET | `/guides` | 指南分类、列表和分页 |
 | GET | `/guides/{guideId}` | 指南详情、相关课程、来源和纠错入口 |
 | GET | `/guides/{guideId}/variants/{variantId}` | 转专业等多学院指南的学院正文与来源 |
+| POST | `/guide-assistant/answers` | 指南AI开发接线；要求登录，当前生产可用性待核验 |
 | GET | `/courses` | 课程列表、搜索、筛选和分页 |
 | GET | `/courses/{courseUid}` | 课程详情 |
 | GET | `/courses/{courseUid}/resources` | 课程资源与 R2 下载地址 |
@@ -47,27 +66,34 @@
 
 所有动态路径参数必须 URL 编码。通用业务页面通过 `miniprogram/services/public-api.js` 调用公开接口；学习指南针通过 feature-local 的 `miniprogram/features/learning-compass/api.js` 调用指南接口，两者都复用统一请求层与认证会话。
 
-### 学习指南针 AI 历史契约（当前客户端已停用）
+### 学习指南针 AI（2026-10-23 恢复开发接线）
 
-2026-09-26：按用户要求移除 AI 工具。指南首页与目录搜索不再提供 AI 入口，AI 页面不再注册且已加入打包排除规则；`askGuideAssistant` 在所有环境本地返回 `FEATURE_REMOVED`，不发起网络请求。以下 AI 请求/响应说明仅为历史参考，不代表当前可用功能；普通指南、学院 variant 和来源原件接口不变。本轮没有关闭或修改网站生产后端服务。
+此前2026-09-26停用的客户端入口、页面注册及请求现已恢复。**本节描述本轮客户端与待集成服务模块约定，不证明当前生产后端已重新启用或已配置真实模型。** 现有网站后端须由沈弋皓核验并挂载后才能正式联调；不得用旧报告替代当前生产验证。
 
-生产已提供五分类指南、学院 variant、R2 原件和 AI 回答接口。AI 请求为：
+`POST /guide-assistant/answers`：统一 Bearer Token，非流式，客户端预算30秒。成功与业务拒答均返回 `{ "code": 0, "data": ... }`，示例：
 
 ```json
 {
   "question": "课程成绩有异议，如何申请复核？",
-  "history": [{ "role": "user", "content": "……" }],
-  "profile": { "admission_year": 2025, "major": "计算机科学与技术" }
+  "history": [
+    {"role": "user", "content": "成绩复核的问题"},
+    {"role": "assistant", "content": "请补充适用年级。"}
+  ],
+  "profile": {"admission_year": 2025, "major": "计算机科学与技术"}
 }
 ```
 
-`question` 为 1～1000 字；`history` 最多 9 个已完成轮次；`profile` 可选，入学年份使用四位整数。客户端最多完成 10 轮，第 10 轮请求携带前 9 轮历史。请求必须使用统一 Bearer Token，会话不存在时客户端先展示登录恢复，不静默重发原问题。
+`question`为1～1000字；`history`为最多9个已完成轮次，按user/assistant成对排列，每条最多1000字。`profile`可选，入学年份为四位整数、专业最多100字。服务器独立验证；用户身份只从Bearer会话取得，不接受正文身份。客户端最多10轮；本机回答最多保留12000字，回传history时保留开头、末尾条件和适用范围。
 
-2026-09-24 客户端兼容说明：AI 展示标题改为“学习和生活指南针”，不改变路由、认证、请求字段或服务端知识库范围。本机会话中的助手回答最多保留 12000 字；发往 API 的每条 history 仍限制 1000 字，优先保留回答开头、末尾条件及适用范围，最多发送最近 9 轮。资料不足后允许用户补充条件继续提问；空回答按服务不可用处理，不消耗完成轮次。搜索入口带入的问题仅作为新话题草稿，不混入上次会话。
+响应`data`包含`answer`、`refused`、`reason`、`guide_id`、`applicable_scope`、`freshness_notice`及`citations`。正常回答必须有已核验的引用；引用对象沿用指南的`id/title/document_no/publisher/published_at/file_type/file_name/file_url/official_page_url/location_label`等公开字段，原文打开沿用现有来源打开器；官方网页仅接受南开大学官网域，文件继续限制为既有资源域。
 
-正常回答和业务拒答均返回 200；正式拒答原因是 `INSUFFICIENT_EVIDENCE` 或 `SOURCE_CONFLICT`。传输错误稳定映射为 `400 INVALID_AI_QUESTION`、`401 AUTH_REQUIRED`、`429 RATE_LIMITED` 和 `503 AI_UNAVAILABLE`。客户端请求预算为 30 秒，provider 重试由服务端负责。
+业务拒答`refused:true`，`reason`只允许`INSUFFICIENT_EVIDENCE`、`SOURCE_CONFLICT`或`OUT_OF_SCOPE`，并有可读说明，可继续补充条件。没有证据时不调用模型。正常回答缺少来源、空回答或非法拒答原因按服务不可用处理，不增加完成轮次。
 
-生产指南原件只接受约定的公开 HTTPS 资源地址；reference profile 的回环原件地址不得进入生产响应。
+传输错误统一为`400 INVALID_AI_QUESTION`、`401 AUTH_REQUIRED`、`429 RATE_LIMITED`、`503 AI_UNAVAILABLE`。登录恢复、网络恢复和服务恢复均不自动重发原问题。客户端不显示服务端原始报错、provider信息或堆栈。
+
+只有develop环境显式设置`nkustudy_guide_assistant_mode=mock`才使用本地模拟；trial/release/未知环境忽略该键和视觉preview参数。模拟会话与真实账号会话分离，页面有开发演示标识；真实会话按稳定用户ID保存在本机30天，不迁入旧版无账号标记的记录。
+
+指南原件沿用公开HTTPS资源域限制，reference回环原件不进入生产响应。详细接线、环境变量、人工验收及交付边界见[AI交接](./GUIDE_ASSISTANT_HANDOFF.md)。
 
 ## 课程与评价
 

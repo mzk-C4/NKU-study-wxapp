@@ -1,0 +1,15 @@
+{
+  "sourceArchive": "校园地图-模型源码与微信接入完整包-20261016.zip",
+  "sha256": "90d5bd0db3c8565188251161711ba8d2190a2f0ea059c4575af0c32b18523304",
+  "verifiedManifestFiles": 141,
+  "importedSourceFiles": 95,
+  "sourceRelease": "2026-10-16",
+  "importedOn": "2026-10-17",
+  "sourcePrefix": "campus-map/",
+  "excluded": [
+    "dist/ (rebuild from locked source)"
+  ],
+  "targetOrigin": "https://nkustudy.top",
+  "targetPath": "/campus-map/",
+  "additionalLicenseFiles": 3
+}

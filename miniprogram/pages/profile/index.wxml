@@ -39,6 +39,8 @@
       <view><b>{{isLoggedIn ? reviewTotal : '—'}}</b><text>我的评价</text></view>
     </view>
 
+    <community-support id="support-personal" mode="personal" account="{{isLoggedIn ? user.id : ''}}" />
+
     <view class="card theme-settings section">
       <view class="theme-settings-head"><text class="learning-title">外观设置</text><text class="muted">{{themeLabel}}模式</text></view>
       <view class="theme-options" aria-label="选择小程序外观">

@@ -7,9 +7,13 @@ const navigation = require('../../utils/navigation')
 const { HOME_SLIDES } = require('../../features/home-carousel')
 const { homeAnnouncementView, createAnnouncementReader } = require('../../features/home-announcement')
 const { openHinku } = require('../../utils/partner-mini-program')
+const { createIntroController } = require('../../features/launch-intro')
+const communitySupport = require('../../features/community-support/index')
 
 registerThemedPage({
   data: {
+    introVisible: false,
+    introLeaving: false,
     loading: true,
     error: '',
     home: null,
@@ -37,6 +41,11 @@ registerThemedPage({
   },
 
   onLoad() {
+    const app = typeof getApp === 'function' ? getApp() : null
+    if (app && app.launchIntro && app.launchIntro.consume()) {
+      this.introController = createIntroController(this, wx)
+      this.introController.start()
+    }
     this.announcementReader = createAnnouncementReader(wx)
     this.homeStarted = true
     this.loadSiteStatus(reportVisit('/mp/home'), true)
@@ -47,8 +56,9 @@ registerThemedPage({
     this.refreshSiteStatus()
     if (this.homeStarted && !this.homeRequest) this.loadHome(true)
   },
-  onHide() { this.setData({ carouselVisible: false, carouselTouching: false }) },
-  onUnload() { this.unloaded = true; this.setData({ carouselVisible: false }) },
+  onHide() { this.skipIntro(); this.setData({ carouselVisible: false, carouselTouching: false }) },
+  onUnload() { this.skipIntro(); this.unloaded = true; this.setData({ carouselVisible: false }) },
+  skipIntro() { if (this.introController) this.introController.finish() },
   onPullDownRefresh() {
     this.loadSiteStatus(getVisitStats())
     this.loadHome().finally(() => wx.stopPullDownRefresh())
@@ -78,9 +88,11 @@ registerThemedPage({
     this.homeRequest = (async () => { try {
       const home = await publicApi.getHome()
       if (this.unloaded) return
+      communitySupport.setPublic(home.community_support)
       this.updateAnnouncement(home.announcement)
       this.setData({ home, latestUpdates: this.buildUpdates(home.latest_updates), loading: false, error: '' })
     } catch (error) {
+      if (!this.unloaded) communitySupport.setPublic(null)
       if (!this.unloaded && !this.data.announcement) this.updateAnnouncement(null)
       if (!this.unloaded && (silent !== true || !this.data.home)) this.setData({ loading: false, error: error.message })
     } finally { this.homeRequest = null } })()
@@ -150,6 +162,10 @@ registerThemedPage({
     const slide = HOME_SLIDES.find(item => item.id === event.currentTarget.dataset.id)
     if (slide) {
       if (slide.kind === 'miniProgram') openHinku()
+      else if (slide.kind === 'community') {
+        const card = typeof this.selectComponent === 'function' ? this.selectComponent('#support-header') : null
+        if (card) card.showRules()
+      }
       else if (slide.kind === 'page') wx.navigateTo({ url: slide.url })
       else wx.switchTab({ url: slide.url })
     }

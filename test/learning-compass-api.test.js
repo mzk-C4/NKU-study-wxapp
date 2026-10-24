@@ -39,16 +39,32 @@ test('guide adapter maps five-category queries and reference source files', asyn
 })
 
 for (const apiProfile of ['production', 'reference']) {
-  test(apiProfile + ' AI is disabled locally without any network request', async () => {
-    let requests = 0
+  test(apiProfile + ' AI uses authenticated non-streaming requests and maps sources', async () => {
+    const calls = []
     const api = createApi({
-      get() { requests++; throw new Error('unexpected GET') },
-      post() { requests++; throw new Error('unexpected POST') }
+      async post(path, data, options) {
+        calls.push({ path, data, options })
+        return { answer: '请向开课单位核实办理方式。', refused: false,
+          citations: [{ id: 'SRC-003', title: '成绩规定', official_page_url: 'https://jwc.nankai.edu.cn/test-rules' }] }
+      }
     }, { apiProfile })
-    await assert.rejects(api.askGuideAssistant({
+    const response = await api.askGuideAssistant({
       question: '成绩复核怎么办？',
+      profile: { admission_year: 2025, major: '计算机科学与技术' },
       history: [{ role: 'user', content: '之前的问题' }]
-    }), error => error.code === 'FEATURE_REMOVED' && /已移除/.test(error.message))
-    assert.equal(requests, 0)
+    })
+    assert.equal(calls[0].path, '/guide-assistant/answers')
+    assert.deepEqual(calls[0].options, { auth: 'required', timeout: 30000 })
+    assert.equal(calls[0].data.profile.admission_year, 2025)
+    assert.equal(response.citations[0].id, 'SRC-003')
   })
 }
+
+test('empty answers, missing evidence and unknown refusal reasons are unavailable', async () => {
+  for (const value of [{ answer: '' }, { answer: '无来源结论' },
+    { refused: true, answer: '拒答', reason: 'UNKNOWN' },
+    { answer: '错误资源', citations: [{ id: 'x', title: 'x', file_url: 'http://127.0.0.1/private' }] }]) {
+    const api = createApi({ async post() { return value } }, { apiProfile: 'production' })
+    await assert.rejects(api.askGuideAssistant({ question: '问题' }), { code: 'AI_UNAVAILABLE' })
+  }
+})

@@ -1,10 +1,13 @@
-<view class="assistant-page">
+<page-meta page-style="{{themePageStyle}}" background-color="{{themeBackground}}" background-text-style="{{themeLoading}}"><navigation-bar front-color="{{themeFront}}" background-color="{{themeNavigation}}" /></page-meta>
+<community-support mode="thanks" />
+<view class="assistant-page {{themeDark ? 'assistant-page--dark' : ''}}">
   <view class="custom-nav" style="padding-top: {{statusBarHeight}}px;">
     <button class="back-button" aria-label="返回学习指南针" hover-class="icon-pressed" bindtap="goBack"><view class="back-arrow"></view></button>
     <view class="nav-title">学习和生活指南针</view>
     <view class="nav-capsule-space" aria-hidden="true"></view>
   </view>
 
+  <view class="mock-notice" wx:if="{{mockMode || previewMode}}">开发演示 · {{mockMode ? '模拟回答' : '视觉样例'}}，不代表模型效果或学校规定</view>
   <view class="assistant-actions">
     <button class="assistant-action" aria-label="打开对话记录" hover-class="assistant-action--pressed" bindtap="openConversationHistory">
       <view class="history-icon" aria-hidden="true"><view></view><view></view><view></view></view>
@@ -153,7 +156,7 @@
             <scroll-view wx:elif="{{block.type === 'table'}}" class="answer-markdown-table-scroll" scroll-x><view class="answer-markdown-table"><view class="answer-markdown-row answer-markdown-row--head"><view wx:for="{{block.headers}}" wx:key="id" class="answer-markdown-cell"><block wx:for="{{item.runs}}" wx:key="id" wx:for-item="run"><rich-text nodes="{{run.html}}"></rich-text></block></view></view><view wx:for="{{block.rows}}" wx:key="id" class="answer-markdown-row"><view wx:for="{{item.cells}}" wx:key="id" class="answer-markdown-cell"><block wx:for="{{item.runs}}" wx:key="id" wx:for-item="run"><rich-text nodes="{{run.html}}"></rich-text></block></view></view></view></scroll-view>
           </block>
         </view>
-        <block wx:else>
+        <block wx:elif="{{previewMode}}">
         <view class="answer-paragraph">
           你可以在下一学期开学3周内，向开课单位提出书面申请。开课单位受理后会组织人员复议，并给出复议意见；超过时限，开课单位可以不予受理。<text class="answer-citation">[来源1]</text>
         </view>
@@ -185,7 +188,7 @@
           </view>
         </view>
 
-        <view class="answer-source" wx:if="{{!responseCitations.length}}">
+        <view class="answer-source" wx:if="{{previewMode && !responseCitations.length}}">
           <view class="source-heading"><view class="source-bookmark"></view><text>来源1</text></view>
           <view class="source-body">
             <view class="source-document-icon" aria-hidden="true"><view class="source-document-fold"></view><view class="source-document-line"></view></view>
@@ -347,7 +350,7 @@
       <view class="building-title">{{recoveryTitle}}</view>
       <view class="building-copy">{{recoveryCopy}}</view>
       <button wx:if="{{assistantState === 'auth-required'}}" class="recovery-action-button" disabled="{{authRecovering}}" bindtap="recoverAuthentication">{{authRecovering ? '正在登录…' : '微信登录'}}</button>
-      <button wx:elif="{{assistantState === 'service-error'}}" class="recovery-action-button" bindtap="prepareManualRetry">稍后手动重试</button>
+      <button wx:elif="{{assistantState === 'service-error' || assistantState === 'rate-limited'}}" class="recovery-action-button" bindtap="prepareManualRetry">稍后手动重试</button>
     </view>
 
     <view class="building-state" wx:else>

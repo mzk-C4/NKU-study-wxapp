@@ -1,0 +1,31 @@
+{
+  "status": "READ_ONLY_AUDIT_NOT_APPLIED",
+  "snapshot_utc": "2026-10-24T04:17:44.0292423Z",
+  "requested_scope": "community_totals_only",
+  "suggested_flowers_baseline": 991,
+  "suggested_coins_baseline": 1477,
+  "resources": {
+    "source": "https://nkustudy.top/api/v1/search-index",
+    "index_version": "Y-LqKp5YLR0N9CLkgPdNKFTl",
+    "index_generated_at": "2026-10-18T00:00:00Z",
+    "matching_type": "resource",
+    "items": 991,
+    "unique_ids": 991,
+    "missing_ids": 0
+  },
+  "reviews": {
+    "source": "https://nkustudy.top/api/v1/review-groups",
+    "reported_groups": 925,
+    "received_groups": 925,
+    "unique_group_keys": 925,
+    "invalid_review_counts": 0,
+    "summed_public_review_count": 1477
+  },
+  "community_before_change": {
+    "source": "https://nkustudy.top/api/v1/home",
+    "revision": 0,
+    "flowers": 0,
+    "coins": 0
+  },
+  "note": "Public audit values are a reference snapshot. Backend must verify authoritative records at cutover, apply the baseline once, preserve newer events and leave all personal totals unchanged."
+}

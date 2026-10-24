@@ -1,0 +1,22 @@
+{
+  "generated_at": "2026-09-19T16:22:30.834Z",
+  "source": "© OpenStreetMap contributors, ODbL 1.0",
+  "source_generated_at": "2026-09-19T08:44:40.648Z",
+  "campus_boundary_osm_way": 476603067,
+  "status": "osm-imported-needs-campus-verification",
+  "counts": {
+    "buildings": 89,
+    "roads": 282,
+    "landscapes": 101,
+    "pois": 9
+  },
+  "bounds_meters": {
+    "minX": -90,
+    "maxX": 2294.76,
+    "minZ": -1660.06,
+    "maxZ": 90
+  },
+  "excluded": {
+    "nonCampusFeatures": 184
+  }
+}

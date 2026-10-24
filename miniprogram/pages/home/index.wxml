@@ -1,5 +1,7 @@
 <page-meta page-style="{{themePageStyle}}" background-color="{{themeBackground}}" background-text-style="{{themeLoading}}"><navigation-bar front-color="{{themeFront}}" background-color="{{themeNavigation}}" /></page-meta>
-<view class="home">
+<launch-intro wx:if="{{introVisible}}" dark="{{themeDark}}" leaving="{{introLeaving}}" bindskip="skipIntro" id="launch-intro" />
+<community-support id="support-thanks" mode="thanks" blocked="{{introVisible || announcementOpen}}" />
+<view class="home" aria-hidden="{{introVisible}}">
   <view class="brand-row">
     <view class="brand-copy"><view class="brand-name">NKUStudy</view><view class="brand-sub">课程资料与选课参考</view></view>
     <view class="site-status" wx:if="{{siteStatus}}" aria-label="NKUStudy.top 已安全运行 {{siteStatus.runtimeValue}}，累计访问 {{siteStatus.visitValue}} 次">
@@ -17,8 +19,8 @@
     <text class="announcement-badge">公告</text><text class="announcement-preview">{{announcement.preview}}</text><text class="announcement-arrow">›</text>
   </button>
 
-  <view class="home-carousel section" aria-label="课程资料、选课评价、指南、hinku 校园服务与飞书内测群">
-    <swiper class="banner-swiper" current="{{currentSlide}}" autoplay="{{carouselVisible && !carouselPaused && !carouselTouching && !announcementOpen}}" circular="{{true}}" interval="6000" duration="300" bindchange="changeSlide" bindtouchstart="startCarouselTouch" bindtouchend="endCarouselTouch" bindtouchcancel="endCarouselTouch">
+  <view class="home-carousel section" aria-label="课程资料、选课评价、指南、HiNKU 校园服务、社区花币与飞书内测群">
+    <swiper class="banner-swiper" current="{{currentSlide}}" autoplay="{{carouselVisible && !carouselPaused && !carouselTouching && !announcementOpen && !introVisible}}" circular="{{true}}" interval="6000" duration="300" bindchange="changeSlide" bindtouchstart="startCarouselTouch" bindtouchend="endCarouselTouch" bindtouchcancel="endCarouselTouch">
       <swiper-item wx:for="{{slides}}" wx:key="id">
         <button class="banner-card" data-id="{{item.id}}" bindtap="openSlide" hover-class="banner-card--pressed" aria-label="{{item.title}}，{{item.description}}，{{item.action}}">
           <image wx:if="{{!failedImages[item.id]}}" class="banner-image" src="{{item.image}}" mode="aspectFill" data-id="{{item.id}}" binderror="bannerImageError" aria-hidden="{{true}}"></image>
@@ -40,6 +42,8 @@
       <button class="carousel-toggle" bindtap="toggleCarousel" aria-label="{{carouselPaused ? '播放轮播图' : '暂停轮播图'}}">{{carouselPaused ? '播放轮播' : '暂停轮播'}}</button>
     </view>
   </view>
+
+  <community-support id="support-header" mode="community" />
 
   <button class="document-entry" bindtap="openFeishuDocument" hover-class="banner-card--pressed" aria-label="NKU 计网 软件 人智大类生存手册，查看原文链接与打开说明">
     <view class="document-entry-icon" aria-hidden="{{true}}">文</view>
@@ -76,10 +80,11 @@
         </view>
       </view>
     </view>
+    <community-support id="support-rules" mode="rules" />
     <view class="build-note">学生共建 · 非南开大学官方平台</view>
   </block>
   <view class="build-note">津ICP备2026009194号-3</view>
-  <view wx:if="{{announcementOpen && announcement}}" class="announcement-mask" catchtouchmove="noop">
+  <view wx:if="{{announcementOpen && announcement && !introVisible}}" class="announcement-mask" catchtouchmove="noop">
     <view class="announcement-dialog" role="dialog" aria-label="平台公告">
       <view class="announcement-heading"><view><view class="announcement-title">平台公告</view><view class="announcement-eyebrow">合作动态 · 新功能体验 · 同学共建</view></view><button class="announcement-close" bindtap="closeAnnouncement" aria-label="关闭公告">×</button></view>
       <scroll-view scroll-y="{{true}}" class="announcement-body">

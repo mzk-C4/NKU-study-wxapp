@@ -1,0 +1,18 @@
+<view class="intro {{dark ? 'intro--dark' : ''}} {{leaving ? 'intro--leaving' : ''}}" catchtouchmove="noop" role="dialog" aria-label="欢迎来到 NKUStudy，可跳过入场动画">
+  <view class="intro-glow intro-glow--purple" aria-hidden="{{true}}"></view>
+  <view class="intro-glow intro-glow--blue" aria-hidden="{{true}}"></view>
+  <view class="intro-orbit intro-orbit--one" aria-hidden="{{true}}"></view>
+  <view class="intro-orbit intro-orbit--two" aria-hidden="{{true}}"></view>
+  <button class="intro-skip" bindtap="skip" aria-label="跳过入场动画，进入首页">跳过 <text aria-hidden="{{true}}">›</text></button>
+  <view class="intro-center">
+    <view wx:if="{{!logoFailed}}" class="intro-logo-wrap" aria-hidden="{{true}}">
+      <image class="intro-logo" src="/assets/branding/launch-logo.png" mode="aspectFit" binderror="logoError" />
+      <view class="intro-shine intro-logo-shine"></view>
+    </view>
+    <view class="intro-wordmark"><text>NKUStudy</text><view class="intro-shine" aria-hidden="{{true}}"></view></view>
+    <view class="intro-stroke" aria-hidden="{{true}}"></view>
+    <view class="intro-caption">南开学生共建</view>
+    <view class="intro-subtitle">课程资料与选课参考</view>
+  </view>
+  <view class="intro-footer">允公允能，日新月异<view class="intro-disclaimer">学生共建 · 非南开大学官方平台</view></view>
+</view>

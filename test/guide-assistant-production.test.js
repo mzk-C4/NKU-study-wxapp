@@ -62,7 +62,7 @@ test('starting a new topic ignores the previous in-flight response', async t => 
 test('an incoming search question starts a clean draft and keeps previous conversations', async t => {
   const messages = completedExchange('旧问题', '旧回答')
   installWx(t, { getStorageSync(key) {
-    if (key !== 'nkustudy_guide_assistant_local_state') return null
+    if (key !== 'nkustudy_guide_assistant_v2:user-1') return null
     return { updatedAt: Date.now(), lastQuestion: '旧问题', draft: '', history: [
       { question: '旧问题', state: 'answer', updatedAt: Date.now(), messages }
     ] }
@@ -90,6 +90,10 @@ function installWx(t, overrides = {}) {
     showToast() {},
     ...overrides
   }
+  const readStorage = global.wx.getStorageSync
+  global.wx.getStorageSync = key => key === 'nkustudy_auth_session'
+    ? { token: 'test-session-token-0001', expires_at: Date.now() + 600000, user: { id: 1 } }
+    : readStorage(key)
   t.after(() => {
     if (previous === undefined) delete global.wx
     else global.wx = previous

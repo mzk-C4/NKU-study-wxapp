@@ -1,6 +1,8 @@
 const DOWNLOAD_ORIGIN = 'https://resources.nkustudy.top'
 const DOCUMENT_TYPES = new Set(['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'])
 const MAX_DOWNLOAD_BYTES = 200 * 1024 * 1024
+const communitySupport = require('../features/community-support/index')
+const auth = require('./auth-session')
 let downloading = false
 
 function validDownloadUrl(value) {
@@ -88,6 +90,7 @@ function downloadResource(resource, options = {}) {
   }
   if (downloading) return Promise.resolve(false)
   downloading = true
+  const downloadAccount = auth.getToken()
   wx.showLoading({ title: '正在下载', mask: true })
   return new Promise(resolve => {
     let finished = false
@@ -100,12 +103,16 @@ function downloadResource(resource, options = {}) {
       url: resource.download_url,
       timeout: 120000,
       success(result) {
+        if (finished) return
         finish()
         if (result.statusCode !== 200 || !result.tempFilePath) {
           showDownloadFailure(resource, options, `下载请求返回 ${result.statusCode || '异常状态'}。`)
           resolve(false)
           return
         }
+        // File transfer succeeded even when WeChat cannot preview its format.
+        // Accounting runs independently and must never delay document opening.
+        communitySupport.downloaded(resource, 'resource', downloadAccount).catch(() => {})
         const fileType = resourceFileType(resource)
         if (!DOCUMENT_TYPES.has(fileType)) {
           offerFileTransfer(resource, result.tempFilePath)
@@ -121,6 +128,7 @@ function downloadResource(resource, options = {}) {
         })
       },
       fail(error) {
+        if (finished) return
         finish()
         const message = error?.errMsg || ''
         if (/domain|合法域名/i.test(message)) {

@@ -1,0 +1,73 @@
+{
+  "status": "local_reference_pending_production_verification",
+  "review_owner": "沈弋皓",
+  "review_status": "pending",
+  "note": "仅登记已有本地published草稿，不证明生产发布、原件在线或政策仍有效；须与网站当前指南逐项映射后纳入模型知识。学生PDF暂不入首期回答证据。",
+  "guides": [
+    {
+      "id": "grade-review",
+      "category": "考试与成绩",
+      "source_ids": [
+        "SRC-003"
+      ],
+      "content_type": "official_document_summary",
+      "applicable_scope": "本科生；办理时核对最新有效文件",
+      "time_notice": "时间性条款与办理入口须复核",
+      "local_path": "Documents/学习指南针内容草稿/guides/guide-grade-review.md",
+      "production_guide_id": null,
+      "review_status": "pending"
+    },
+    {
+      "id": "resume-study",
+      "category": "学籍与毕业",
+      "source_ids": [
+        "SRC-001"
+      ],
+      "content_type": "official_document_summary",
+      "applicable_scope": "源文自2023级本科生起实施；其他年级须核对",
+      "time_notice": "因病休学的复学材料需核对适用情形",
+      "local_path": "Documents/学习指南针内容草稿/guides/guide-resume-study.md",
+      "production_guide_id": null,
+      "review_status": "pending"
+    },
+    {
+      "id": "ai-coursework",
+      "category": "规范与权益",
+      "source_ids": [
+        "SRC-004"
+      ],
+      "content_type": "official_document_summary",
+      "applicable_scope": "本科课程作业；教师和学院可另作更严格要求",
+      "time_notice": "不得自行推断统一AI使用比例",
+      "local_path": "Documents/学习指南针内容草稿/guides/guide-ai-coursework.md",
+      "production_guide_id": null,
+      "review_status": "pending"
+    },
+    {
+      "id": "course-selection-2026-fall",
+      "category": "选课与修读",
+      "source_ids": [
+        "SRC-002"
+      ],
+      "content_type": "official_document_summary",
+      "applicable_scope": "2026—2027学年第一学期2025级",
+      "time_notice": "多数选课时段已结束；不得当作当前开放入口",
+      "local_path": "Documents/学习指南针内容草稿/guides/guide-course-selection-2026-fall.md",
+      "production_guide_id": null,
+      "review_status": "pending"
+    },
+    {
+      "id": "micro-major-2026",
+      "category": "学业拓展",
+      "source_ids": [
+        "SRC-007"
+      ],
+      "content_type": "official_document_summary",
+      "applicable_scope": "2026年度招生；各项目招生年级和专业不同",
+      "time_notice": "2026年7月5日报名已结束；不能沿用到以后年度",
+      "local_path": "Documents/学习指南针内容草稿/guides/guide-micro-major-2026.md",
+      "production_guide_id": null,
+      "review_status": "pending"
+    }
+  ]
+}

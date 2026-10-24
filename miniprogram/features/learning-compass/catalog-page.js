@@ -52,6 +52,7 @@ function createCatalogPage(mode) {
       }
     },
     retry() { return this.loadGuides() },
+    openAssistant() { navigation.openGuideAssistant(this.data.query) },
     inputSearch(event) {
       this.setData({ query: String(event.detail.value || '').slice(0, 80) })
       clearTimeout(this._searchTimer)
@@ -91,7 +92,7 @@ function createCatalogPage(mode) {
       if (this.data.openingDocumentId) return false
       this.setData({ openingDocumentId: item.id })
       try {
-        return await (this._sourceOpener || createSourceOpener()).open(item, { failureTitle: 'PDF 暂时无法打开，请稍后重试' })
+        return await (this._sourceOpener || createSourceOpener()).open(item, { failureTitle: 'PDF 暂时无法打开，请稍后重试', reportSupport: false })
       } finally {
         if (!this._isUnloaded) this.setData({ openingDocumentId: '' })
       }

@@ -1,3 +1,4 @@
+<community-support mode="thanks" />
 <view class="catalog-page">
   <view class="catalog-hero">
     <view class="catalog-eyebrow">NKUSTUDY · 校园指南</view>
@@ -9,6 +10,7 @@
     <input value="{{query}}" maxlength="80" confirm-type="search" placeholder="搜索选课、保研、住宿等问题" aria-label="搜索指南和PDF资料" bindinput="inputSearch" bindconfirm="confirmSearch" />
     <button wx:if="{{query}}" class="catalog-clear" aria-label="清空搜索" bindtap="clearSearch">×</button>
   </view>
+  <button class="catalog-ai" wx:if="{{mode === 'search'}}" bindtap="openAssistant" aria-label="把当前搜索词作为草稿，向指南针 AI 提问">问问指南针 AI · {{query ? '带入当前搜索词' : '根据指南回答并列出来源'}} ›</button>
   <view class="catalog-suggestions" wx:if="{{!query}}">
     <button wx:for="{{suggestions}}" wx:key="*this" data-query="{{item}}" bindtap="chooseSuggestion">{{item}}</button>
   </view>

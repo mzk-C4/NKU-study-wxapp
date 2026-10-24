@@ -3,6 +3,8 @@ const { categories, campuses, buildings } = require('../../features/campus-map/d
 const local = require('../../utils/local-preferences')
 const source = require('../../features/campus-map/source')
 const { createBuildingSearch } = require('../../features/campus-map/search')
+const map3d = require('../../features/campus-map-3d/config')
+const map3dLinks = require('../../features/campus-map-3d/links')
 const validIds = new Set(buildings.map(place => place.markerId))
 const ALL = { value: '', label: '全部' }
 let searchBuildings
@@ -32,12 +34,31 @@ registerThemedPage({
     categoryIndex: 0, categoryLabel: '全部分类', panelCollapsed: false, keyboardFocused: false, keyboardHeight: 0, includePoints: [],
     mapVisible: true, mapError: false, favoriteIds: [], recentIds: [], placeMode: 'all', selectedFavorite: false, detailExpanded: false, storageNotice: '',
     longitude: campuses.n.coord[0], latitude: campuses.n.coord[1], scale: campuses.n.zoom },
-  onLoad() {
+  onLoad(options = {}) {
     this._isUnloaded = false
+    const campusId = options.campusId === 'j' ? 'j' : 'n'
+    const campus = campuses[campusId]
+    this.setData({ campusId, longitude: campus.coord[0], latitude: campus.coord[1], scale: campus.zoom })
+    this._open3dOnReady = map3d.isEnabled() && campusId === 'j' && options.open3d === '1'
+    this._entry3dId = map3dLinks.buildingId(options.buildingId)
     this.setData({ favoriteIds: local.readPlaces('favorites', validIds), recentIds: local.readPlaces('recent', validIds) })
     this.refresh()
   },
   onUnload() { this._isUnloaded = true },
+  onReady() {
+    if (this._open3dOnReady) {
+      this._open3dOnReady = false
+      this.open3d(this._entry3dId)
+    }
+  },
+  open3d(id) {
+    if (!map3d.isEnabled() || this.data.campusId !== 'j' || this._isUnloaded || this._opening3d) return
+    this._opening3d = true
+    wx.navigateTo({ url: map3dLinks.pagePath(id),
+      fail: () => { if (!this._isUnloaded) wx.showToast({ title: '三维校园打开失败，请重试', icon: 'none' }) },
+      complete: () => { this._opening3d = false }
+    })
+  },
   mapFailed() { if (!this._isUnloaded) this.setData({ mapError: true }) },
   retryMap() {
     if (this._isUnloaded || !this.data.mapVisible) return

@@ -3,6 +3,7 @@ const config = require('../config')
 const authSession = require('../utils/auth-session')
 const { validateAvatarFile } = require('../utils/avatar-file')
 const { formatBrowseCount } = require('../utils/list-card-presentation')
+const supportContract = require('../features/community-support/contract')
 
 const RESOURCE_DOWNLOAD_HOST = 'resources.nkustudy.top'
 const COURSE_QUERY_KEYS = Object.freeze(['q', 'term', 'group', 'tag', 'assessment', 'page', 'page_size'])
@@ -318,6 +319,7 @@ function mapHome(rawData) {
   const raw = rawData && typeof rawData === 'object' ? rawData : {}
   const submission = raw.review_submission && typeof raw.review_submission === 'object' ? raw.review_submission : {}
   return {
+    community_support: supportContract.publicStats(raw.community_support),
     announcement: toText(raw.announcement),
     hot_courses: Array.isArray(raw.hot_courses) ? raw.hot_courses.map(mapCourse) : [],
     latest_updates: Array.isArray(raw.latest_updates) ? raw.latest_updates.map(item => ({
@@ -356,7 +358,7 @@ function mapResource(rawResource) {
 
 function mapCourseResources(rawData, courseId) {
   const raw = rawData && typeof rawData === 'object' ? rawData : {}
-  const resources = Array.isArray(raw.items) ? raw.items.map(mapResource) : []
+  const resources = Array.isArray(raw.items) ? raw.items.map(item => mapResource({ ...item, course_id: toText(item && item.course_id) || toText(raw.course_id) || toText(courseId) })) : []
   return {
     course_id: toText(raw.course_id) || toText(courseId),
     items: resources,
@@ -736,6 +738,17 @@ function createPublicApi(client = request, options = {}) {
         page: toPositiveInteger(query.page, 1, 1000000),
         page_size: toPositiveInteger(query.page_size, 20, 100)
       }, { auth: 'required' }))
+    },
+    async recordCommunityDownload(input) {
+      const event = supportContract.downloadEvent(input)
+      if (isReference || !event) throw new Error('支持计数暂不可用')
+      const data = await client.post('/community-support/downloads', event, { auth: event.attribution === 'account' ? 'required' : 'none', timeout: 6000 })
+      return { event_id: toText(data && data.event_id), recorded: data && data.recorded === true,
+        community_support: supportContract.publicStats(data && data.community_support) }
+    },
+    async getMyCommunitySupport() {
+      if (isReference) return null
+      return supportContract.counts(await client.get('/me/community-support', undefined, { auth: 'required', timeout: 6000 }))
     },
     async submitReview(input = {}) {
       if (isReference) {

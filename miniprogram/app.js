@@ -1,9 +1,13 @@
 const { publicApi } = require('./services/public-api')
 const { homeAnnouncementView, announcementText, createAnnouncementReader } = require('./features/home-announcement')
+const { createLaunchIntroGate } = require('./features/launch-intro')
 
 function createApp(api = publicApi) {
   return {
+    launchIntro: createLaunchIntroGate(),
+    onLaunch(options) { this.launchIntro.launch(options) },
     onHide() {
+      this.launchIntro.cancel()
       this.noticeForeground = false
       this.noticeEpoch = (this.noticeEpoch || 0) + 1
       if (this.noticeRouteTimer) clearTimeout(this.noticeRouteTimer)

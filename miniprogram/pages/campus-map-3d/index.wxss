@@ -1,0 +1,8 @@
+page { height:100%; background:var(--nk-bg, #F6F3F7); color:var(--nk-text, #211C24); }
+.map-status { box-sizing:border-box; max-width:640px; margin:0 auto; padding:100rpx 40rpx calc(40rpx + env(safe-area-inset-bottom)); text-align:center; }
+.status-title { font-size:36rpx; font-weight:600; line-height:1.5; }
+.status-description { margin:24rpx 0 40rpx; color:var(--nk-muted, #716A7D); font-size:28rpx; line-height:1.7; }
+.map-status button { margin-top:24rpx; min-height:88rpx; line-height:88rpx; font-size:28rpx; border-radius:16rpx; }
+.map-status button::after { border:0; }
+.retry { background:var(--nk-primary, #4B1F6F); color:#fff; }
+.return { background:var(--nk-surface, #fff); color:var(--nk-accent, #4B1F6F); }

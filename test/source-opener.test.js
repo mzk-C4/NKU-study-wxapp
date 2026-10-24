@@ -2,6 +2,7 @@ const test = require('node:test')
 const assert = require('node:assert/strict')
 
 const { createSourceOpener, officialNankaiUrl } = require('../miniprogram/utils/source-opener')
+const support = require('../miniprogram/features/community-support/index')
 
 function referencePolicy() {
   return {
@@ -79,4 +80,18 @@ test('failed opening exposes an explicit safe copy fallback without losing conte
   assert.equal(phases.at(-1).canCopy, true)
   assert.equal(await opener.copyFallback(source), true)
   assert.deepEqual(copied, ['https://jwc.nankai.edu.cn/file.pdf'])
+})
+
+test('local student PDFs open normally without reporting; public guide sources report only successful transfers', async t => {
+  const events = []
+  t.mock.method(support, 'downloaded', async (source, kind) => { events.push({ id: source.id, kind }) })
+  const opener = createSourceOpener({ policy: referencePolicy(), wxApi: {
+    downloadFile(options) { options.success({ statusCode: 200, tempFilePath: '/file' }) },
+    openDocument(options) { options.success() }
+  } })
+  const source = { id: 's1', file_type: 'pdf', file_url: 'http://127.0.0.1:3000/__local__/learning-compass/source-files/s1' }
+  assert.equal(await opener.open(source, { reportSupport: false }), true)
+  assert.deepEqual(events, [])
+  assert.equal(await opener.open(source), true)
+  assert.deepEqual(events, [{ id: 's1', kind: 'guide_source' }])
 })

@@ -21,6 +21,12 @@
       <text>搜索选课、保研、住宿与学生资料</text>
     </button>
 
+    <button class="campus-map-entry" bindtap="openAssistant" hover-class="control--pressed" aria-label="打开指南针 AI 问答">
+      <view class="campus-map-symbol" aria-hidden="true">AI</view>
+      <view class="campus-map-main"><view class="campus-map-title">问问指南针 AI</view><view class="campus-map-note">根据指南回答 · 查看来源 · 支持追问</view></view>
+      <text class="pdf-entry-arrow" aria-hidden="true">›</text>
+    </button>
+
     <view class="category-panel" aria-label="指南一级分类">
       <button
         wx:for="{{homeCategories}}"
@@ -38,7 +44,7 @@
 
     <button class="campus-map-entry" bindtap="openCampusMap" hover-class="control--pressed" aria-label="打开校园地图">
       <view class="campus-map-symbol">⌖</view>
-      <view class="campus-map-main"><view class="campus-map-title">校园地图</view><view class="campus-map-note">八里台 · 津南校区，找地点、看介绍、去导航</view></view>
+      <view class="campus-map-main"><view class="campus-map-title">校园地图</view><view class="campus-map-note">腾讯地图导航 · 2D / 3D 校园导览</view></view>
       <text class="pdf-entry-arrow">›</text>
     </button>
 

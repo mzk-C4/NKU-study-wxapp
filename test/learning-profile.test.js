@@ -10,7 +10,7 @@ const projectRoot = path.resolve(__dirname, '..')
 function installWx(t, implementation = {}) {
   const hadWx = Object.hasOwn(global, 'wx')
   const previousWx = global.wx
-  global.wx = implementation
+  global.wx = { getAccountInfoSync() { return { miniProgram: { envVersion: 'develop' } } }, ...implementation }
   t.after(() => {
     if (hadWx) global.wx = previousWx
     else delete global.wx
@@ -222,7 +222,8 @@ test('refreshing learning information never rewrites assistant history or adds n
   const history = [{ question: '原问题', title: '原会话', state: 'answer', updatedAt: Date.now(), pinned: true }]
   const store = new Map([
     [learningProfile.STORAGE_KEY, { version: 1, admission_year: '2025', major: '物理学' }],
-    ['nkustudy_guide_assistant_local_state', { lastQuestion: '', draft: '', history, updatedAt: Date.now() }]
+    ['nkustudy_auth_session', { token: 'test-session-token-0001', expires_at: Date.now() + 600000, user: { id: 1 } }],
+    ['nkustudy_guide_assistant_v2:user-1', { lastQuestion: '', draft: '', history, updatedAt: Date.now() }]
   ])
   let assistantWrites = 0
   let networkCalls = 0
@@ -231,7 +232,7 @@ test('refreshing learning information never rewrites assistant history or adds n
     getStorageSync(key) { return store.get(key) },
     setStorageSync(key, value) {
       store.set(key, value)
-      if (key === 'nkustudy_guide_assistant_local_state') assistantWrites += 1
+      if (key === 'nkustudy_guide_assistant_v2:user-1') assistantWrites += 1
     },
     getNetworkType() { networkCalls += 1 },
     onNetworkStatusChange() {},

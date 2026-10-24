@@ -1,0 +1,59 @@
+/* System fonts only: unavailable families fall back without a network request.
+ * Keep UI text in sans; use Song for headings and Kai for short editorial copy.
+ * Device font availability is not guaranteed by a family name.
+ */
+page {
+  --nk-font-ui: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+  --nk-font-song: "Songti SC", "STSong", "SimSun", "Noto Serif CJK SC", "Source Han Serif SC", "PingFang SC", "Microsoft YaHei", serif;
+  --nk-font-kai: "Kaiti SC", "STKaiti", "KaiTi", "KaiTi_GB2312", "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+/* These roles can also be applied explicitly by future native pages. */
+.font-song { font-family:var(--nk-font-song); }
+.font-kai { font-family:var(--nk-font-kai); }
+.font-ui { font-family:var(--nk-font-ui); }
+
+.home .hero-title,
+.home .collaborators-title,
+.guides-page .guide-title,
+.guides-page .pdf-section-title,
+.courses-page .course-list-title,
+.reviews-page .reviews-list-title,
+.profile-page .profile-name,
+.catalog-page .catalog-title,
+.detail-page .detail-title,
+.detail-page .transfer-title,
+.detail-page .detail-section-title,
+.detail-page .markdown-heading,
+.about-card .about-heading,
+.map-choice-page .page-title,
+.map-choice-page .card-title {
+  font-family:var(--nk-font-song);
+  font-weight:600;
+  line-height:1.5;
+}
+
+.home .hero-kicker,
+.home .collaborators-subtitle,
+.guides-page .guide-sub,
+.catalog-page .catalog-description,
+.about-card .about-quote,
+.map-choice-page .page-description,
+.map-choice-page .credit-name,
+.map-choice-page .page-note {
+  font-family:var(--nk-font-kai);
+  font-weight:400;
+  line-height:1.75;
+}
+
+/* Kai's finer strokes need more room than compact labels. */
+.home .hero-kicker,
+.home .collaborators-subtitle,
+.map-choice-page .credit-name,
+.map-choice-page .page-note { font-size:26rpx; }
+.guides-page .guide-sub,
+.catalog-page .catalog-description,
+.map-choice-page .page-description { font-size:28rpx; }
+
+/* Counts and controls retain the functional font when nested in a heading. */
+.course-list-title .course-list-total { font-family:var(--nk-font-ui); }

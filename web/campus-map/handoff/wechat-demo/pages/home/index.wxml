@@ -1,0 +1,6 @@
+<view class="intro">
+  <view class="title">NKUStudy 校园地图</view>
+  <text>此页仅演示原生入口。请先在 config/map-config.js 配置已部署的 HTTPS 地图域名，并由管理员完成业务域名设置。</text>
+  <navigator url="/pages/campus-map/index" hover-class="none"><view class="entry">打开校园地图</view></navigator>
+  <navigator url="/pages/campus-map/index?buildingId=osm-building-616829077" hover-class="none"><view class="entry secondary">直接查看中心图书馆</view></navigator>
+</view>

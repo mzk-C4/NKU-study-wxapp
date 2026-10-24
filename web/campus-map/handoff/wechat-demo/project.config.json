@@ -1,0 +1,9 @@
+{
+  "description": "校园地图独立接入示例；导入时填写自己的组织 AppID 和业务域名",
+  "projectname": "nkustudy-campus-map-demo",
+  "appid": "",
+  "compileType": "miniprogram",
+  "miniprogramRoot": "./",
+  "setting": { "es6":true, "enhance":true, "minified":true, "urlCheck":true },
+  "packOptions": { "ignore":[{"type":"file","value":"README.md"},{"type":"file","value":"package.json"}] }
+}

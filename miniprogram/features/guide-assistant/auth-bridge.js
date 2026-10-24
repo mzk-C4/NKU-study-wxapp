@@ -18,12 +18,16 @@ async function ensureLogin() {
   const current = authSession.readSession()
   if (current) return current.user
   const code = await getWechatLoginCode()
+  const afterCode = authSession.readSession()
+  if (afterCode) return afterCode.user
   const result = await publicApi.loginWechat(code)
+  const replacement = authSession.readSession()
+  if (replacement) return replacement.user
   return authSession.saveSession(result).user
 }
 
 module.exports = {
   ensureLogin,
-  clearSession: authSession.clearSession,
+  getSessionIdentity: authSession.getToken,
   getWechatLoginCode
 }

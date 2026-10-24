@@ -1,0 +1,7 @@
+<view wx:if="{{failed}}" class="map-error">
+  <view class="map-error-title">校园地图暂时无法打开</view>
+  <text>请检查网络后重试。如持续失败，请管理员确认网页已部署、HTTPS 和业务域名已配置。</text>
+  <button bindtap="retry">重新加载</button>
+  <button class="map-back" bindtap="goBack">返回首页</button>
+</view>
+<web-view wx:elif="{{url}}" src="{{url}}" binderror="onError"></web-view>

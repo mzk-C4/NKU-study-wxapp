@@ -1,17 +1,20 @@
+@import "./styles/typography.wxss";
+
 page {
   min-height: 100%;
   background: var(--nk-bg, #F6F3F7);
   color: var(--nk-text, #211C24);
-  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-family: var(--nk-font-ui, -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif);
   font-size: 28rpx;
 }
 
 button { color:var(--nk-text, #211C24); }
 input, textarea { color:var(--nk-text, #211C24); }
+button, input, textarea { font-family:var(--nk-font-ui, -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif); }
 button::after { border: 0; }
 .page { min-height: 100vh; padding: 28rpx 32rpx calc(40rpx + env(safe-area-inset-bottom)); box-sizing: border-box; }
 .section { margin-top: 36rpx; }
-.section-title { font-size: 34rpx; line-height: 1.35; font-weight: 700; }
+.section-title { font-family:var(--nk-font-song); font-size: 34rpx; line-height: 1.5; font-weight: 600; }
 .section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20rpx; }
 .section-link { color: var(--nk-accent, #4B1F6F); font-size: 24rpx; font-weight: 600; }
 .muted { color: var(--nk-muted, #6F6972); }

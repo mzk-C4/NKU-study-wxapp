@@ -135,10 +135,13 @@ async function loadSearchData(api) {
   return data
 }
 
+const communitySupport = require('../../features/community-support/index')
+
 function createWriteReviewPage(api = publicApi) {
   return {
     onShow() {
       const changedAccount = this._draft && drafts.owner(false) && this._draft.account !== drafts.owner(false)
+      if (changedAccount) this._reviewSubmitted = false
       this.startDraft()
       const wasLoggedIn = this.data.isLoggedIn
       if (this.checkLogin() && (changedAccount || (!wasLoggedIn && !this.data.loading && !this.data.course))) this.prepare()
@@ -154,6 +157,7 @@ function createWriteReviewPage(api = publicApi) {
     isGroupMode: false, isCatalogMode: false, groupCourseTitle: '', catalogCourseId: '', teacherOptions: []
   },
   onLoad(options = {}) {
+    this._reviewSubmitted = false
     this._isUnloaded = false
     reportVisit('/mp/write-review')
     this.setData({
@@ -289,6 +293,7 @@ function createWriteReviewPage(api = publicApi) {
   },
   reselectCourse() {
     if (this.data.submitting) return
+    this._reviewSubmitted = false
     if (this._draft) this._draft.flush()
     this.setData({ courseId: '', groupCourseTitle: '', catalogCourseId: '', course: null, pickerMode: true })
     this.startDraft()
@@ -308,7 +313,7 @@ function createWriteReviewPage(api = publicApi) {
   setRating(event) { const rating = Number(event.currentTarget.dataset.score); if (rating >= 1 && rating <= 5 && Number.isInteger(rating)) this.updateDraftField({ rating }) },
   inputBody(event) { this.updateDraftField({ body: String(event.detail.value || '').slice(0, 800) }) },
   async submit() {
-    if (this.data.submitting) return
+    if (this.data.submitting || this._reviewSubmitted) return
     if (!this.checkLogin()) return
     if (this.data.loading || this.data.error || !this.data.course) return
     if (this._draft && this._draft.account !== drafts.owner(false)) { this.startDraft(); return }
@@ -328,15 +333,20 @@ function createWriteReviewPage(api = publicApi) {
         : isGroupMode
           ? { course_title: groupCourseTitle, ...base }
           : { course_id: course.id, ...base }
-      await api.submitReview(payload)
+      const receipt = await api.submitReview(payload)
       const cleared = !draft || draft.submitted()
       if (this._isUnloaded || authSession.getToken() !== token || draft !== this._draft) return
+      this._reviewSubmitted = true
       this.setData({ hasDraft: !cleared, draftNotice: cleared ? '提交成功，已清除本机草稿。' : '提交成功，但旧草稿清除失败，请手动清除，勿重复提交。' })
       const resultMessage = this.data.moderationRequired
         ? '评价已进入审核，通过后将公开展示。可在“我的评价”查看处理状态。'
         : '评价已提交。可在“我的评价”查看处理状态。'
       const content = resultMessage + (cleared ? '' : ' 本机旧草稿清除失败，再次进入时请先核对“我的评价”，勿重复提交。')
-      wx.showModal({ title: '提交成功', content, showCancel: false, success: () => wx.navigateBack() })
+      communitySupport.reviewSubmitted(receipt, () => {
+        if (this._isUnloaded || authSession.getToken() !== token) return
+        const pages = typeof getCurrentPages === 'function' ? getCurrentPages() : []
+        if (!pages.length || pages[pages.length - 1] === this) wx.navigateBack()
+      }, ' ' + content)
     } catch (error) {
       if (this._isUnloaded || authSession.getToken() !== token || draft !== this._draft) return
       if (error.statusCode === 401 || error.code === 'AUTH_REQUIRED') {

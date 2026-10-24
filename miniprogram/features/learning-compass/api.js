@@ -41,6 +41,13 @@ function publicHttps(value) {
   return url
 }
 
+function assistantSource(value, isReference) {
+  const source = mapSource(value, isReference)
+  if (!/^https:\/\/(?:[A-Za-z0-9-]+\.)*nankai\.edu\.cn(?:[/?#]|$)/i.test(source.official_page_url)) source.official_page_url = ''
+  source.url = source.file_url || source.official_page_url
+  return source
+}
+
 function guideFileUrl(value, isReference) {
   const url = text(value)
   if (!url || /[\s\\]/.test(url)) return ''
@@ -160,7 +167,7 @@ function mapVariant(value, isReference) {
 }
 
 function buildAssistantRequest(input = {}) {
-  const admissionYearText = unicode(input.profile && input.profile.admission_year, 4)
+  const admissionYearText = String(input.profile && input.profile.admission_year || '').trim()
   const admissionYear = /^\d{4}$/.test(admissionYearText) ? Number(admissionYearText) : 0
   const profile = input.profile && typeof input.profile === 'object' ? input.profile : {}
   return {
@@ -185,7 +192,7 @@ function mapAssistant(value, isReference) {
     reason: refused && REFUSAL_REASONS.has(reason) ? reason : '',
     guide_id: text(raw.guide_id), category: text(raw.category), answer: text(raw.answer),
     applicable_scope: text(raw.applicable_scope), freshness_notice: text(raw.freshness_notice),
-    citations: Array.isArray(raw.citations) ? raw.citations.map(item => mapSource(item, isReference)).filter(item => item.id && item.title) : []
+    citations: Array.isArray(raw.citations) ? raw.citations.map(item => assistantSource(item, isReference)).filter(item => item.id && item.title && item.url) : []
   }
 }
 
@@ -197,9 +204,16 @@ function createApi(client = request, options = {}) {
     getGuideVariant(guideId, variantId) {
       return client.get(`/guides/${encode(guideId)}/variants/${encode(variantId)}`).then(value => mapVariant(value, isReference))
     },
-    askGuideAssistant() {
-      // 仅保留旧实现的安全兼容边界：所有环境停止发起 AI 请求。
-      return Promise.reject(Object.assign(new Error('AI 问答已移除，请使用指南搜索。'), { code: 'FEATURE_REMOVED' }))
+    askGuideAssistant(input) {
+      return client.post('/guide-assistant/answers', buildAssistantRequest(input), { auth: 'required', timeout: 30000 })
+        .then(value => {
+          const mapped = mapAssistant(value, isReference)
+          const usable = mapped.citations.some(source => source.file_url || source.official_page_url)
+          if (!mapped.answer || (!mapped.refused && !usable) || (mapped.refused && !mapped.reason)) {
+            throw Object.assign(new Error('AI 服务暂时不可用，请稍后重试。'), { code: 'AI_UNAVAILABLE' })
+          }
+          return mapped
+        })
     },
     validateGuideFileUrl(value) { return guideFileUrl(value, isReference) },
     isAllowedGuideFileUrl(value) { return Boolean(guideFileUrl(value, isReference)) },

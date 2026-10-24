@@ -7,6 +7,51 @@
   box-sizing: border-box;
 }
 
+.mock-notice { padding: 18rpx 28rpx; color: var(--nk-text, #513F14); background: var(--nk-gold-soft, #FFF2CC); font-size: 25rpx; line-height: 1.6; }
+.assistant-page--dark { background: var(--nk-bg); color: var(--nk-text); }
+.assistant-page--dark .custom-nav,
+.assistant-page--dark .answer-card,
+.assistant-page--dark .composer,
+.assistant-page--dark .history-drawer { background: var(--nk-surface); color: var(--nk-text); border-color: var(--nk-line); }
+.assistant-page--dark .answer-question-bubble,
+.assistant-page--dark .answer-source { background: var(--nk-soft); color: var(--nk-text); }
+.assistant-page--dark .nav-title,
+.assistant-page--dark .back-button,
+.assistant-page--dark .answer-heading-title,
+.assistant-page--dark .answer-paragraph,
+.assistant-page--dark .source-title { color: var(--nk-text); }
+.assistant-page--dark .composer-area { background: linear-gradient(180deg, transparent, var(--nk-bg) 18%, var(--nk-bg)); }
+.assistant-page--dark .assistant-actions,
+.assistant-page--dark .new-topic-profile,
+.assistant-page--dark .example-question,
+.assistant-page--dark .continue-card,
+.assistant-page--dark .refusal-card,
+.assistant-page--dark .answer-markdown-table { background: var(--nk-surface); border-color: var(--nk-line); }
+.assistant-page--dark .new-topic-title,
+.assistant-page--dark .new-topic-copy,
+.assistant-page--dark .composer-input,
+.assistant-page--dark .refusal-heading-title,
+.assistant-page--dark .refusal-copy,
+.assistant-page--dark .answer-markdown-heading,
+.assistant-page--dark .answer-markdown-list,
+.assistant-page--dark .answer-markdown-cell { color: var(--nk-text); }
+.assistant-page--dark .assistant-action,
+.assistant-page--dark .source-meta,
+.assistant-page--dark .answer-reminder,
+.assistant-page--dark .ai-note,
+.assistant-page--dark .conversation-meta,
+.assistant-page--dark .preview-meta { color: var(--nk-muted); }
+.assistant-page--dark .answer-markdown-quote,
+.assistant-page--dark .follow-up-options button,
+.assistant-page--dark .composer-notice { background: var(--nk-soft); color: var(--nk-text); }
+.assistant-page--dark .answer-markdown-link,
+.assistant-page--dark .source-heading,
+.assistant-page--dark .source-open-button { color: var(--nk-accent); }
+.assistant-page--dark .composer-placeholder { color: var(--nk-muted); }
+@media (prefers-reduced-motion: reduce) {
+  .assistant-page view, .assistant-page button { animation: none !important; transition: none !important; }
+}
+
 button::after { border: 0; }
 
 .custom-nav {

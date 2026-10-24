@@ -16,14 +16,15 @@ function loadPage(relative) {
   return page
 }
 
-test('home has five local banners with hinku fourth and the Feishu QR fifth', () => {
+test('home has six local banners with community between hinku and the Feishu QR', () => {
   const app = JSON.parse(fs.readFileSync(path.join(root, 'miniprogram/app.json'), 'utf8'))
   const tabs = new Set(app.tabBar.list.map(item => '/' + item.pagePath))
-  assert.deepEqual(HOME_SLIDES.map(slide => slide.id), ['resources', 'reviews', 'guides', 'hinku', 'beta'])
+  assert.deepEqual(HOME_SLIDES.map(slide => slide.id), ['resources', 'reviews', 'guides', 'hinku', 'community', 'beta'])
   assert.equal(HOME_SLIDES[3].kind, 'miniProgram')
-  assert.equal(HOME_SLIDES[4].qrImage, '/assets/home/beta-group.jpg')
+  assert.equal(HOME_SLIDES[4].kind, 'community')
+  assert.equal(HOME_SLIDES[5].qrImage, '/assets/home/beta-group.jpg')
   for (const slide of HOME_SLIDES) {
-    if (slide.kind !== 'miniProgram') assert.ok(slide.kind === 'page' ? app.pages.includes(slide.url.slice(1)) : tabs.has(slide.url))
+    if (!['miniProgram', 'community'].includes(slide.kind)) assert.ok(slide.kind === 'page' ? app.pages.includes(slide.url.slice(1)) : tabs.has(slide.url))
     assert.ok(fs.existsSync(path.join(root, 'miniprogram', slide.image)))
     if (slide.logo) assert.ok(fs.existsSync(path.join(root, 'miniprogram', slide.logo)))
     if (slide.qrImage) assert.ok(fs.existsSync(path.join(root, 'miniprogram', slide.qrImage)))
@@ -81,6 +82,8 @@ test('banner navigation is fixed and image errors retain text and action', t => 
   const previous = global.wx
   t.after(() => { global.wx = previous })
   const opened = []
+  let rulesOpened = 0
+  page.selectComponent = selector => { assert.equal(selector, '#support-header'); return { showRules() { rulesOpened++ } } }
   global.wx = {
     switchTab: options => opened.push(options.url), navigateTo: options => opened.push(options.url),
     navigateToMiniProgram(options) { opened.push(options.appId); options.complete() }
@@ -88,9 +91,10 @@ test('banner navigation is fixed and image errors retain text and action', t => 
   for (const slide of HOME_SLIDES) page.openSlide({ currentTarget: { dataset: { id: slide.id } } })
   page.openSlide({ currentTarget: { dataset: { id: 'https://untrusted.example' } } })
   assert.deepEqual(opened, ['/pages/courses/index', '/pages/reviews-tab/index', '/pages/guides/index', 'wxbd7dc59babb6d536', '/pages/beta-group/index'])
+  assert.equal(rulesOpened, 1)
   page.bannerImageError({ currentTarget: { dataset: { id: 'resources' } } })
   assert.equal(page.data.failedImages.resources, true)
-  assert.equal(page.data.slides.length, 5)
+  assert.equal(page.data.slides.length, 6)
   page.bannerImageError({ currentTarget: { dataset: { id: 'hinku' } } })
   page.openSlide({ currentTarget: { dataset: { id: 'hinku' } } })
   assert.equal(opened.at(-1), 'wxbd7dc59babb6d536')

@@ -1,0 +1,24 @@
+{
+  "name": "nkulawer-campus-map-lab",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "preview": "vite preview --host 127.0.0.1",
+    "build": "tsc -p tsconfig.json && vite build",
+    "check": "npm run build && node scripts/validate-data.mjs && node scripts/geometry-smoke.mjs && node scripts/wechat-smoke.mjs --web-only && node scripts/controls-lod-smoke.mjs && node scripts/nkustudy-theme-smoke.mjs && node scripts/places-smoke.mjs && node scripts/sync-place-ids.mjs",
+    "fetch:osm": "node scripts/fetch-osm.mjs",
+    "convert:osm": "node scripts/convert-osm.mjs",
+    "build:model": "node scripts/build-model-data.mjs",
+    "refresh:data": "npm run fetch:osm && npm run convert:osm && npm run build:model"
+  },
+  "dependencies": {
+    "three": "^0.183.1"
+  },
+  "devDependencies": {
+    "@types/three": "^0.183.1",
+    "typescript": "^5.9.3",
+    "vite": "^7.2.2"
+  }
+}

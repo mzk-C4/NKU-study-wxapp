@@ -1,0 +1,4 @@
+.map-error {padding:80rpx 40rpx;color:#6c5477;line-height:1.7;}
+.map-error-title {margin-bottom:24rpx;font-size:36rpx;font-weight:600;color:#57216f;}
+.map-error button {margin-top:32rpx;background:#57216f;color:#fff;}
+.map-error .map-back {background:#fff;color:#57216f;}

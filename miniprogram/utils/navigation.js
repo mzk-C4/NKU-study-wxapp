@@ -31,8 +31,13 @@ function openGuideDocuments() {
   wx.navigateTo({ url: '/pages/guide-documents/index' })
 }
 
+function openGuideAssistant(question = '') {
+  const value = Array.from(String(question == null ? '' : question).trim()).slice(0, 1000).join('')
+  wx.navigateTo({ url: '/pages/guide-assistant/index' + (value ? '?question=' + encodeURIComponent(value) : '') })
+}
+
 function openCampusMap() {
-  wx.navigateTo({ url: '/pages/campus-map/index' })
+  wx.navigateTo({ url: '/pages/campus-map-select/index' })
 }
 
 module.exports = {
@@ -43,5 +48,6 @@ module.exports = {
   openGuide,
   openGuideCategory,
   openGuideSearch,
-  openGuideDocuments
+  openGuideDocuments,
+  openGuideAssistant
 }

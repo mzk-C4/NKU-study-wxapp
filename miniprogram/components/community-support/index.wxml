@@ -1,0 +1,76 @@
+<view wx:if="{{mode === 'header'}}" class="support-totals">
+  <button class="support-total" bindtap="showRules" aria-label="社区鲜花：{{flowerExact}}，查看计数规则"><image class="support-icon" src="/assets/support/flower.svg" aria-hidden="{{true}}" /><text>{{flowers}}</text></button>
+  <button class="support-total" bindtap="showRules" aria-label="社区硬币：{{coinExact}}，查看计数规则"><image class="support-icon" src="/assets/support/coin.svg" aria-hidden="{{true}}" /><text>{{coins}}</text></button>
+</view>
+
+<view wx:if="{{mode === 'community'}}" class="community-card">
+  <view class="community-art">
+    <view class="community-intro">
+      <view class="community-eyebrow">海棠寄情 · 同学共建</view>
+      <view class="community-title">社区共建足迹</view>
+      <view class="community-description">每次下载与认真评价，都让社区更丰富</view>
+    </view>
+    <image wx:if="{{!illustrationFailed}}" class="community-illustration" src="/assets/support/community-haitang-purple-emblem.png" mode="aspectFit" aria-hidden="{{true}}" binderror="illustrationError" />
+  </view>
+  <view class="community-body">
+    <view class="community-label">全社区累计</view>
+    <view class="support-totals community-totals">
+      <button class="support-total" bindtap="showRules" aria-label="全社区累计鲜花 {{flowerExact}}，查看计数规则"><image class="support-icon" src="/assets/support/flower.svg" aria-hidden="{{true}}" /><text>{{flowers}}</text></button>
+      <button class="support-total" bindtap="showRules" aria-label="全社区累计硬币 {{coinExact}}，查看计数规则"><image class="support-icon" src="/assets/support/coin.svg" aria-hidden="{{true}}" /><text>{{coins}}</text></button>
+    </view>
+    <view class="community-note">这里是大家的支持 · 个人贡献与等级请到「我的」查看</view>
+  </view>
+</view>
+
+<view wx:if="{{mode === 'rules'}}" class="support-card">
+  <view class="support-title">每一份参与，都让社区更好</view>
+  <view class="support-rule"><image class="support-icon" src="/assets/support/flower.svg" />下载一份资料，添一朵鲜花</view>
+  <view class="support-rule"><image class="support-icon" src="/assets/support/coin.svg" />分享一条通过审核的评价，添一枚硬币</view>
+  <view class="support-copy">NKUStudy 由南开学生公益共建。使用、分享和认真评价，都是对我们的支持。</view>
+  <view class="support-links"><button bindtap="showRules">计数与升级规则 ›</button><button bindtap="openWebsite">了解公益支持 ›</button></view>
+</view>
+
+<view wx:if="{{mode === 'personal'}}" class="support-card personal-card">
+  <view class="support-heading"><view><view class="support-eyebrow">我的社区贡献</view><view class="support-title">让每一份心意被记住</view></view><view class="support-level">Lv.{{personal ? personal.level : '—'}}</view></view>
+  <view class="personal-totals">
+    <view><image class="support-icon" src="/assets/support/flower.svg" /><text class="personal-number">{{personal ? personal.flowers : '—'}}</text><text>我的鲜花</text></view>
+    <view><image class="support-icon" src="/assets/support/coin.svg" /><text class="personal-number">{{personal ? personal.coins : '—'}}</text><text>我的硬币</text></view>
+  </view>
+  <block wx:if="{{personal}}">
+    <view class="support-copy">下一等级 Lv.{{personal.level + 1}} · 还差 {{personal.flowersNeeded}} 朵鲜花、{{personal.coinsNeeded}} 枚硬币</view>
+    <view class="progress-label">鲜花进度</view><view class="support-progress" aria-label="本级鲜花进度 {{personal.flowerProgress}}%"><view style="width:{{personal.flowerProgress}}%"></view></view>
+    <view class="progress-label">硬币进度</view><view class="support-progress support-progress--gold" aria-label="本级硬币进度 {{personal.coinProgress}}%"><view style="width:{{personal.coinProgress}}%"></view></view>
+  </block>
+  <view wx:elif="{{!account}}" class="support-copy">微信登录后查看个人贡献与等级。无需登录也可以正常下载资料。</view>
+  <view wx:else class="support-copy">{{personalLoading ? '正在同步个人贡献…' : '个人贡献暂时无法同步，请稍后重试。'}}</view>
+  <view class="support-links"><button bindtap="showRules">每 10 朵花＋10 枚币升一级 ›</button><button wx:if="{{personalError}}" bindtap="refreshPersonal">重试</button></view>
+</view>
+
+<view wx:if="{{rulesOpen}}" class="support-mask" catchtouchmove="noop">
+  <view class="support-dialog" role="dialog" aria-label="社区计数与升级规则">
+    <button class="support-close" bindtap="closeRules" aria-label="关闭计数规则">×</button>
+    <view class="support-title">让参与留下足迹</view>
+    <scroll-view scroll-y="{{true}}" class="rules-scroll">
+      <view class="support-copy">参与统计的课程资料与学校指南原件，下载成功记一朵鲜花；内置学生 PDF 暂不参与。失败、取消、复制链接或同一次请求重试不重复计数。</view>
+      <view class="support-copy">评价审核通过后记一枚硬币；编辑、点赞及重复审核不重复计数。删除或违规撤回按有效记录调整。</view>
+      <view class="support-copy">个人等级从 Lv.1 开始，每累计 10 朵鲜花且 10 枚硬币升一级。10＋10 为 Lv.2，20＋20 为 Lv.3，多出的一项继续保留。</view>
+      <view class="support-copy">未登录下载只计社区总量，不补归到后来登录的账号。个人记录仅本人可见，登录同一账号可同步查看。</view>
+      <view class="support-copy">鲜花、硬币是免费参与标记，不是捐款金额，不购买、不兑换、不提现，不影响资料使用。捐助完全自愿，支持说明请查看网站。</view>
+      <view class="support-note">“—”表示暂无可用统计，不代表数量为零。全社区总量以平台统计为准；个人贡献从功能启用后记录，历史行为不补到个人账号。重复下载受频率限制。</view>
+    </scroll-view>
+    <button class="support-primary" bindtap="closeRules">知道了</button>
+  </view>
+</view>
+
+<view wx:if="{{mode === 'thanks' && notice && !blocked}}" class="support-mask" catchtouchmove="noop">
+  <view class="support-dialog thanks-dialog" role="dialog" aria-label="{{notice.title}}">
+    <button class="support-close" bindtap="closeThanks" aria-label="关闭感谢提示">×</button>
+    <image class="thanks-icon" src="{{notice.kind === 'flower' ? '/assets/support/flower.svg' : '/assets/support/coin.svg'}}" aria-hidden="{{true}}" />
+    <view class="support-title">{{notice.title}}</view>
+    <view class="support-copy">{{notice.message}}</view>
+    <view class="support-copy">平台由学生公益共建。使用、分享与认真评价，就是一份支持；也欢迎自愿捐助，支持平台维护。</view>
+    <button class="support-primary" bindtap="closeThanks">{{notice.action}}</button>
+    <button class="support-secondary" bindtap="openWebsite">了解公益支持 ›</button>
+    <checkbox-group bindchange="changeMute"><label class="support-mute"><checkbox value="mute" checked="{{muteChecked}}" color="#704494" />本次使用不再提醒</label></checkbox-group>
+  </view>
+</view>
