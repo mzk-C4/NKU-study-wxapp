@@ -1,0 +1,48 @@
+<view class="md {{large ? 'md-large' : ''}}">
+  <block wx:for="{{nodes}}" wx:key="idx" wx:for-index="idx">
+    <!-- 标题 -->
+    <view wx:if="{{item.type==='h1'}}" class="md-h1">
+      <text wx:for="{{item.spans}}" wx:for-item="s" wx:for-index="si" wx:key="si" class="md-span md-{{s.t}}" data-url="{{s.url}}" bindtap="onSpanTap">{{s.text}}</text>
+    </view>
+    <view wx:elif="{{item.type==='h2'}}" class="md-h2">
+      <text wx:for="{{item.spans}}" wx:for-item="s" wx:for-index="si" wx:key="si" class="md-span md-{{s.t}}" data-url="{{s.url}}" bindtap="onSpanTap">{{s.text}}</text>
+    </view>
+    <view wx:elif="{{item.type==='h3'}}" class="md-h3">
+      <text wx:for="{{item.spans}}" wx:for-item="s" wx:for-index="si" wx:key="si" class="md-span md-{{s.t}}" data-url="{{s.url}}" bindtap="onSpanTap">{{s.text}}</text>
+    </view>
+
+    <!-- 段落 -->
+    <view wx:elif="{{item.type==='p'}}" class="md-p">
+      <text wx:for="{{item.spans}}" wx:for-item="s" wx:for-index="si" wx:key="si" class="md-span md-{{s.t}}" data-url="{{s.url}}" bindtap="onSpanTap">{{s.text}}</text>
+    </view>
+
+    <!-- 引用 -->
+    <view wx:elif="{{item.type==='blockquote'}}" class="md-quote">
+      <text wx:for="{{item.spans}}" wx:for-item="s" wx:for-index="si" wx:key="si" class="md-span md-{{s.t}}" data-url="{{s.url}}" bindtap="onSpanTap">{{s.text}}</text>
+    </view>
+
+    <!-- 代码块 -->
+    <view wx:elif="{{item.type==='code'}}" class="md-code">
+      <text class="md-code-text" user-select="true" space="nbsp">{{item.text}}</text>
+    </view>
+
+    <!-- 无序列表 -->
+    <view wx:elif="{{item.type==='ul'}}" class="md-list">
+      <view wx:for="{{item.items}}" wx:for-item="li" wx:for-index="lii" wx:key="lii" class="md-li">
+        <text class="md-bullet">•</text>
+        <text wx:for="{{li}}" wx:for-item="s" wx:for-index="si" wx:key="si" class="md-span md-{{s.t}}" data-url="{{s.url}}" bindtap="onSpanTap">{{s.text}}</text>
+      </view>
+    </view>
+
+    <!-- 有序列表 -->
+    <view wx:elif="{{item.type==='ol'}}" class="md-list">
+      <view wx:for="{{item.items}}" wx:for-item="li" wx:for-index="oi" wx:key="oi" class="md-li">
+        <text class="md-bullet">{{oi + 1}}.</text>
+        <text wx:for="{{li}}" wx:for-item="s" wx:for-index="si" wx:key="si" class="md-span md-{{s.t}}" data-url="{{s.url}}" bindtap="onSpanTap">{{s.text}}</text>
+      </view>
+    </view>
+
+    <!-- 分割线 -->
+    <view wx:elif="{{item.type==='hr'}}" class="md-hr"></view>
+  </block>
+</view>
