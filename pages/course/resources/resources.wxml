@@ -1,0 +1,96 @@
+<view class="page">
+  <!-- 指南针 AI 入口 -->
+  <view class="compass-banner" bindtap="onOpenCompass">
+    <view class="cb-left">
+      <text class="cb-title">🧭 指南针 · AI 问答</text>
+      <text class="cb-sub">用学校公开指南，回答你的选课 / 学籍 / 办事问题</text>
+    </view>
+    <text class="cb-arrow">›</text>
+  </view>
+
+  <!-- 搜索 + 问 AI（搜索词可带入 AI 页作为草稿） -->
+  <view class="search-row">
+    <view class="search-box">
+      <text class="search-ico">🔍</text>
+      <input
+        class="search-input"
+        value="{{keyword}}"
+        bindinput="onSearchInput"
+        placeholder="搜索资料，或向 AI 提问"
+        confirm-type="search"
+      />
+      <text wx:if="{{keyword}}" class="search-clear" bindtap="onClearSearch">✕</text>
+    </view>
+    <view class="ask-ai-btn" bindtap="onAskAI">问 AI</view>
+  </view>
+
+  <!-- 顶部课程信息 -->
+  <view class="course-header">
+    <view class="course-name">{{courseName}}</view>
+    <view class="course-sub">{{resourceCount}} 份资料 · {{courseTerm}}</view>
+  </view>
+
+  <!-- 筛选区 -->
+  <scroll-view class="chip-row" scroll-x="true" enhanced="true" show-scrollbar="{{false}}">
+    <view 
+      class="chip {{activeType === item.key ? 'active' : ''}}" 
+      wx:for="{{typeList}}" 
+      wx:key="key"
+      data-key="{{item.key}}"
+      bindtap="onTypeTap"
+    >{{item.label}}</view>
+  </scroll-view>
+
+  <view class="filter-line">
+    <view class="filter-btn {{sortMode === 'term' ? 'active' : ''}}" bindtap="onSortTap" data-mode="term">
+      <text>全部学期</text>
+      <text class="arrow">{{sortMode === 'term' ? '▾' : '▸'}}</text>
+    </view>
+    <view class="filter-btn {{sortMode === 'update' ? 'active' : ''}}" bindtap="onSortTap" data-mode="update">
+      <text>最近更新</text>
+      <text class="arrow">{{sortMode === 'update' ? '▾' : '▸'}}</text>
+    </view>
+  </view>
+
+  <!-- 内容区 -->
+  <scroll-view class="content-scroll safe-bottom" scroll-y="true" refresher-enabled="{{true}}" refresher-triggered="{{refreshing}}" bindrefresherrefresh="onRefresh">
+    <!-- 加载中 -->
+    <view class="loading-wrap" wx:if="{{loading}}">
+      <view class="loading-spinner"></view>
+      <text class="loading-text">加载中...</text>
+    </view>
+
+    <!-- 错误状态 (HXR-06) -->
+    <error-state 
+      wx:elif="{{error}}" 
+      text="{{errorText}}" 
+      bind:retry="loadResources"
+    ></error-state>
+
+    <!-- 空状态 (HXR-06) -->
+    <empty-state
+      wx:elif="{{filteredResources.length === 0}}"
+      text="{{activeType === 'all' ? '该课程还没有资料' : '没有找到该类型的资料'}}"
+      sub="快来分享第一份资料吧"
+    ></empty-state>
+
+    <!-- 资料列表 -->
+    <block wx:else>
+      <resource-card 
+        wx:for="{{filteredResources}}" 
+        wx:key="id"
+        resource="{{item}}"
+        bind:tap="onResourceTap"
+        bind:action="onResourceAction"
+      ></resource-card>
+    </block>
+  </scroll-view>
+
+  <!-- 底部悬浮按钮 (HXR-01) -->
+  <view class="sticky-action" wx:if="{{!loading && !error}}">
+    <button class="btn primary" bindtap="onShareTap">
+      <text class="btn-icon">↑</text>
+      <text>分享这门课的资料</text>
+    </button>
+  </view>
+</view>

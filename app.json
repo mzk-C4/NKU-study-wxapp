@@ -1,0 +1,22 @@
+{
+  "pages": [
+    "pages/course/resources/resources",
+    "pages/resource/detail/detail",
+    "pages/resource/share/share",
+    "pages/submission/status/status",
+    "pages/compass/index/index",
+    "pages/compass/chat/chat",
+    "pages/compass/source/source"
+  ],
+  "window": {
+    "navigationBarTitleText": "NKUStudy",
+    "navigationBarBackgroundColor": "#fffdf8",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#f6f3f7",
+    "backgroundTextStyle": "dark",
+    "enablePullDownRefresh": false
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents"
+}

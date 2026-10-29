@@ -1,0 +1,48 @@
+/* source-card：引用来源卡片 */
+.source-card {
+  background: var(--paper);
+  border: 2rpx solid var(--line);
+  border-radius: 20rpx;
+  padding: 20rpx 22rpx;
+  margin-top: 14rpx;
+}
+.sc-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10rpx;
+}
+.sc-cat {
+  display: inline-flex;
+  align-items: center;
+  height: 40rpx;
+  padding: 0 14rpx;
+  border-radius: 10rpx;
+  background: var(--purple-soft);
+  color: var(--purple);
+  font-size: 20rpx;
+  font-weight: 600;
+}
+.sc-date { font-size: 20rpx; color: var(--muted); }
+.sc-title { font-size: 26rpx; font-weight: 700; color: var(--ink); line-height: 1.5; }
+.sc-snippet {
+  font-size: 22rpx;
+  color: var(--muted);
+  line-height: 1.6;
+  margin-top: 8rpx;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.sc-foot {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 28rpx;
+  margin-top: 14rpx;
+  padding-top: 12rpx;
+  border-top: 2rpx dashed var(--line);
+}
+.sc-copy { font-size: 22rpx; color: var(--muted); }
+.sc-open { font-size: 22rpx; color: var(--purple); font-weight: 600; }

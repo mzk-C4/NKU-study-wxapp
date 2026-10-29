@@ -1,0 +1,8 @@
+{
+  "navigationBarTitleText": "指南针 · AI 问答",
+  "backgroundColor": "#f6f3f7",
+  "usingComponents": {
+    "md-view": "/components/md-view/md-view",
+    "source-card": "/components/source-card/source-card"
+  }
+}

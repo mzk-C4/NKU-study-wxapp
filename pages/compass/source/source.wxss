@@ -1,0 +1,37 @@
+.page.source-page {
+  min-height: 100vh;
+  background: var(--bg);
+}
+.fallback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 120rpx 56rpx;
+}
+.fb-icon { font-size: 80rpx; }
+.fb-title {
+  margin-top: 24rpx;
+  font-size: 34rpx;
+  font-weight: 700;
+  color: var(--ink);
+}
+.fb-desc {
+  margin-top: 16rpx;
+  font-size: 26rpx;
+  color: var(--muted);
+  line-height: 1.7;
+}
+.fb-url {
+  margin-top: 28rpx;
+  width: 100%;
+  padding: 20rpx 22rpx;
+  background: var(--paper);
+  border: 2rpx solid var(--line);
+  border-radius: 16rpx;
+  font-size: 22rpx;
+  color: var(--muted);
+  word-break: break-all;
+  text-align: left;
+}
+.fb-copy { margin-top: 32rpx; width: 60%; }
