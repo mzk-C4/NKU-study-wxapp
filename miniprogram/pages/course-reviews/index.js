@@ -5,7 +5,7 @@ const { publicApi } = require('../../services/public-api')
 
 function starStates(value) {
   const rating = Math.max(0, Math.min(5, Number(value) || 0))
-  return [1, 2, 3, 4, 5].map(star => ({ value: star, active: rating >= star }))
+  return [1, 2, 3, 4, 5].map(star => ({ value: star, active: rating >= star, fill: Math.round(Math.max(0, Math.min(1, rating - star + 1)) * 100) }))
 }
 
 function displayDate(value) {
@@ -18,8 +18,9 @@ function displayDate(value) {
 }
 
 function presentReview(review) {
-  const rating = Math.max(0, Math.min(5, Number(review.rating) || 0))
-  return { ...review, rating, stars: starStates(rating), created_date: displayDate(review.created_at) }
+  const value = review.rating == null || review.rating === '' ? NaN : Number(review.rating)
+  const rating = Number.isFinite(value) && value >= 1 && value <= 5 ? value : null
+  return { ...review, rating, rating_label: rating === null ? '—' : rating.toFixed(1), stars: starStates(rating), created_date: displayDate(review.created_at) }
 }
 
 registerThemedPage({
@@ -45,7 +46,7 @@ registerThemedPage({
         scoreNumber: aggregate && aggregate.show_aggregate ? aggregate.average : '—',
         scoreLabel: aggregate && aggregate.show_aggregate ? '总体评分' : '评价样本不足',
         scoreCount: course ? course.review_count : 0,
-        scoreStars: starStates(aggregate && aggregate.average)
+        scoreStars: starStates(aggregate && aggregate.show_aggregate ? aggregate.average : 0)
       })
       return
     }

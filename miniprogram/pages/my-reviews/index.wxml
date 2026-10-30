@@ -1,5 +1,6 @@
 <page-meta page-style="{{themePageStyle}}" background-color="{{themeBackground}}" background-text-style="{{themeLoading}}"><navigation-bar front-color="{{themeFront}}" background-color="{{themeNavigation}}" /></page-meta>
-<view class="page">
+<view class="page my-reviews-page">
+  <state-view loading="{{loading}}" error="{{error}}" bindretry="retry"></state-view>
   <view class="card empty-record" wx:if="{{!loading && !error && !reviews.length}}">登录后提交的评价会显示在这里</view>
   <view class="card record-row" wx:for="{{reviews}}" wx:key="id">
     <view class="record-main">
@@ -9,4 +10,5 @@
     </view>
     <view class="status {{item.status_class}}">{{item.status_label}}</view>
   </view>
+  <button class="review-compose-fab" bindtap="writeReview" aria-label="写课程评价"><text class="compose-icon" aria-hidden="{{true}}">＋</text><text>写评价</text></button>
 </view>

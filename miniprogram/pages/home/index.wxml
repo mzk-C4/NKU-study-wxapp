@@ -97,7 +97,7 @@
           <view class="partner-notice-note">{{announcement.partner.note}}</view>
           <button class="announcement-partner-action" bindtap="openHinku" aria-label="打开 HiNKU 小程序首页，查询课表、班车、校园卡余额和电费">前往 HiNKU 查询 <text aria-hidden="{{true}}">↗</text></button>
           <button class="partner-preview-toggle" bindtap="togglePartnerPreview" aria-expanded="{{partnerPreviewOpen}}">{{partnerPreviewOpen ? '收起 HiNKU 界面' : '看看 HiNKU 有哪些服务'}} <text aria-hidden="{{true}}">{{partnerPreviewOpen ? '−' : '+'}}</text></button>
-          <image wx:if="{{partnerPreviewOpen}}" class="partner-notice-screen" src="/assets/home/hinku-preview.png" mode="widthFix" aria-label="HiNKU 小程序服务界面截图"></image>
+          <image wx:if="{{partnerPreviewOpen}}" class="partner-notice-screen" src="/assets/home/hinku-preview-release.jpg" mode="widthFix" aria-label="HiNKU 小程序服务界面截图"></image>
         </view>
         <view wx:if="{{announcement.parts.length}}" class="platform-notice"><view class="platform-notice-title">平台最新公告</view><text user-select="{{true}}"><block wx:for="{{announcement.parts}}" wx:key="id"><text wx:if="{{item.link}}" class="announcement-link" bindtap="openNkuCs" role="link">{{item.text}} ↗</text><text wx:else>{{item.text}}</text></block></text></view>
         <view wx:if="{{announcement.partner.group}}" class="announcement-community">

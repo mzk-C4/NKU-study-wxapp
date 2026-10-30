@@ -2,6 +2,10 @@
 .rule-title { padding-left: 16rpx; border-left: 8rpx solid var(--nk-gold, #D7A63C); font-size: 30rpx; font-weight: 700; }.rating-hint { margin: 18rpx 0 10rpx; color: var(--nk-muted, #817A84); font-size: 20rpx; }.rating-row { display: flex; align-items: center; justify-content: space-between; gap: 20rpx; min-height: 88rpx; }.rating-stars { display: flex; align-items: center; gap: 10rpx; }.rating-star { padding: 8rpx 2rpx; color: #DED7E2; font-size: 54rpx; line-height: 1; transition: color .15s ease, transform .15s ease; }.rating-star--active { color: var(--nk-gold, #D7A63C); text-shadow: 0 2rpx 0 rgba(75,31,111,.18); transform: scale(1.05); }.rating-value { min-width: 82rpx; color: var(--nk-muted, #817A84); text-align: right; font-size: 22rpx; }.rating-value--selected { color: var(--nk-accent, #4B1F6F); font-weight: 700; }.tag-options { display: flex; flex-wrap: wrap; gap: 14rpx; }.review-textarea { min-height: 210rpx; }.anonymous-row { display: flex; align-items: center; justify-content: space-between; margin-top: 26rpx; }.anonymous-title { font-weight: 700; }
 
 /* 课程选择器（无预选课程时） */
+.rating-stars { gap: 0; }
+.rating-star { flex: none; width: 76rpx !important; min-width: 0; height: 88rpx; margin: 0 !important; padding: 0; display: flex; align-items: center; justify-content: center; background: transparent; line-height: 1; }
+.rating-star[disabled] { opacity: .55; }
+.rating-check { margin-top: 20rpx; color: var(--nk-muted, #6F6972); font-size: 24rpx; line-height: 1.65; }
 .picker-list {
   margin-top: 12rpx;
   max-height: 56vh;

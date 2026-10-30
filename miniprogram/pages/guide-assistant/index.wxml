@@ -3,7 +3,7 @@
 <view class="assistant-page {{themeDark ? 'assistant-page--dark' : ''}}">
   <view class="custom-nav" style="padding-top: {{statusBarHeight}}px;">
     <button class="back-button" aria-label="返回学习指南针" hover-class="icon-pressed" bindtap="goBack"><view class="back-arrow"></view></button>
-    <view class="nav-title">学习和生活指南针</view>
+    <view class="nav-title">指南针 · AI 问答</view>
     <view class="nav-capsule-space" aria-hidden="true"></view>
   </view>
 
@@ -13,6 +13,7 @@
       <view class="history-icon" aria-hidden="true"><view></view><view></view><view></view></view>
       <text>对话记录</text>
     </button>
+    <view class="assistant-round-indicator" wx:if="{{!newTopicMode}}">{{roundLabel}} 轮</view>
     <button class="assistant-action" aria-label="新开话题" hover-class="assistant-action--pressed" bindtap="startNewTopic">
       <view class="new-topic-icon" aria-hidden="true"><view></view></view>
       <text>新开话题</text>
@@ -165,8 +166,12 @@
         </view>
         </block>
 
-        <view class="answer-reminder"><view class="answer-info-icon">i</view><text>{{responseFreshness || '如后续发布新规定，以最新官方文件为准。'}}</text></view>
-        <view class="answer-reminder" wx:if="{{responseScope}}"><view class="answer-info-icon">i</view><text>适用范围：{{responseScope}}</text></view>
+        <view class="answer-context">
+          <view class="answer-context-row" wx:if="{{responseScope}}"><text class="answer-context-label">适用范围</text><text>{{responseScope}}</text></view>
+          <view class="answer-context-row"><text class="answer-context-label">时效提醒</text><text>{{responseFreshness || '如后续发布新规定，以最新官方文件为准。'}}</text></view>
+        </view>
+
+        <view class="answer-sources-title" wx:if="{{responseCitations.length || previewMode}}"><text>引用来源</text><text class="answer-sources-count">{{responseCitations.length || 1}} 份</text></view>
 
         <view class="answer-source" wx:for="{{responseCitations}}" wx:key="id" wx:for-item="source">
           <view class="source-heading"><view class="source-bookmark"></view><text>{{source.sourceLabel}}</text></view>
@@ -174,6 +179,8 @@
             <view class="source-document-icon" aria-hidden="true"><view class="source-document-fold"></view><view class="source-document-line"></view></view>
             <view class="source-main">
               <view class="source-title">《{{source.title}}》</view>
+              <view class="source-published" wx:if="{{source.published_at}}">发布于 {{source.published_at}}</view>
+              <view class="source-location" wx:if="{{source.location_label}}">{{source.location_label}}</view>
               <view class="source-detail-row">
                 <view class="source-meta-group">
                   <view class="source-meta" wx:if="{{source.document_no}}">{{source.document_no}}</view>
@@ -313,6 +320,7 @@
     </view>
 
     <view class="new-topic-state" wx:elif="{{newTopicMode}}">
+      <view class="new-topic-intro">
       <view class="new-topic-avatar" aria-hidden="true">
         <view class="new-topic-spark new-topic-spark--left"></view>
         <view class="new-topic-spark new-topic-spark--right"></view>
@@ -324,11 +332,13 @@
           </view>
         </view>
       </view>
-      <view class="new-topic-title">今天想了解什么？</view>
-      <view class="new-topic-copy">说说你遇到的具体问题，可以补充年级、专业和时间。我会根据已有资料回答；资料不足时，你可以继续补充，学校规定请核对原文。</view>
+      <view class="new-topic-badge">NKUSTUDY / 校园问答</view>
+      <view class="new-topic-title">你好，我是指南针</view>
+      <view class="new-topic-copy">学习有疑问，生活没头绪？<view>一起从已有资料里，找找下一步。</view></view>
+      </view>
       <view class="new-topic-safety"><view class="new-topic-shield" aria-hidden="true"></view><text>学生共建 · 重要事项以最新官方文件为准</text></view>
       <button class="new-topic-profile" aria-label="编辑本机学习信息，当前为{{learningProfileLabel}}" hover-class="new-topic-profile--pressed" bindtap="openLearningProfile"><view class="profile-icon profile-icon--large" aria-hidden="true"></view><text>{{learningProfileLabel}}</text><text class="new-topic-profile-action">编辑</text><text class="new-topic-profile-arrow">›</text></button>
-      <view class="new-topic-examples-title"><view class="new-topic-star" aria-hidden="true">✦</view><text>试试这些常见问题</text></view>
+      <view class="new-topic-examples-title"><text>从一个问题开始</text><text class="new-topic-examples-caption">点击填入 · 不会自动发送</text></view>
       <view class="new-topic-examples">
         <button
           wx:for="{{exampleQuestions}}"
@@ -386,7 +396,7 @@
         focus="{{focusInput}}"
         disabled="{{requestPending || roundLimitReached || assistantState === 'rate-limited' || (previewMode && previewState === 'generating')}}"
         confirm-type="send"
-        placeholder="{{answerMode ? '继续追问这个问题' : '给学习和生活指南针发送消息'}}"
+        placeholder="{{answerMode ? '继续追问这个问题…' : '有什么想了解的？'}}"
         placeholder-class="composer-placeholder"
         aria-label="给学习和生活指南针发送消息"
         bindinput="inputQuestion"

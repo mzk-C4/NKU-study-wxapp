@@ -40,5 +40,13 @@ registerThemedPage({
     }
   },
 
+  writeReview() {
+    if (!authSession.readSession()) {
+      wx.showModal({ title: '需要先登录', content: '写评价需要先登录，登录后即可提交评价。', confirmText: '去登录',
+        success: result => { if (result.confirm) wx.switchTab({ url: '/pages/profile/index' }) } })
+      return
+    }
+    wx.navigateTo({ url: '/pages/write-review/index' })
+  },
   retry() { this.load() }
 })

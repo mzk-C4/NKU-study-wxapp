@@ -246,6 +246,23 @@ test('guide home retains search, categories and PDF alongside its AI entry', asy
   assert.deepEqual(routes,['/pages/guide-search/index?q=','/pages/guide-category/index?category=study','/pages/guide-documents/index'])
 })
 
+test('guide home example opens a draft in the existing assistant without sending', async t => {
+  const routes = []
+  installWx(t, { navigateTo(options) { routes.push(options.url) } })
+  const page = createPage(guidesDefinition)
+  const question = page.data.assistantExamples[0]
+  page.openAssistantExample({ currentTarget: { dataset: { question } } })
+  page.openAssistantExample({ currentTarget: { dataset: { question: '未登记的问题' } } })
+  assert.deepEqual(routes, [`/pages/guide-assistant/index?question=${encodeURIComponent(question)}`])
+  const template = fs.readFileSync(path.join(projectRoot, 'miniprogram/pages/guides/index.wxml'), 'utf8')
+  assert.match(template, /<button class="assistant-feature" bindtap="openAssistant"/)
+  assert.match(template, /学习与生活问题，问问指南针/)
+  assert.doesNotMatch(template, /assistant-feature-example|依据可查|试试这样问/)
+  const styles = fs.readFileSync(path.join(projectRoot, 'miniprogram/pages/guides/index.wxss'), 'utf8')
+  assert.match(styles, /\.assistant-feature\s*\{[^}]*background:\s*transparent/s)
+  assert.match(styles, /\.assistant-feature-copy\s*\{[^}]*var\(--nk-muted,/s)
+})
+
 test('concurrent catalog retries are latest-request-wins and stale errors stay silent', async t => {
   const first=deferred(),second=deferred()
   let count=0

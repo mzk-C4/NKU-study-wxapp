@@ -190,3 +190,12 @@ test('Feishu entry copies the exact original URL without mirroring or embedded w
   assert.match(page.data.copyError, /复制失败/)
   assert.equal(page.data.copying, false)
 })
+
+test('home keeps only the first three latest updates and handles short or empty lists', () => {
+  const page = loadPage('home')
+  const items = Array.from({ length: 5 }, (_, i) => ({ id: `u-${i}`, title: `更新 ${i}`, summary: '说明', updated: '2026-10-29' }))
+  assert.deepEqual(page.buildUpdates(items).map(item => item.id), ['u-0', 'u-1', 'u-2'])
+  assert.equal(page.buildUpdates(items.slice(0, 2)).length, 2)
+  assert.deepEqual(page.buildUpdates([]), [])
+  assert.deepEqual(page.buildUpdates(null), [])
+})

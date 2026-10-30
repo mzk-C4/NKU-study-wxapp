@@ -2,24 +2,22 @@
 <view class="reviews-page">
   <view class="detail-tabs" wx:if="{{course}}"><view class="detail-tab" data-tab="overview" bindtap="openTab">概览</view><view class="detail-tab" data-tab="resources" bindtap="openTab">资料 {{course.resource_count || 0}}</view><view class="detail-tab detail-tab--active">评价 {{course.review_count || 0}}</view></view>
   <view class="page reviews-body">
-    <view class="card score-card" wx:if="{{course}}"><view class="score-number">{{scoreNumber}}</view><view class="score-copy"><view class="score-label">{{teacher ? teacher + ' · 评分' : scoreLabel}}</view><view class="stars stars--summary"><text wx:for="{{scoreStars}}" wx:key="value" class="star {{item.active ? 'star--active' : ''}}">★</text></view><view class="micro">基于 {{scoreCount}} 条评价{{teacher ? '（当前老师）' : ''}}</view></view></view>
-    <view class="card score-card" wx:if="{{standaloneGroup && !course}}"><view class="score-number">{{standaloneGroup.rating_average || '—'}}</view><view class="score-copy"><view class="score-label">{{standaloneGroup.course_name}} · {{standaloneGroup.teacher_name}}</view><view class="stars stars--summary"><text wx:for="{{scoreStars}}" wx:key="value" class="star {{item.active ? 'star--active' : ''}}">★</text></view></view></view>
+    <view class="card score-card" wx:if="{{course}}"><view class="score-number">{{scoreNumber}}</view><view class="score-copy"><view class="score-label">{{teacher ? teacher + ' · 评分' : scoreLabel}}</view><view class="stars stars--summary"><view wx:for="{{scoreStars}}" wx:key="value" class="star"><text>★</text><view class="star-fill" style="width: {{item.fill}}%;"><text>★</text></view></view></view><view class="micro">基于 {{scoreCount}} 条评价{{teacher ? '（当前老师）' : ''}}</view></view></view>
+    <view class="card score-card" wx:if="{{standaloneGroup && !course}}"><view class="score-number">{{standaloneGroup.rating_average || '—'}}</view><view class="score-copy"><view class="score-label">{{standaloneGroup.course_name}} · {{standaloneGroup.teacher_name}}</view><view class="stars stars--summary"><view wx:for="{{scoreStars}}" wx:key="value" class="star"><text>★</text><view class="star-fill" style="width: {{item.fill}}%;"><text>★</text></view></view></view></view></view>
     <view class="chips section"><view class="chip {{!teacher ? 'chip--active' : ''}}" data-teacher="" bindtap="chooseTeacher">全部教师</view><view wx:for="{{teacherGroups}}" wx:key="id" class="chip {{teacher === item.teacher_name ? 'chip--active' : ''}}" data-teacher="{{item.teacher_name}}" bindtap="chooseTeacher">{{item.teacher_name}}</view></view>
     <state-view loading="{{loading}}" error="{{error}}" empty="{{!loading && !error && !visibleReviews.length}}" empty-text="还没有同学评价" bindretry="loadReviews"></state-view>
     <view class="review-card" wx:for="{{visibleReviews}}" wx:for-item="review" wx:key="id">
       <view class="review-head">
-        <view class="review-user">
-          <view class="review-rating"><view class="stars"><text wx:for="{{review.stars}}" wx:for-item="starItem" wx:key="value" class="star {{starItem.active ? 'star--active' : ''}}">★</text></view><text>{{review.rating}} 分</text></view>
-          <view class="micro">{{review.teacher_name}}</view>
-        </view>
+        <view class="review-score" aria-label="{{review.rating === null ? '暂无评分' : review.rating_label + ' 分，满分 5 分'}}"><text class="review-score-value">{{review.rating_label}}</text><text class="review-score-caption">{{review.rating === null ? '未评分' : '评分'}}</text></view>
+        <view class="review-user"><view class="review-teacher">{{review.teacher_name || '教师未注明'}}</view><view class="stars" aria-hidden="{{true}}"><view wx:for="{{review.stars}}" wx:for-item="starItem" wx:key="value" class="star"><text>★</text><view class="star-fill" style="width: {{starItem.fill}}%;"><text>★</text></view></view></view></view>
+        <text class="review-date">{{review.created_date}}</text>
       </view>
-      <view class="review-body"><text user-select>{{review.body}}</text></view>
-      <view class="review-foot">
-        <view class="helpful-button {{review.viewer_reaction === 'up' ? 'helpful-button--active' : ''}} {{reactingReviewId === review.id ? 'helpful-button--busy' : ''}}" data-id="{{review.id}}" catchtap="reactToReview"><text class="helpful-icon">👍</text><text class="helpful-count">{{review.helpful_count || 0}} 人觉得有帮助</text></view>
-        <text class="review-date">{{review.created_date || review.created_at}}</text>
+      <view class="review-content">
+        <view class="review-body"><text user-select>{{review.body}}</text></view>
+        <button class="helpful-button {{review.viewer_reaction === 'up' ? 'helpful-button--active' : ''}}" data-id="{{review.id}}" catchtap="reactToReview" disabled="{{!!reactingReviewId}}" aria-label="{{review.viewer_reaction === 'up' ? '取消有帮助标记' : '标记这条评价有帮助'}}，已有 {{review.helpful_count || 0}} 人标记"><image class="helpful-icon" src="/assets/icons/thumb-up.svg" aria-hidden="{{true}}" /><text class="helpful-count">{{review.helpful_count || 0}}</text><text class="helpful-caption">有帮助</text></button>
       </view>
     </view>
     <view class="empty-space"></view>
   </view>
-  <view class="sticky-footer"><button class="button button--primary" bindtap="writeReview">写课程评价</button></view>
+  <button class="review-compose-fab" bindtap="writeReview" aria-label="写课程评价"><text class="compose-icon" aria-hidden="{{true}}">＋</text><text>写评价</text></button>
 </view>

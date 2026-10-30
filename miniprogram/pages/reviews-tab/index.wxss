@@ -28,6 +28,12 @@
 /* 右下角写评价悬浮按钮 */
 .write-review-fab {
   position: fixed;
+  width: auto !important;
+  min-width: 0;
+  max-width: calc(100% - 64rpx);
+  margin: 0 !important;
+  box-sizing: border-box;
+  line-height: 1.5;
   right: 32rpx;
   bottom: calc(48rpx + env(safe-area-inset-bottom));
   z-index: 50;
@@ -42,3 +48,5 @@
 .write-review-fab:active {
   opacity: 0.85;
 }
+
+.write-review-fab::after { border: 0; }

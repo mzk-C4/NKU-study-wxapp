@@ -29,6 +29,34 @@
       {
         "type": "folder",
         "value": "docs"
+      },
+      {
+        "type": "file",
+        "value": "assets/support/community-garden.jpg"
+      },
+      {
+        "type": "file",
+        "value": "assets/support/community-garden-n.jpg"
+      },
+      {
+        "type": "file",
+        "value": "assets/support/community-emblem.png"
+      },
+      {
+        "type": "file",
+        "value": "assets/support/community-haitang-banner.jpg"
+      },
+      {
+        "type": "file",
+        "value": "assets/support/community-haitang-emblem.png"
+      },
+      {
+        "type": "file",
+        "value": "assets/branding/launch-logo.png"
+      },
+      {
+        "type": "file",
+        "value": "assets/home/hinku-preview.png"
       }
     ]
   },

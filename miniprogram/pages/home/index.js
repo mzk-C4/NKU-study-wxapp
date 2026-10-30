@@ -121,7 +121,7 @@ registerThemedPage({
   // 把多行简介整理为「引导语 + 分点要点」：带序号或圆点开头的行进入要点，其余按顺序归入引导语或上一个要点
   buildUpdates(items) {
     const POINT_PATTERN = /^([-*•]|(\d+[.、)]))\s*(.+)$/
-    return (items || []).map(item => {
+    return (Array.isArray(items) ? items : []).slice(0, 3).map(item => {
       const lines = String(item.summary || '').split(/\r?\n/).map(line => line.trim()).filter(Boolean)
       const lead = []
       const points = []

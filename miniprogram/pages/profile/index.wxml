@@ -34,9 +34,9 @@
 
   <view class="page profile-body">
     <view class="profile-stats">
-      <view><b>{{history.length}}</b><text>本机浏览</text></view>
-      <view><b>{{isLoggedIn ? favoriteTotal : '—'}}</b><text>收藏课程</text></view>
-      <view><b>{{isLoggedIn ? reviewTotal : '—'}}</b><text>我的评价</text></view>
+      <button class="profile-stat" hover-class="profile-stat--pressed" bindtap="openHistoryPage" aria-label="最近浏览，{{history.length}} 条，点击查看"><text class="profile-stat-value">{{history.length}}</text><text>最近浏览</text></button>
+      <button class="profile-stat" hover-class="profile-stat--pressed" bindtap="openFavorites" aria-label="我的收藏，点击查看"><text class="profile-stat-value">{{isLoggedIn ? favoriteTotal : '—'}}</text><text>我的收藏</text></button>
+      <button class="profile-stat" hover-class="profile-stat--pressed" bindtap="openMyReviews" aria-label="我的评价，点击查看"><text class="profile-stat-value">{{isLoggedIn ? reviewTotal : '—'}}</text><text>我的评价</text></button>
     </view>
 
     <community-support id="support-personal" mode="personal" account="{{isLoggedIn ? user.id : ''}}" />
@@ -106,9 +106,6 @@
     </view>
 
     <view class="card menu section">
-      <view class="menu-row" bindtap="openFavorites"><text>我的收藏</text><text class="muted">{{isLoggedIn ? favoriteLabel : '登录后可用'}} ›</text></view>
-      <view class="menu-row" bindtap="openHistoryPage"><text>最近浏览</text><text class="muted">{{history.length}} 条 ›</text></view>
-      <view class="menu-row" bindtap="openMyReviews"><text>我的评价</text><text class="muted">{{isLoggedIn ? reviewLabel : '登录后可用'}} ›</text></view>
       <view class="menu-row" bindtap="openSubmit"><text>资料投稿</text><text class="muted">{{submissionLabel}} ›</text></view>
     </view>
 

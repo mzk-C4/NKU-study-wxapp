@@ -8,3 +8,8 @@
 .status--approved { color: var(--nk-green, #16a34a); border-color: var(--nk-line, #bbf7d0); }
 .status--pending, .status--needs_changes { color: var(--nk-gold, #a16207); border-color: var(--nk-line, #fde68a); }
 .status--rejected, .status--hidden { color: var(--nk-red, #dc2626); border-color: var(--nk-line, #fecaca); }
+
+.my-reviews-page { padding-bottom: calc(172rpx + env(safe-area-inset-bottom)); }
+.review-compose-fab { position: fixed; z-index: 10; right: 32rpx; bottom: calc(28rpx + env(safe-area-inset-bottom)); display: flex; flex-direction: column; align-items: center; justify-content: center; width: 112rpx !important; min-width: 112rpx; max-width: 112rpx; height: 112rpx; margin: 0 !important; padding: 0; border-radius: 50%; color: #FFFFFF; background: var(--nk-primary, #4B1F6F); box-shadow: 0 6rpx 18rpx rgba(43,18,62,.2); font-size: 22rpx; line-height: 1.2; }
+.review-compose-fab::after { border: 0; }
+.compose-icon { font-size: 38rpx; line-height: 1; margin-bottom: 4rpx; }

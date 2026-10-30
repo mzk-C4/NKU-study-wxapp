@@ -42,3 +42,56 @@ test('review tag summaries keep real bounded counts, drop private fields and sel
   assert.equal(Object.hasOwn(mapReviewGroup({}), 'tag_counts'), false)
   assert.deepEqual(mapReviewGroup({ review_count: 0, tag_counts: [{ tag: '不存在', count: 1 }] }).tag_counts, [])
 })
+
+test('review cards preserve real scores and do not manufacture scores from missing or invalid values', () => {
+  const previous = global.Page
+  global.Page = () => {}
+  let presentReview
+  try { ({ presentReview } = require('../miniprogram/pages/course-reviews/index')) } finally { global.Page = previous }
+  for (const rating of [null, undefined, '', 0, -1, 6, Infinity, 'bad']) {
+    const review = presentReview({ rating, body: '事多分低，四学期以来最低的英语' })
+    assert.equal(review.rating, null)
+    assert.equal(review.rating_label, '—')
+    assert.equal(review.stars.some(star => star.active), false)
+  }
+  const review = presentReview({ rating: 5, body: '事多分低，四学期以来最低的英语' })
+  assert.equal(review.rating_label, '5.0', 'client must not infer moderation or rewrite server scores from text')
+  assert.equal(presentReview({ rating: 3.5 }).rating_label, '3.5')
+})
+
+test('review layout places score left, date in header and real helpful action beside the text', () => {
+  const fs = require('node:fs')
+  const read = file => fs.readFileSync(require('node:path').join(__dirname, '../miniprogram', file), 'utf8')
+  const markup = read('pages/course-reviews/index.wxml')
+  assert.ok(markup.indexOf('class="review-score"') < markup.indexOf('class="review-teacher"'))
+  assert.ok(markup.indexOf('class="review-date"') < markup.indexOf('class="review-content"'))
+  assert.match(markup, /<button class="helpful-button[^>]*catchtap="reactToReview"/)
+  assert.match(markup, /class="review-compose-fab"[^>]*bindtap="writeReview"[^>]*aria-label="写课程评价"/)
+  assert.doesNotMatch(markup, /sticky-footer/)
+  assert.match(read('pages/course-reviews/index.wxss'), /bottom:\s*calc\(28rpx \+ env\(safe-area-inset-bottom\)\)/)
+})
+
+test('home restores the separate themed brand row and original rounded purple grid hero', () => {
+  const fs = require('node:fs')
+  const read = file => fs.readFileSync(require('node:path').join(__dirname, '../miniprogram', file), 'utf8')
+  const home = read('pages/home/index.wxml')
+  const styles = read('pages/home/index.wxss')
+  assert.doesNotMatch(home + styles, /home-masthead/)
+  assert.ok(home.indexOf('class="brand-row"') < home.indexOf('class="hero"'))
+  assert.ok(home.indexOf('class="search-box home-search"') < home.indexOf('class="announcement-bar"'))
+  assert.ok(home.indexOf('class="announcement-bar"') < home.indexOf('class="home-carousel section"'))
+  assert.match(styles, /\.brand-name\s*\{[^}]*color:\s*var\(--nk-text/)
+  assert.match(styles, /\.site-status-value\s*\{[^}]*color:\s*var\(--nk-text/)
+  assert.match(styles, /\.hero\s*\{[^}]*background-image:\s*linear-gradient/)
+  assert.match(styles, /\.hero\s*\{[^}]*border-radius:\s*0 0 48rpx 48rpx/)
+})
+
+test('decimal stars display exact partial fill without changing the server score', () => {
+  const previous = global.Page
+  global.Page = () => {}
+  let starStates
+  try { ({ starStates } = require('../miniprogram/pages/course-reviews/index')) } finally { global.Page = previous }
+  assert.deepEqual(starStates(3.5).map(star => star.fill), [100, 100, 100, 50, 0])
+  assert.deepEqual(starStates(4.9).map(star => star.fill), [100, 100, 100, 100, 90])
+  assert.deepEqual(starStates(null).map(star => star.fill), [0, 0, 0, 0, 0])
+})

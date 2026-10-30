@@ -72,6 +72,21 @@ function installWx(t, implementation = {}) {
 const assistantDefinition = capturePage('miniprogram/pages/guide-assistant/index.js')
 const guidesDefinition = capturePage('miniprogram/pages/guides/index.js')
 
+test('AI visual refresh keeps theme tokens, compact layout and existing actions', () => {
+  const template = fs.readFileSync(path.join(projectRoot, 'miniprogram/pages/guide-assistant/index.wxml'), 'utf8')
+  const styles = fs.readFileSync(path.join(projectRoot, 'miniprogram/pages/guide-assistant/index.wxss'), 'utf8')
+  assert.match(template, /指南针 · AI 问答/)
+  assert.match(template, /class="new-topic-intro"/)
+  assert.match(template, /点击填入 · 不会自动发送/)
+  assert.match(styles, /\.assistant-page:not\(\.assistant-page--dark\)/)
+  assert.match(styles, /--nk-primary:\s*#4B1F6F/)
+  assert.match(styles, /\.assistant-page \.new-topic-example[\s\S]*color: var\(--nk-text\)/)
+  assert.match(styles, /\.assistant-page \.composer-placeholder[\s\S]*var\(--nk-muted\)/)
+  for (const action of ['sendQuestion', 'openConversationHistory', 'startNewTopic', 'openAnswerSource']) {
+    assert.match(template, new RegExp('bindtap="' + action + '"'))
+  }
+})
+
 test('AI page is registered with accessible controls and recoverable history', () => {
   const app = JSON.parse(fs.readFileSync(path.join(projectRoot, 'miniprogram/app.json'), 'utf8'))
   const config = JSON.parse(fs.readFileSync(path.join(projectRoot, 'miniprogram/pages/guide-assistant/index.json'), 'utf8'))
@@ -86,7 +101,10 @@ test('AI page is registered with accessible controls and recoverable history', (
   assert.match(template, /新开话题/)
   assert.match(template, /正在查找资料并整理回答中/)
   assert.match(template, /现有资料暂时无法回答/)
-  assert.match(template, /今天想了解什么/)
+  assert.match(template, /你好，我是指南针/)
+  assert.match(template, /class="assistant-round-indicator"/)
+  assert.match(template, /class="answer-context-label">适用范围/)
+  assert.match(template, /class="answer-sources-title"/)
   assert.match(template, /bindtap="chooseExampleQuestion"/)
   assert.match(template, /disabled="{{requestPending \|\| roundLimitReached/)
   assert.match(template, /class="new-topic-logo"/)

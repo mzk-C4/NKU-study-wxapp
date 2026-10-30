@@ -6,7 +6,7 @@
   <button class="intro-skip" bindtap="skip" aria-label="跳过入场动画，进入首页">跳过 <text aria-hidden="{{true}}">›</text></button>
   <view class="intro-center">
     <view wx:if="{{!logoFailed}}" class="intro-logo-wrap" aria-hidden="{{true}}">
-      <image class="intro-logo" src="/assets/branding/launch-logo.png" mode="aspectFit" binderror="logoError" />
+      <image class="intro-logo" src="/assets/branding/launch-logo-release.jpg" mode="aspectFit" binderror="logoError" />
       <view class="intro-shine intro-logo-shine"></view>
     </view>
     <view class="intro-wordmark"><text>NKUStudy</text><view class="intro-shine" aria-hidden="{{true}}"></view></view>

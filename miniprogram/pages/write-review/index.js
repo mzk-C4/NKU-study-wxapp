@@ -318,7 +318,7 @@ function createWriteReviewPage(api = publicApi) {
     if (this.data.loading || this.data.error || !this.data.course) return
     if (this._draft && this._draft.account !== drafts.owner(false)) { this.startDraft(); return }
     const { course, isGroupMode, groupCourseTitle, teacher, rating, body, minLength } = this.data
-    if (!teacher.trim() || !rating || body.trim().length < minLength) {
+    if (!teacher.trim() || !Number.isInteger(rating) || rating < 1 || rating > 5 || body.trim().length < minLength) {
       wx.showToast({ title: `请填写教师、完成评分并填写至少 ${minLength} 字`, icon: 'none' })
       return
     }

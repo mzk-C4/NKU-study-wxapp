@@ -585,3 +585,33 @@
 .campus-map-main { flex:1; min-width:0; }
 .campus-map-title { color:var(--nk-text, #2B174A); font-size:30rpx; font-weight:700; }
 .campus-map-note { margin-top:6rpx; color:var(--nk-muted, #716A7D); font-size:23rpx; }
+
+/* One quiet entry; examples and source guidance live inside the assistant. */
+.assistant-feature {
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+  width: 100% !important;
+  min-height: 124rpx;
+  margin: 20rpx 0 0 !important;
+  padding: 24rpx 6rpx;
+  border-bottom: 1rpx solid var(--nk-line, #E8E2EC);
+  border-radius: 0;
+  color: var(--nk-text, #211C24);
+  background: transparent;
+  box-shadow: none;
+  text-align: left;
+  line-height: 1.5;
+  box-sizing: border-box;
+}
+.assistant-feature::after { border: 0; }
+.assistant-feature-mark {
+  display: flex; align-items: center; justify-content: center;
+  flex: 0 0 auto; width: 56rpx; height: 56rpx; border-radius: 16rpx;
+  color: var(--nk-accent, #4B1F6F); background: var(--nk-soft, #EFE8F4); font-size: 30rpx;
+}
+.assistant-feature-main { flex: 1; min-width: 0; }
+.assistant-feature-title { font-size: 28rpx; font-weight: 600; }
+.assistant-feature-copy { margin-top: 4rpx; color: var(--nk-muted, #6F6972); font-size: 22rpx; }
+.assistant-feature-action { display: flex; align-items: center; gap: 10rpx; flex: 0 0 auto; color: var(--nk-accent, #4B1F6F); font-size: 24rpx; }
+.assistant-feature-action > text:last-child { font-size: 34rpx; }

@@ -21,10 +21,13 @@
       <text>搜索选课、保研、住宿与学生资料</text>
     </button>
 
-    <button class="campus-map-entry" bindtap="openAssistant" hover-class="control--pressed" aria-label="打开指南针 AI 问答">
-      <view class="campus-map-symbol" aria-hidden="true">AI</view>
-      <view class="campus-map-main"><view class="campus-map-title">问问指南针 AI</view><view class="campus-map-note">根据指南回答 · 查看来源 · 支持追问</view></view>
-      <text class="pdf-entry-arrow" aria-hidden="true">›</text>
+    <button class="assistant-feature" bindtap="openAssistant" hover-class="control--pressed" aria-label="打开指南针 AI 问答">
+      <view class="assistant-feature-mark" aria-hidden="true">✦</view>
+      <view class="assistant-feature-main">
+        <view class="assistant-feature-title">指南针 AI</view>
+        <view class="assistant-feature-copy">学习与生活问题，问问指南针</view>
+      </view>
+      <view class="assistant-feature-action"><text>去提问</text><text aria-hidden="true">›</text></view>
     </button>
 
     <view class="category-panel" aria-label="指南一级分类">

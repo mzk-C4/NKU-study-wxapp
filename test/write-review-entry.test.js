@@ -43,6 +43,25 @@ function makePage(api) {
   return page
 }
 
+test('new reviews require an explicit score from one to five; no default five-star submission', async () => {
+  let submitted = 0
+  const page = makePage(fakeApi({ submitReview: async () => { submitted++; return {} } }))
+  assert.equal(page.data.rating, 0)
+  await page.onLoad({ course_id: 'c1' })
+  await page.prepare()
+  page.setData({ teacher: '张老师', body: '这是一段足够长的真实课程体验评价。' })
+  for (const rating of [0, 6, -1, 2.5, '5', NaN]) {
+    page.setData({ rating })
+    await page.submit()
+    assert.equal(submitted, 0)
+  }
+  page.setRating({ currentTarget: { dataset: { score: '4' } } })
+  assert.equal(page.data.rating, 4)
+  page.setData({ submitting: true })
+  page.setRating({ currentTarget: { dataset: { score: '1' } } })
+  assert.equal(page.data.rating, 4, 'submitting locks the score')
+})
+
 test('picker entries merge sources with review stats and derive course teachers from groups', () => {
   const entries = buildPickerEntries(
     { items: [
