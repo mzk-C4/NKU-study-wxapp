@@ -46,16 +46,16 @@
         <block wx:for="{{historyGroups}}" wx:key="key" wx:for-item="group">
           <view class="history-group-title">{{group.label}}</view>
           <view
-            class="history-conversation-item {{historyActionQuestion === conversation.question ? 'history-conversation-item--active' : ''}}"
+            class="history-conversation-item {{historyActionId === conversation.id ? 'history-conversation-item--active' : ''}}"
             wx:for="{{group.items}}"
-            wx:key="question"
+            wx:key="id"
             wx:for-item="conversation"
           >
-            <view class="history-conversation-row {{historyActionQuestion === conversation.question ? 'history-conversation-row--selected' : ''}}">
+            <view class="history-conversation-row {{historyActionId === conversation.id ? 'history-conversation-row--selected' : ''}}">
               <button
                 class="history-conversation-button"
                 aria-label="打开对话：{{conversation.title}}，长按管理"
-                data-question="{{conversation.question}}"
+                data-id="{{conversation.id}}" data-question="{{conversation.question}}"
                 hover-class="history-conversation-button--pressed"
                 bindtap="selectHistory"
                 bindlongpress="openHistoryActions"
@@ -63,7 +63,7 @@
               <button
                 class="history-pin-button {{conversation.pinned ? 'history-pin-button--active' : ''}}"
                 aria-label="{{conversation.pinAriaLabel}}"
-                data-question="{{conversation.question}}"
+                data-id="{{conversation.id}}" data-question="{{conversation.question}}"
                 hover-class="history-pin-button--pressed"
                 bindtap="toggleHistoryPin"
               ><view class="history-pin-mark" aria-hidden="true"><view></view></view></button>
@@ -71,20 +71,20 @@
 
             <view
               class="history-action-card"
-              wx:if="{{historyActionQuestion === conversation.question && !historyRenameMode}}"
+              wx:if="{{historyActionId === conversation.id && !historyRenameMode}}"
               catchtap="stopPropagation"
             >
-              <button class="history-action-row" data-question="{{conversation.question}}" hover-class="history-action-row--pressed" bindtap="openHistoryRename">
+              <button class="history-action-row" data-id="{{conversation.id}}" data-question="{{conversation.question}}" hover-class="history-action-row--pressed" bindtap="openHistoryRename">
                 <view class="history-action-icon history-pencil-icon" aria-hidden="true"><view></view></view>
                 <text>重命名</text>
               </button>
-              <button class="history-action-row" data-question="{{conversation.question}}" hover-class="history-action-row--pressed" bindtap="chooseHistoryPin">
+              <button class="history-action-row" data-id="{{conversation.id}}" data-question="{{conversation.question}}" hover-class="history-action-row--pressed" bindtap="chooseHistoryPin">
                 <view class="history-action-icon" aria-hidden="true">
                   <view class="history-pin-mark history-action-pin {{conversation.pinned ? 'history-action-pin--unpin' : ''}}"><view></view></view>
                 </view>
                 <text>{{conversation.pinned ? '取消置顶' : '置顶'}}</text>
               </button>
-              <button class="history-action-row history-action-row--danger" data-question="{{conversation.question}}" hover-class="history-action-row--pressed" bindtap="chooseHistoryDelete">
+              <button class="history-action-row history-action-row--danger" data-id="{{conversation.id}}" data-question="{{conversation.question}}" hover-class="history-action-row--pressed" bindtap="chooseHistoryDelete">
                 <view class="history-action-icon history-trash-icon" aria-hidden="true"><view></view></view>
                 <text>删除</text>
               </button>
@@ -92,7 +92,7 @@
 
             <view
               class="history-rename-card"
-              wx:if="{{historyActionQuestion === conversation.question && historyRenameMode}}"
+              wx:if="{{historyActionId === conversation.id && historyRenameMode}}"
               catchtap="stopPropagation"
             >
               <view class="history-rename-title">重命名会话</view>
@@ -356,6 +356,7 @@
     </view>
 
     <view class="service-recovery-state" wx:elif="{{showRecoveryActions && !networkError}}">
+      <view class="answer-question-bubble" wx:if="{{lastQuestion}}">{{lastQuestion}}</view>
       <view class="building-mark">AI</view>
       <view class="building-title">{{recoveryTitle}}</view>
       <view class="building-copy">{{recoveryCopy}}</view>
@@ -382,7 +383,7 @@
         <view class="continue-arrow">›</view>
       </button>
     </view>
-  <view class="follow-up-options" wx:if="{{!requestPending && !roundLimitReached && (answerMode || previewState === 'refusal') && !previewMode}}">
+  <view class="follow-up-options" wx:if="{{followUpQuestions.length && !requestPending && !roundLimitReached && answerMode && !previewMode}}">
     <button wx:for="{{followUpQuestions}}" wx:key="*this" data-question="{{item}}" bindtap="chooseExampleQuestion">{{item}}</button>
   </view>
   </view>

@@ -10,13 +10,11 @@
   overflow: hidden;
   display: flex;
   align-items: center;
-  gap: 26rpx;
-  min-height: 228rpx;
-  padding: 34rpx 34rpx 34rpx 32rpx;
+  gap: 20rpx;
+  min-height: 164rpx;
+  padding: 28rpx 32rpx;
   border-bottom: 1rpx solid var(--nk-line, #EFEAF2);
-  background:
-    radial-gradient(circle at 86% 18%, rgba(113, 72, 160, .08), transparent 35%),
-    linear-gradient(135deg, var(--nk-surface, #FFFDF8) 0%, var(--nk-surface, #FBF7FD) 72%, var(--nk-surface, #FFFFFF) 100%);
+  background: var(--nk-bg, #F6F3F7);
   box-sizing: border-box;
 }
 
@@ -24,8 +22,8 @@
   position: relative;
   z-index: 2;
   flex: 0 0 auto;
-  width: 132rpx;
-  height: 132rpx;
+  width: 88rpx;
+  height: 88rpx;
 }
 
 .guide-intro-main {
@@ -37,7 +35,7 @@
 
 .guide-title {
   color: var(--nk-text, #2B174A);
-  font-size: 48rpx;
+  font-size: 36rpx;
   font-weight: 800;
   line-height: 1.24;
   letter-spacing: 1rpx;
@@ -131,7 +129,7 @@
   width: 100% !important;
   min-width: 100%;
   max-width: 100%;
-  height: 94rpx;
+  height: 82rpx;
   margin: 0 !important;
   padding: 0 30rpx;
   border: 2rpx solid var(--nk-line, #D7C9E6);
@@ -189,12 +187,12 @@
   display: flex;
   align-items: stretch;
   gap: 0;
-  margin-top: 28rpx;
-  padding: 18rpx 10rpx 12rpx;
+  margin-top: 20rpx;
+  padding: 12rpx 8rpx 8rpx;
   border: 1rpx solid var(--nk-line, #EEE9F1);
   border-radius: 28rpx;
   background: var(--nk-surface, #FFFFFF);
-  box-shadow: 0 10rpx 28rpx rgba(52,35,68,.07);
+  box-shadow: none;
   box-sizing: border-box;
 }
 
@@ -207,7 +205,7 @@
   width: 25% !important;
   min-width: 0;
   max-width: 25%;
-  min-height: 142rpx;
+  min-height: 122rpx;
   margin: 0 !important;
   padding: 8rpx 0 18rpx !important;
   border-radius: 20rpx;
@@ -614,4 +612,32 @@
 .assistant-feature-title { font-size: 28rpx; font-weight: 600; }
 .assistant-feature-copy { margin-top: 4rpx; color: var(--nk-muted, #6F6972); font-size: 22rpx; }
 .assistant-feature-action { display: flex; align-items: center; gap: 10rpx; flex: 0 0 auto; color: var(--nk-accent, #4B1F6F); font-size: 24rpx; }
-.assistant-feature-action > text:last-child { font-size: 34rpx; }
+.assistant-feature-action { font-size: 34rpx; }
+
+/* Shared columns keep every entry's icon, text and arrow on the same rails. */
+.guide-body .assistant-feature,
+.guide-body .campus-map-entry,
+.guide-body .pdf-entry {
+  display: grid; grid-template-columns: 56rpx minmax(0, 1fr) 28rpx;
+  align-items: center; gap: 20rpx; width: 100% !important;
+  min-height: 116rpx; margin: 16rpx 0 0 !important; padding: 22rpx 20rpx !important;
+  border: 1rpx solid var(--nk-line, #E8E2EC); border-radius: 20rpx;
+  background: transparent; box-shadow: none; box-sizing: border-box;
+}
+.guide-body .campus-map-symbol,
+.guide-body .pdf-document-icon,
+.guide-body .assistant-feature-mark {
+  display: flex; align-items: center; justify-content: center;
+  width: 56rpx; height: 56rpx; border: 0; border-radius: 14rpx;
+  background: var(--nk-soft, #EFE8F4); color: var(--nk-accent, #4B1F6F);
+  font-size: 28rpx; box-sizing: border-box;
+}
+.guide-body .pdf-document-icon { font-size: 18rpx; }
+.guide-body .campus-map-title,
+.guide-body .pdf-section-title,
+.guide-body .assistant-feature-title { font-size: 26rpx; font-weight: 600; line-height: 1.5; }
+.guide-body .campus-map-note,
+.guide-body .pdf-section-note,
+.guide-body .assistant-feature-copy { margin-top: 4rpx; font-size: 22rpx; line-height: 1.6; }
+.guide-body .pdf-entry-arrow,
+.guide-body .assistant-feature-action { width: 28rpx; font-size: 34rpx; text-align: center; }

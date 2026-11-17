@@ -98,8 +98,9 @@ test('banner navigation is fixed and image errors retain text and action', t => 
   page.bannerImageError({ currentTarget: { dataset: { id: 'hinku' } } })
   page.openSlide({ currentTarget: { dataset: { id: 'hinku' } } })
   assert.equal(opened.at(-1), 'wxbd7dc59babb6d536')
-  page.openFeishuDocument()
-  assert.equal(opened.at(-1), '/pages/feishu-document/index')
+  const guides = loadPage('guides')
+  guides.openHandbook()
+  assert.equal(opened.at(-1), '/pages/guide-category/index?kind=handbook')
 })
 
 test('home and guides open the fixed hinku release homepage from a tap, including when home data is unavailable', t => {
@@ -124,7 +125,7 @@ test('home and guides open the fixed hinku release homepage from a tap, includin
       assert.match(page.data.slides[3].description, /课表 · 班车 · 校园卡余额 · 电费/)
     } else {
       assert.match(template, /bindtap="openHinku"/)
-      assert.match(template, /课表 · 班车 · 校园卡余额 · 电费/)
+      assert.match(template, /课表 · 班车 · 余额与电费 · 场地预约/)
     }
   }
   assert.equal(opened.length, 2)
@@ -155,7 +156,7 @@ test('hinku navigation suppresses repeated taps, allows retry, and handles cance
   assert.match(toasts.at(-1).title, /更新微信/)
 })
 
-test('Feishu entry copies the exact original URL without mirroring or embedded web-view', t => {
+test('handbook directory retains its original Feishu source without an embedded web-view', t => {
   const page = loadPage('feishu-document')
   const previous = global.wx
   t.after(() => { global.wx = previous })
@@ -167,10 +168,14 @@ test('Feishu entry copies the exact original URL without mirroring or embedded w
   const homeTemplate = fs.readFileSync(path.join(root, 'miniprogram/pages/home/index.wxml'), 'utf8')
   const config = JSON.parse(fs.readFileSync(path.join(root, 'miniprogram/pages/feishu-document/index.json'), 'utf8'))
   const title = 'NKU 计网 软件 人智大类生存手册'
-  assert.ok(homeTemplate.includes(title))
-  assert.ok(template.includes(title))
+  const guidesTemplate = fs.readFileSync(path.join(root, 'miniprogram/pages/guides/index.wxml'), 'utf8')
+  assert.doesNotMatch(homeTemplate, /生存手册|openFeishuDocument|document-entry/)
+  assert.ok(guidesTemplate.includes(title))
+  assert.match(guidesTemplate, /bindtap="openHandbook"/)
+  assert.ok(guidesTemplate.indexOf('bindtap="openHandbook"') < guidesTemplate.indexOf('bindtap="openCppNotes"'))
+  assert.equal(page.data.documentTitle, title)
+  assert.match(template, /\{\{documentTitle\}\}/)
   assert.equal(config.navigationBarTitleText, title)
-  assert.match(homeTemplate, /感谢编写手册的学长/)
   assert.match(template, /感谢参与本手册编写、整理与持续完善的各位学长/)
   let calls = 0
   let clipboard
@@ -189,6 +194,42 @@ test('Feishu entry copies the exact original URL without mirroring or embedded w
   assert.equal(page.data.copied, false)
   assert.match(page.data.copyError, /复制失败/)
   assert.equal(page.data.copying, false)
+})
+
+test('guides C++ notes entry keeps a fixed original document and cannot override the survival handbook', t => {
+  const oldWx = global.wx
+  t.after(() => { global.wx = oldWx })
+  let route, title, clipboard
+  global.wx = {
+    navigateTo: options => { route = options.url },
+    setNavigationBarTitle: options => { title = options.title },
+    setClipboardData: options => { clipboard = options }
+  }
+  const guides = loadPage('guides')
+  const template = fs.readFileSync(path.join(root, 'miniprogram/pages/guides/index.wxml'), 'utf8')
+  assert.match(template, /bindtap="openCppNotes"/)
+  assert.match(template, /C\+\+ 笔记/)
+  assert.match(template, /按章阅读 · 编程学习与复习参考/)
+  guides.openCppNotes()
+  assert.equal(route, '/pages/feishu-document/index?doc=cpp-notes')
+  const notes = loadPage('feishu-document')
+  notes.onLoad({ doc: 'cpp-notes', url: 'https://evil.example', title: '伪造标题' })
+  assert.equal(title, 'C++ 笔记')
+  assert.equal(notes.data.documentTitle, 'C++ 笔记')
+  notes.copyLink()
+  assert.equal(clipboard.data, 'https://nankai.feishu.cn/wiki/Cve2wGjESikMqrkMY7bcEbqgned')
+  clipboard.fail(); clipboard.complete()
+  assert.match(notes.data.copyError, /复制失败/)
+  notes.copyLink()
+  clipboard.success(); clipboard.complete()
+  assert.equal(notes.data.copied, true)
+  for (const doc of ['unknown', '__proto__', 'constructor', 'https://evil.example', undefined]) {
+    const handbook = loadPage('feishu-document')
+    handbook.onLoad({ doc, url: 'https://evil.example' })
+    assert.equal(handbook.data.documentTitle, 'NKU 计网 软件 人智大类生存手册')
+    handbook.copyLink()
+    assert.equal(clipboard.data, 'https://nankai.feishu.cn/wiki/O36Dw5fQVibzsnkx4ptcZreDnAf')
+  }
 })
 
 test('home keeps only the first three latest updates and handles short or empty lists', () => {

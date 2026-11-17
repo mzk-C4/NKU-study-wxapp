@@ -134,7 +134,7 @@ test('guide list keeps network failures, malformed empty pages and tab returns o
   })
   const page = createPage(searchDefinition)
   await page.loadGuides()
-  assert.equal(page.data.isEmpty, false); assert.match(page.data.warning, /仅显示/)
+  assert.equal(page.data.isEmpty, false); assert.match(page.data.warning, /仅有已收录 PDF/)
   await page.retry()
   assert.match(page.data.warning, /加载失败/); assert.equal(page.data.isEmpty, false)
   assert.ok(page.data.results.every(item => item.kind === 'pdf'))
@@ -203,6 +203,103 @@ test('category guide page keeps the all-guides route unfiltered', async t => {
   assert.deepEqual(calls,[{page:1,page_size:100}])
 })
 
+test('handbook entry filters the shared catalog locally and retains the original source entry', async t => {
+  const routes = [], calls = []
+  installWx(t, { navigateTo(options) { routes.push(options.url) } })
+  replaceMethod(t, publicApi, 'getGuides', async query => {
+    calls.push(query)
+    return guideList([
+      guide('school', { title: '选课规定', category: 'course-study' }),
+      guide('handbook-choice', { title: '选课流程', content_type: 'student_experience' })
+    ])
+  })
+  const home = createPage(guidesDefinition)
+  home.openHandbook()
+  assert.equal(routes.pop(), '/pages/guide-category/index?kind=handbook')
+  const page = createPage(categoryDefinition)
+  await page.onLoad({ kind: 'handbook' })
+  assert.equal(page.data.title, '生存手册')
+  assert.deepEqual(page.data.results.map(item => item.id), ['handbook-choice'])
+  await page.openItem({ currentTarget: { dataset: { key: 'guide:handbook-choice' } } })
+  assert.equal(routes.pop(), '/pages/guide-detail/index?id=handbook-choice')
+  page.openHandbookSource()
+  assert.equal(routes.pop(), '/pages/feishu-document/index')
+  page.chooseKind({ currentTarget: { dataset: { kind: 'guide' } } })
+  assert.deepEqual(page.data.results.map(item => item.id), ['school'])
+  assert.deepEqual(calls, [{ page: 1, page_size: 100 }])
+})
+
+test('student handbook preserves full text, image preview/retry and its Feishu source', async t => {
+  const sourceUrl = 'https://nankai.feishu.cn/wiki/original'
+  const imageUrl = 'https://nkustudy.top/guide-media/chart.jpg'
+  const clipboard = [], previews = []
+  installWx(t, {
+    setClipboardData(options) { clipboard.push(options.data); options.success() },
+    previewImage(options) { previews.push(options) }
+  })
+  replaceMethod(t, publicApi, 'getGuide', async () => guide('handbook-test', {
+    content_type: 'student_experience',
+    sections: [
+      { id: 'notice', title: '来源说明', body: '保留作者署名' },
+      { id: 'article', title: '正文', body: `第一段\n第二段\n第三段\n![分流图](${imageUrl})\n最后一段` }
+    ],
+    sources: [{ id: 'source', title: '学生共建手册', publisher: '原作者', document_no: '学生经验', official_page_url: sourceUrl }]
+  }))
+  const page = createPage(detailDefinition)
+  await page.onLoad({ id: 'handbook-test' })
+  const section = page.data.guide.sections[1]
+  assert.equal(section.visibleBlocks.length, section.blocks.length)
+  assert.equal(section.visibleBlocks[3].src, imageUrl)
+  assert.match(section.visibleBlocks.at(-1).runs[0].html, /最后一段/)
+  assert.equal(page.data.guide.source.publisher, '原作者')
+  assert.equal(page.previewGuideImage({ currentTarget: { dataset: { src: imageUrl } } }), true)
+  assert.equal(previews[0].current, imageUrl)
+  assert.deepEqual(previews[0].urls, [imageUrl])
+  assert.equal(page.previewGuideImage({ currentTarget: { dataset: { src: 'https://unlisted.example/image.png' } } }), false)
+  page.onGuideImageError({ currentTarget: { dataset: { src: imageUrl } } })
+  assert.equal(page.data.imageErrors[imageUrl], true)
+  page.retryGuideImage({ currentTarget: { dataset: { src: imageUrl } } })
+  assert.equal(page.data.imageErrors[imageUrl], undefined)
+  assert.equal(await page.copySourceUrl(), true)
+  assert.equal(clipboard.pop(), sourceUrl)
+  assert.equal(await page.openMarkdownLink({ currentTarget: { dataset: { href: sourceUrl } } }), true)
+  assert.equal(clipboard.pop(), sourceUrl)
+  assert.equal(await page.openMarkdownLink({ currentTarget: { dataset: { href: 'javascript:alert(1)' } } }), false)
+})
+
+test('Feishu rich handbook keeps HTML intact and supports real outline and internal links', async t => {
+  const routes = [], copied = [], anchors = []
+  installWx(t, {
+    navigateTo(options) { routes.push(options.url) },
+    setClipboardData(options) { copied.push(options.data); options.success() }
+  })
+  const html = '<h2 id="fs-heading-1">方向选择</h2><p>保留<strong>重点</strong>与<a href="https://example.edu/">链接</a>。</p><ul><li>第一层<ul><li>第二层</li></ul></li></ul><img src="https://nkustudy.top/guide-media/chart.jpg" />'
+  replaceMethod(t, publicApi, 'getGuide', async () => guide('handbook-rich', {
+    title: '生存手册 · 选课流程', content_type: 'student_experience',
+    sections: [{ id: 'body', title: '正文', body: '旧版兼容文本', render_format: 'feishu-html-v1', body_html: html, body_outline: [{ id: 'fs-heading-1', title: '方向选择', level: 2 }] }],
+    sources: [{ title: '生存手册', publisher: '原作者', official_page_url: 'https://nankai.feishu.cn/wiki/original' }]
+  }))
+  const page = createPage(detailDefinition)
+  await page.onLoad({ id: 'handbook-rich' })
+  assert.equal(page.data.guide.richHtml, html)
+  assert.equal(page.data.guide.readerTitle, '选课流程')
+  assert.equal(page.data.guide.source.publisher, '原作者')
+  assert.deepEqual(page.data.guide.sections[0].blocks, [])
+  page.selectComponent = selector => {
+    assert.equal(selector, '#handbook-reader')
+    return { navigateTo(id, offset) { anchors.push([id, offset]); return Promise.resolve() } }
+  }
+  await page.chooseHandbookHeading({ detail: { value: '0' } })
+  await page.chooseHandbookHeading({ detail: { value: '99' } })
+  assert.deepEqual(anchors, [['fs-heading-1', -82]])
+  page.openReaderLink({ detail: { href: 'https://nkustudy.top/guides/handbook-next/' } })
+  assert.deepEqual(routes, ['/pages/guide-detail/index?id=handbook-next'])
+  page.openReaderLink({ detail: { href: 'https://example.edu/' } })
+  page.openReaderLink({ detail: { href: 'javascript:alert(1)' } })
+  page.copySourceUrl()
+  assert.deepEqual(copied, ['https://example.edu/', 'https://nankai.feishu.cn/wiki/original'])
+})
+
 test('guide list owns a full-width native button layout', async t => {
   const styles=fs.readFileSync(path.join(projectRoot,'miniprogram/features/learning-compass/catalog.wxss'),'utf8')
   assert.match(styles, /\.catalog-row\s*\{[^}]*width:\s*100%\s*!important/s)
@@ -234,6 +331,22 @@ test('guide PDF cards download and open only the selected trusted document', asy
   assert.deepEqual(downloads,['https://resources.nkustudy.top/guide-sources/nku-postgraduate-entrance-exam-roadmap.pdf'])
   assert.deepEqual(opened,['pdf']); assert.equal(page.data.openingDocumentId,'')
   assert.equal(await page.openItem({currentTarget:{dataset:{key:'unknown'}}}),false)
+})
+
+test('guide entries align on shared columns and imported documents use smaller type', () => {
+  const read = file => fs.readFileSync(path.join(projectRoot, file), 'utf8')
+  const template = read('miniprogram/pages/guides/index.wxml')
+  const styles = read('miniprogram/pages/guides/index.wxss')
+  assert.match(styles, /grid-template-columns:\s*56rpx minmax\(0, 1fr\) 28rpx/)
+  assert.match(styles, /\.guide-body \.pdf-entry[\s\S]*padding: 22rpx 20rpx !important/)
+  assert.doesNotMatch(template, /class="guide-trust"|图文在线阅读 · 感谢|学校公告 · 场地预约 · 打开/)
+  assert.equal((template.match(/重要事项以最新官方文件为准/g) || []).length, 1)
+  for (const action of ['openAssistant', 'openHandbook', 'openCampusMap', 'openHinku', 'openCppNotes', 'openDocuments']) {
+    assert.match(template, new RegExp('bindtap="' + action + '"'))
+  }
+  assert.match(read('miniprogram/pages/guide-detail/index.wxml'), /container-style="[^"]*font-size:13px/)
+  assert.match(read('miniprogram/pages/guide-detail/index.wxss'), /\.handbook-hero \.detail-title[^}]*font-size: 36rpx/)
+  assert.match(read('miniprogram/pages/feishu-document/index.wxss'), /\.chapter-row[^}]*font-size:24rpx/)
 })
 
 test('guide home retains search, categories and PDF alongside its AI entry', async t => {
@@ -522,7 +635,7 @@ test('PDF and DOCX sources download and open while correction copy failures stay
   }
   assert.match(template, /查看完整原文件/)
   assert.match(template, /bindtap="copySourceUrl"/)
-  assert.doesNotMatch(template, /copyCorrectionUrl|目录|收藏|分享/)
+  assert.doesNotMatch(template, /copyCorrectionUrl|收藏|分享/)
   assert.match(template, /bindtap="openInlineFeedback"/)
   assert.match(template, /feedbackPanelOpen/)
 })
@@ -636,7 +749,7 @@ test('guide inline feedback stays on-page, submits only the proven payload and p
   const template = fs.readFileSync(path.join(projectRoot, 'miniprogram/pages/guide-detail/index.wxml'), 'utf8')
   const styles = fs.readFileSync(path.join(projectRoot, 'miniprogram/pages/guide-detail/index.wxss'), 'utf8')
   assert.doesNotMatch(source, /copyCorrectionUrl/)
-  assert.doesNotMatch(template, /目录|收藏|分享/)
+  assert.doesNotMatch(template, /收藏|分享/)
   assert.equal((template.match(/反馈本指南问题/g) || []).length, 2)
   assert.match(template, /feedback-buttons/)
   assert.match(template, /class="feedback-modal-mask"[^>]*wx:if="\{\{feedbackPanelOpen\}\}"[^>]*bindtap="closeInlineFeedback"/)

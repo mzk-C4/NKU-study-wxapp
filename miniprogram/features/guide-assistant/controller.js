@@ -2,6 +2,7 @@ const MAX_ROUNDS = 10
 const MAX_QUESTION_LENGTH = 1000
 const MAX_ANSWER_LENGTH = 12000
 const REFUSAL_REASONS = new Set(['INSUFFICIENT_EVIDENCE', 'SOURCE_CONFLICT', 'OUT_OF_SCOPE'])
+const { normalizeResponse } = require('./response')
 
 function normalizeText(value, maximum = MAX_QUESTION_LENGTH) {
   const source = String(value == null ? '' : value)
@@ -32,18 +33,25 @@ function normalizeCitation(value) {
 function normalizeAssistantMessage(value) {
   const raw = value && typeof value === 'object' ? value : {}
   const role = raw.role === 'assistant' ? 'assistant' : raw.role === 'user' ? 'user' : ''
-  const content = normalizeText(raw.content, role === 'assistant' ? MAX_ANSWER_LENGTH : MAX_QUESTION_LENGTH)
-  if (!role || !content) return null
-  if (role === 'user') return { role, content }
-  const reason = normalizeText(raw.reason, 80)
+  if (!role) return null
+  if (role === 'user') {
+    const content = normalizeText(raw.content)
+    return content ? { role, content } : null
+  }
+  const response = normalizeResponse({ ...raw, answer: raw.content })
+  const content = normalizeText(response.answer, MAX_ANSWER_LENGTH)
+  if (!content) return null
+  const reason = normalizeText(response.reason, 80)
   return {
     role,
     content,
-    refused: raw.refused === true,
+    refused: response.refused,
+    answer_kind: response.answer_kind,
+    follow_up_questions: response.follow_up_questions,
     reason: REFUSAL_REASONS.has(reason) ? reason : '',
-    applicable_scope: normalizeText(raw.applicable_scope, 500),
+    applicable_scope: normalizeText(response.applicable_scope, 500),
     freshness_notice: normalizeText(raw.freshness_notice, 500),
-    citations: Array.isArray(raw.citations) ? raw.citations.map(normalizeCitation).filter(item => item.id && item.title) : []
+    citations: response.citations.map(normalizeCitation).filter(item => item.id && item.title)
   }
 }
 
@@ -84,7 +92,7 @@ function appendCompletedRound(messages, question, response) {
   const history = normalizeCompletedMessages(messages)
   if (history.length >= MAX_ROUNDS * 2) return history
   const normalizedQuestion = normalizeText(question)
-  const raw = response && typeof response === 'object' ? response : {}
+  const raw = normalizeResponse(response)
   const answer = normalizeText(raw.answer, MAX_ANSWER_LENGTH)
   if (!normalizedQuestion || !answer) return history
   const reason = normalizeText(raw.reason, 80)
@@ -95,6 +103,8 @@ function appendCompletedRound(messages, question, response) {
       role: 'assistant',
       content: answer,
       refused: raw.refused === true,
+      answer_kind: raw.answer_kind,
+      follow_up_questions: raw.follow_up_questions,
       reason: REFUSAL_REASONS.has(reason) ? reason : '',
       applicable_scope: normalizeText(raw.applicable_scope, 500),
       freshness_notice: normalizeText(raw.freshness_notice, 500),
@@ -148,11 +158,11 @@ function createGuideAssistantController(options = {}) {
       requestId = currentRequestId
       pending = true
       try {
-        const response = await api.askGuideAssistant({
+        const response = normalizeResponse(await api.askGuideAssistant({
           question,
           history: buildHistory(messages),
           profile: input.profile
-        })
+        }))
         if (destroyed || requestId !== currentRequestId || changedSession()) return { accepted: true, stale: true }
         if (!response || !normalizeText(response.answer, MAX_ANSWER_LENGTH)) {
           return { accepted: true, stale: false, state: 'service-error' }

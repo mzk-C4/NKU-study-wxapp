@@ -42,6 +42,21 @@ test('catalog cancels stale pagination and rejects no-progress pages',async()=>{
   assert.equal(result,null);assert.equal(calls,1)
   await assert.rejects(catalog.loadCatalog({api:{getGuides:async()=>({items:[{id:'a',title:'a'}],total:200})}}))
 })
+
+test('handbooks share the guide route but are separated from school files and PDF material', async () => {
+  const items = await catalog.loadCatalog({ api: { async getGuides() { return {
+    total: 2, items: [
+      { id: 'school', title: '选课规定', category: 'course-study' },
+      { id: 'handbook-choice', title: '选课流程', category: 'course-study', content_type: 'student_experience' }
+    ]
+  } } } })
+  const handbooks = catalog.searchCatalog(items, '选课', { kind: 'handbook', topic: 'senior' })
+  assert.deepEqual(handbooks.map(row => row.id), ['handbook-choice'])
+  assert.equal(handbooks[0].key, 'guide:handbook-choice')
+  assert.match(handbooks[0].sourceLabel, /学生经验/)
+  assert.deepEqual(catalog.searchCatalog(items, '', { kind: 'guide' }).map(row => row.id), ['school'])
+  assert.equal(catalog.searchCatalog(items, '', { kind: 'pdf' }).length, catalog.documents().length)
+})
 test('full answers and citation locations survive saved conversation restore',()=>{
   const answer='结论。'+'具体内容'.repeat(400)+'最后一个重要条件'
   const messages=controller.appendCompletedRound([],'问题',{answer,citations:[{id:'s',title:'文件',location_label:'第十四条'}]})

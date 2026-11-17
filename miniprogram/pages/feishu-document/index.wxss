@@ -1,6 +1,10 @@
 .document-kicker { margin-top: 16rpx; color: var(--nk-muted, #6F6972); font-size: 22rpx; }
-.document-title { margin-top: 14rpx; color: var(--nk-text, #2B123E); font-size: 42rpx; font-weight: 700; line-height: 1.35; }
-.document-intro { margin-top: 20rpx; color: var(--nk-muted, #6F6972); font-size: 27rpx; line-height: 1.8; }
+.chapter-row { display:flex; align-items:center; gap:20rpx; width:100%; padding:24rpx 8rpx; margin:0; text-align:left; font-size:28rpx; line-height:1.6; color:var(--nk-text,#2B123E); background:transparent; border-bottom:1rpx solid var(--nk-line,#E8E1ED); border-radius:0; }
+.chapter-row::after { border:0; }
+.chapter-number { color:var(--nk-accent,#4B1F6F); min-width:42rpx; font-variant-numeric:tabular-nums; }
+.chapter-arrow { margin-left:auto; color:var(--nk-muted,#6F6972); }
+.document-title { margin-top: 14rpx; color: var(--nk-text, #2B123E); font-size: 34rpx; font-weight: 700; line-height: 1.35; }
+.document-intro { margin-top: 20rpx; color: var(--nk-muted, #6F6972); font-size: 23rpx; line-height: 1.8; }
 .document-label { margin-bottom: 16rpx; color: var(--nk-text, #2B123E); font-size: 28rpx; font-weight: 700; }
 .document-url { display: block; color: var(--nk-accent, #4B1F6F); font-size: 26rpx; line-height: 1.7; word-break: break-all; }
 .document-copy { margin-top: 28rpx; width: 100% !important; }
@@ -10,3 +14,6 @@
 .document-help { color: var(--nk-muted, #514B54); font-size: 26rpx; line-height: 1.8; }
 .document-help > view + view { margin-top: 12rpx; }
 .document-footnote { margin-top: 36rpx; color: var(--nk-muted, #817A84); font-size: 24rpx; line-height: 1.7; }
+.chapter-row { width:100% !important; box-sizing:border-box; font-size:24rpx; }
+.chapter-row > text:nth-child(2) { flex:1; min-width:0; }
+.chapter-arrow { flex:0 0 auto; }

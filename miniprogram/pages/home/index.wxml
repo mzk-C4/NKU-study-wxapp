@@ -45,12 +45,6 @@
 
   <community-support id="support-header" mode="community" />
 
-  <button class="document-entry" bindtap="openFeishuDocument" hover-class="banner-card--pressed" aria-label="NKU 计网 软件 人智大类生存手册，查看原文链接与打开说明">
-    <view class="document-entry-icon" aria-hidden="{{true}}">文</view>
-    <view class="document-entry-copy"><view class="document-entry-title">NKU 计网 软件 人智大类生存手册</view><view class="document-entry-note">感谢编写手册的学长 · 飞书原文</view></view>
-    <text class="document-entry-arrow" aria-hidden="{{true}}">›</text>
-  </button>
-
   <state-view loading="{{loading}}" error="{{error}}" bindretry="loadHome"></state-view>
   <block wx:if="{{!loading && !error && home}}">
     <view class="section" wx:if="{{latestUpdates.length}}">

@@ -732,7 +732,7 @@ test('reference page waits for the controller, renders real data, and restores o
   assert.equal(page.data.messages.length, 4)
   assert.equal(page.data.previousTurns.length, 1)
   assert.equal(page.data.previousTurns[0].answer, '第一轮真实回答')
-  assert.equal(page.data.responseAnswer, '第二轮来源存在差异,无法给出统一结论。')
+  assert.match(page.data.responseAnswer, /现有来源存在差异/)
 })
 
 test('401 recovery logs in once and leaves the original question for manual retry', async t => {
@@ -816,8 +816,8 @@ test('AI response blocks are rebuilt for answers, refusals, restored history and
   assert.deepEqual(page.data.responseBlocks, [])
   page.selectHistory({ currentTarget: { dataset: { question: conversationKey } } })
   assert.equal(page.data.responseBlocks.length > 0, true)
-  assert.equal(page.data.responseAnswer, '暂无**足够依据**')
-  assert.match(page.data.responseBlocks[0].runs.map(run => run.html || '').join(''), /<b>足够依据<\/b>/)
+  assert.match(page.data.responseAnswer, /现有指南没有足够依据/)
+  assert.match(page.data.responseBlocks[0].runs.map(run => run.html || '').join(''), /现有指南没有足够依据/)
 
   await page.regenerateAnswer()
   assert.equal(page.data.responseAnswer, '重新生成的回答')

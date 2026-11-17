@@ -5,6 +5,7 @@ const childProcess = require('node:child_process')
 const root = path.resolve(__dirname, '..')
 const miniRoot = path.join(root, 'miniprogram')
 const app = JSON.parse(fs.readFileSync(path.join(miniRoot, 'app.json'), 'utf8'))
+const pages = [...app.pages, ...(app.subPackages || []).flatMap(group => group.pages.map(page => `${group.root}/${page}`))]
 const failures = []
 
 function fail(message) { failures.push(message) }
@@ -30,7 +31,7 @@ function checkComponentReferences(file) {
   }
 }
 
-for (const page of app.pages) {
+for (const page of pages) {
   for (const extension of ['json', 'js', 'wxml', 'wxss']) {
     const file = path.join(miniRoot, `${page}.${extension}`)
     if (!fs.existsSync(file)) fail(`页面文件缺失：${path.relative(root, file)}`)
@@ -132,4 +133,4 @@ if (failures.length) {
   console.error(failures.map(item => `- ${item}`).join('\n'))
   process.exit(1)
 }
-console.log(`NKUStudy 小程序静态检查通过：${app.pages.length} 个页面，${tabPages.size} 个 Tab。`)
+console.log(`NKUStudy 小程序静态检查通过：${pages.length} 个页面，${tabPages.size} 个 Tab，${(app.subPackages || []).length} 个分包。`)

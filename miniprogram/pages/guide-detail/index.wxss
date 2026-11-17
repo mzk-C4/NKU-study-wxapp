@@ -1,7 +1,7 @@
 .detail-page { min-height: 100vh; color: var(--nk-text, #18152A); background: var(--nk-bg, #F6F3F7); box-sizing: border-box; }
 button::after { border: 0; }
 
-.detail-nav { position: relative; z-index: 5; display: grid; grid-template-columns: 104rpx 1fr 174rpx; align-items: center; min-height: 96rpx; border-bottom: 1rpx solid var(--nk-line, #EDE8F1); background: var(--nk-surface, rgba(255,254,252,.98)); box-sizing: border-box; }
+.detail-nav { position: sticky; top: 0; z-index: 5; display: grid; grid-template-columns: 104rpx 1fr 174rpx; align-items: center; min-height: 96rpx; border-bottom: 1rpx solid var(--nk-line, #EDE8F1); background: var(--nk-surface, rgba(255,254,252,.98)); box-sizing: border-box; }
 .detail-back { display: flex; align-items: center; justify-content: center; width: 88rpx !important; height: 88rpx; margin: 0 !important; padding: 0; background: transparent; }
 .back-arrow { width: 25rpx; height: 25rpx; border-left: 7rpx solid var(--nk-accent, #21163C); border-bottom: 7rpx solid var(--nk-accent, #21163C); transform: rotate(45deg); box-sizing: border-box; }
 .detail-nav-title { color: var(--nk-text, #0E0C15); font-size: 31rpx; font-weight: 750; text-align: center; }
@@ -27,7 +27,7 @@ button::after { border: 0; }
 .detail-document-number { padding: 7rpx 14rpx; border-radius: 12rpx; color: var(--nk-accent, #69439B); background: var(--nk-soft, #F0E9F7); }
 .detail-date-line { position: relative; z-index: 1; display: flex; flex-wrap: wrap; gap: 28rpx; margin-top: 22rpx; color: var(--nk-muted, #6E6980); font-size: 21rpx; }
 
-.detail-section-tabs { position: relative; z-index: 2; border-top: 1rpx solid var(--nk-line, #EEEAF1); border-bottom: 1rpx solid var(--nk-line, #E7E1EC); background: var(--nk-surface, rgba(255,255,255,.97)); white-space: nowrap; }
+.detail-section-tabs { position: relative; z-index: 2; height: 86rpx; box-sizing: border-box; border-top: 1rpx solid var(--nk-line, #EEEAF1); border-bottom: 1rpx solid var(--nk-line, #E7E1EC); background: var(--nk-surface, rgba(255,255,255,.97)); white-space: nowrap; }
 .detail-section-tab-row { display: inline-flex; min-width: 100%; }
 .detail-section-tab { display: inline-flex; align-items: center; justify-content: center; gap: 9rpx; min-width: 180rpx; height: 84rpx; margin: 0 !important; padding: 0 18rpx; border-radius: 0; color: var(--nk-muted, #5D5B71); background: transparent; font-size: 22rpx; line-height: 1; box-sizing: border-box; }
 .detail-section-tab--active { position: relative; color: var(--nk-accent, #4D198F); font-weight: 700; }
@@ -162,3 +162,17 @@ button::after { border: 0; }
 .inline-feedback-submit { color:#fff; background:var(--nk-primary, #59209B); }
 .inline-feedback-success { margin-top:12rpx; color:var(--nk-green, #24703D); }
 .inline-feedback-error { margin-top:12rpx; color:var(--nk-red, #B42318); }
+.markdown-figure { margin: 22rpx 0; }
+.markdown-image { display: block; width: 100%; height: auto; border-radius: 12rpx; background: var(--nk-soft, #F8F5FB); }
+.markdown-image-hint { margin-top: 10rpx; color: var(--nk-muted, #6D6578); font-size: 21rpx; text-align: center; }
+.markdown-image-error { padding: 24rpx; border: 1rpx solid var(--nk-line, #DDD4E7); border-radius: 12rpx; color: var(--nk-muted, #6D6578); font-size: 24rpx; text-align: center; }
+.markdown-image-error button { display: inline-block; margin: 16rpx 10rpx 0; color: var(--nk-accent, #5D259C); background: var(--nk-soft, #F8F5FB); font-size: 24rpx; }
+.handbook-hero { padding: 32rpx 36rpx; }
+.handbook-hero .detail-title { margin-top: 20rpx; font-size: 36rpx; line-height: 1.35; }
+.handbook-byline { margin-top: 18rpx; color: var(--nk-muted, #74697C); font-size: 23rpx; line-height: 1.6; }
+.handbook-reading { padding: 0 36rpx calc(42rpx + env(safe-area-inset-bottom)); background: var(--nk-surface, #FFFEFF); }
+.handbook-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 20rpx; padding: 24rpx 0; border-bottom: 1rpx solid var(--nk-line, #E8E1ED); }
+.handbook-toc { color: var(--nk-accent, #69309A); font-size: 25rpx; line-height: 1.6; }
+.handbook-toc text { margin-left: 10rpx; }
+.handbook-original { width: auto !important; margin: 0 0 0 auto !important; padding: 0; color: var(--nk-accent, #69309A); background: transparent; font-size: 24rpx; line-height: 1.6; }
+.handbook-prose { padding: 32rpx 0 10rpx; }

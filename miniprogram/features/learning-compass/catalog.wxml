@@ -4,6 +4,7 @@
     <view class="catalog-eyebrow">NKUSTUDY · 校园指南</view>
     <view class="catalog-title">{{title}}</view>
     <view class="catalog-description">{{description}}</view>
+    <button class="catalog-original" wx:if="{{kind === 'handbook'}}" bindtap="openHandbookSource">查看飞书原文与来源 ↗</button>
   </view>
   <view class="catalog-search">
     <text class="catalog-search-mark">⌕</text>
@@ -26,7 +27,7 @@
   <view class="catalog-count" wx:if="{{!loading}}">{{warning ? '当前可用内容' : '找到'}} {{total}} 项 · 支持近义词与组合关键词</view>
   <view class="catalog-list" wx:if="{{!loading}}">
     <button class="catalog-row" wx:for="{{results}}" wx:key="key" data-key="{{item.key}}" bindtap="openItem" loading="{{openingDocumentId === item.id}}" disabled="{{openingDocumentId && openingDocumentId !== item.id}}">
-      <view class="catalog-badge {{item.kind === 'pdf' ? 'catalog-badge--pdf' : ''}}">{{item.kind === 'pdf' ? 'PDF' : '指南'}}</view>
+      <view class="catalog-badge {{item.kind === 'pdf' ? 'catalog-badge--pdf' : ''}}">{{item.kind === 'pdf' ? 'PDF' : item.content_type === 'student_experience' ? '手册' : '指南'}}</view>
       <view class="catalog-main">
         <rich-text class="catalog-item-title" nodes="{{item.titleHtml}}"></rich-text>
         <rich-text class="catalog-summary" nodes="{{item.summaryHtml}}"></rich-text>

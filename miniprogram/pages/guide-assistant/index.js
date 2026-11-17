@@ -48,17 +48,51 @@ function decodeQuestion(value) {
   }
 }
 
+let conversationSequence = 0
+function newConversationId() {
+  return `conversation-${Date.now().toString(36)}-${++conversationSequence}-${Math.random().toString(36).slice(2, 10)}`
+}
+
+function legacyConversationId(question, timestamp, index) {
+  let hash = 2166136261
+  for (let i = 0; i < question.length; i++) hash = Math.imul(hash ^ question.charCodeAt(i), 16777619) >>> 0
+  return `legacy-${Number(timestamp) || 0}-${index}-${hash.toString(36)}`
+}
+
+function findHistoryEntry(history, key) {
+  const byId = history.find(item => item.id === key)
+  if (byId) return byId
+  // Compatibility with old local records and callers. Never guess between
+  // independent conversations that happen to start with the same question.
+  const byQuestion = history.filter(item => item.question === key)
+  return byQuestion.length === 1 ? byQuestion[0] : null
+}
+
+function historyEventKey(event) {
+  const dataset = event && event.currentTarget && event.currentTarget.dataset || {}
+  return String(dataset.id || dataset.question || '')
+}
+
+function normalizePending(value) {
+  if (!value || typeof value !== 'object' || !value.id || !boundedQuestion(value.question)) return null
+  return { id: String(value.id).slice(0, 100), question: boundedQuestion(value.question),
+    state: value.state === 'pending' ? 'pending' : 'retry', startedAt: Number(value.startedAt) || Date.now(),
+    mode: value.mode === 'replace-last' ? 'replace-last' : 'append' }
+}
+
 function normalizeHistory(value, now = Date.now()) {
   if (!Array.isArray(value)) return []
-  return value.map(item => {
+  return value.map((item, index) => {
     const messages = normalizeCompletedMessages(item && item.messages)
     const exchange = lastCompletedExchange(messages)
     const question = boundedQuestion(item && item.question) || boundedQuestion(exchange && exchange.question)
     const latestQuestion = boundedQuestion(item && item.latestQuestion) || boundedQuestion(exchange ? exchange.question : question)
-    const state = ['answer', 'refusal', 'network-error'].includes(item && item.state)
+    let state = ['answer', 'refusal', 'network-error'].includes(item && item.state)
       ? item.state
       : (exchange && exchange.response.refused ? 'refusal' : exchange ? 'answer' : 'network-error')
+    if (exchange && ['answer', 'refusal'].includes(state)) state = exchange.response.refused ? 'refusal' : 'answer'
     return {
+      id: String(item && item.id || legacyConversationId(question, item && item.updatedAt, index)).slice(0, 100),
       question,
       latestQuestion,
       title: boundedHistoryTitle(item && item.title) || boundedHistoryTitle(question),
@@ -66,8 +100,9 @@ function normalizeHistory(value, now = Date.now()) {
       updatedAt: Number(item && item.updatedAt) || now,
       pinned: Boolean(item && item.pinned),
       messages,
+      pending: normalizePending(item && item.pending),
       rounds: completedRounds(messages),
-      readOnly: Boolean(question && !messages.length)
+      readOnly: Boolean(question && !messages.length && !normalizePending(item && item.pending))
     }
   }).filter(item => (
     item.question &&
@@ -80,10 +115,12 @@ function addHistoryEntry(history, question, state, details = {}) {
   const normalizedQuestion = boundedQuestion(question)
   if (!normalizedQuestion) return normalizeHistory(history)
   const normalizedHistory = normalizeHistory(history)
-  const previous = normalizedHistory.find(item => item.question === normalizedQuestion)
+  const previous = details.id ? normalizedHistory.find(item => item.id === details.id) : null
+  const id = previous ? previous.id : details.id || newConversationId()
   const messages = normalizeCompletedMessages(details.messages || (previous && previous.messages))
   return [
     {
+      id,
       question: normalizedQuestion,
       latestQuestion: boundedQuestion(details.latestQuestion) || boundedQuestion(lastCompletedExchange(messages)?.question) || normalizedQuestion,
       title: previous ? previous.title : boundedHistoryTitle(normalizedQuestion),
@@ -91,10 +128,11 @@ function addHistoryEntry(history, question, state, details = {}) {
       updatedAt: Date.now(),
       pinned: Boolean(previous && previous.pinned),
       messages,
+      pending: Object.prototype.hasOwnProperty.call(details, 'pending') ? normalizePending(details.pending) : normalizePending(previous && previous.pending),
       rounds: completedRounds(messages),
-      readOnly: Boolean(normalizedQuestion && !messages.length)
+      readOnly: Boolean(normalizedQuestion && !messages.length && !(details.pending || (previous && previous.pending)))
     },
-    ...normalizedHistory.filter(item => item.question !== normalizedQuestion)
+    ...normalizedHistory.filter(item => item.id !== id)
   ]
 }
 
@@ -153,6 +191,7 @@ function readLocalState(account) {
     const updatedAt = Number(value.updatedAt)
     if (!Number.isFinite(updatedAt) || Date.now() - updatedAt > LOCAL_RETENTION_MS) return null
     return {
+      activeConversationId: String(value.activeConversationId || ''),
       lastQuestion: boundedQuestion(value.lastQuestion),
       draft: boundedQuestion(value.draft),
       history: normalizeHistory(value.history)
@@ -162,10 +201,11 @@ function readLocalState(account) {
   }
 }
 
-function saveLocalState(account, lastQuestion, draft, history = []) {
+function saveLocalState(account, lastQuestion, draft, history = [], activeConversationId = '') {
   try {
     if (typeof wx.setStorageSync !== 'function') return
     conversationStorage.save(account, {
+      activeConversationId,
       lastQuestion: boundedQuestion(lastQuestion),
       draft: boundedQuestion(draft),
       history: normalizeHistory(history),
@@ -201,6 +241,7 @@ const definition = {
   data: {
     statusBarHeight: 20,
     lastQuestion: '',
+    activeConversationId: '',
     activeConversationQuestion: '',
     draft: '',
     canSend: false,
@@ -234,7 +275,7 @@ const definition = {
     showRecoveryActions: false,
     learningProfileLabel: learningProfile.formatLabel(learningProfile.emptyProfile()),
     exampleQuestions: NEW_TOPIC_EXAMPLES,
-    followUpQuestions: ['请列出具体步骤和需要准备的材料', '哪些要求会因年级、专业不同而变化？', '哪些信息确定，哪些还需要向学校确认？'],
+    followUpQuestions: [],
     generatingDots: GENERATING_DOTS,
     newTopicMode: false,
     history: [],
@@ -242,6 +283,7 @@ const definition = {
     historySearch: '',
     historyGroups: [],
     historyActionQuestion: '',
+    historyActionId: '',
     historyRenameMode: false,
     historyRenameValue: '',
     canSaveHistoryRename: false,
@@ -268,14 +310,15 @@ const definition = {
       ? requestedPreview
       : ''
     const previewMode = Boolean(previewState)
-    const storedConversation = !optionQuestion && normalizeHistory(stored.history).find(item => (
-      item.question === boundedQuestion(stored.lastQuestion) ||
-      item.latestQuestion === boundedQuestion(stored.lastQuestion)
-    ))
+    const storedHistory = normalizeHistory(stored.history)
+    const storedConversation = !optionQuestion && (stored.activeConversationId
+      ? storedHistory.find(item => item.id === stored.activeConversationId)
+      : storedHistory.find(item => item.question === boundedQuestion(stored.lastQuestion) || item.latestQuestion === boundedQuestion(stored.lastQuestion)))
     const storedMessages = storedConversation ? storedConversation.messages : []
     const storedExchange = lastCompletedExchange(storedMessages)
-    const answerMode = previewState === 'answer' || (!previewMode && storedConversation && storedConversation.state === 'answer')
-    const restoredState = !previewMode && storedConversation ? storedConversation.state : ''
+    const interrupted = !previewMode && storedConversation && storedConversation.pending
+    const answerMode = previewState === 'answer' || (!previewMode && !interrupted && storedConversation && storedConversation.state === 'answer')
+    const restoredState = interrupted ? '' : !previewMode && storedConversation ? storedConversation.state : ''
     const visualQuestion = previewState === 'generating'
       ? optionQuestion || ANSWER_PREVIEW_QUESTION
       : previewState === 'refusal'
@@ -283,28 +326,33 @@ const definition = {
         : ''
     const lastQuestion = previewState === 'new-topic' || (optionQuestion && !previewMode)
       ? ''
-      : optionQuestion || visualQuestion || (previewState === 'answer' ? ANSWER_PREVIEW_QUESTION : storedExchange ? storedExchange.question : stored.lastQuestion || '')
-    const draft = optionQuestion && !previewMode ? optionQuestion : previewMode ? '' : stored.draft || ''
+      : optionQuestion || visualQuestion || (previewState === 'answer' ? ANSWER_PREVIEW_QUESTION : interrupted ? interrupted.question : storedExchange ? storedExchange.question : stored.lastQuestion || '')
+    const draft = optionQuestion && !previewMode ? optionQuestion : previewMode ? '' : interrupted ? interrupted.question : stored.draft || ''
     const history = ['answer', 'network-error'].includes(previewState) && lastQuestion
-      ? addHistoryEntry(stored.history, lastQuestion, previewState)
+      ? addHistoryEntry(stored.history, lastQuestion, previewState, { id: storedConversation && storedConversation.id })
       : normalizeHistory(stored.history)
-    const restoredResponse = !previewMode && storedExchange ? storedExchange.response : null
+    const restoredResponse = !previewMode && !interrupted && storedExchange ? storedExchange.response : null
     const completedRoundCount = ['answer', 'refusal'].includes(previewState) ? 1 : completedRounds(storedMessages)
     this.setData({
       statusBarHeight: getStatusBarHeight(),
       mockMode: assistantRuntime.isMock(),
       lastQuestion,
+      activeConversationId: storedConversation ? storedConversation.id : previewMode && history.length ? history[0].id : '',
       activeConversationQuestion: storedConversation ? storedConversation.question : lastQuestion,
       draft,
       previewMode,
       previewState: previewState || restoredState,
       answerMode,
-      assistantState: previewState || (storedConversation ? storedConversation.state : 'idle'),
+      assistantState: interrupted ? 'service-error' : previewState || (storedConversation ? storedConversation.state : 'idle'),
+      showRecoveryActions: Boolean(interrupted),
+      recoveryTitle: interrupted ? '上次提问尚未完成' : '',
+      recoveryCopy: interrupted ? '问题已保留，请手动重试；未完成回答不会计入轮次。' : '',
       messages: storedMessages,
-      previousTurns: this.presentPreviousTurns(storedMessages),
+      previousTurns: this.presentPreviousTurns(storedMessages, Boolean(interrupted)),
+      followUpQuestions: restoredResponse ? restoredResponse.follow_up_questions || [] : [],
       completedRoundCount,
       roundLabel: `${completedRoundCount}/${MAX_ROUNDS}`,
-      roundLimitReached: completedRoundCount >= MAX_ROUNDS,
+      roundLimitReached: completedRoundCount >= MAX_ROUNDS && (!interrupted || interrupted.mode !== 'replace-last'),
       responseAnswer: restoredResponse ? restoredResponse.content : '',
       responseBlocks: parseMarkdown(restoredResponse ? restoredResponse.content : ''),
       responseScope: restoredResponse ? restoredResponse.applicable_scope : '',
@@ -420,11 +468,16 @@ const definition = {
     this.setData({ focusInput: false })
   },
 
-  async sendQuestion() {
+  async sendQuestion(options = {}) {
     if (this.syncConversationOwner()) return false
-    if (this._isUnloaded || this._checkingNetwork || this.data.requestPending || this.data.roundLimitReached || this.data.assistantState === 'rate-limited') return false
+    if (this._isUnloaded || this._checkingNetwork || this.data.requestPending || this.data.assistantState === 'rate-limited') return false
     if (this.data.previewState === 'generating' && !this.data.previewMode) return false
     const question = boundedQuestion(this.data.draft)
+    const currentEntry = this.data.history.find(item => item.id === this.data.activeConversationId)
+    const replacement = options.replaceLast === true || Boolean(currentEntry && currentEntry.pending && currentEntry.pending.mode === 'replace-last' && currentEntry.pending.question === question)
+    if (this.data.roundLimitReached && !replacement) return false
+    const requestMessages = replacement ? this.data.messages.slice(0, -2) : this.data.messages
+    if (completedRounds(requestMessages) >= MAX_ROUNDS) return false
     if (!question) {
       this.setData({ inputError: '请输入问题后再发送。' })
       return false
@@ -451,6 +504,7 @@ const definition = {
       return false
     }
     if (this.data.statusMessage) this.setData({ statusMessage: '' })
+    if (!this.data.activeConversationId) this.setData({ activeConversationId: newConversationId() })
     this._checkingNetwork = true
     const currentController = this._assistantController
     let networkType
@@ -462,8 +516,10 @@ const definition = {
     if (!connected) {
       const conversationQuestion = this.data.activeConversationQuestion || question
       const history = addHistoryEntry(this.data.history, conversationQuestion, 'network-error', {
+        id: this.data.activeConversationId,
         messages: this.data.messages,
-        latestQuestion: question
+        latestQuestion: question,
+        pending: { id: `local-${Date.now()}`, question, state: 'retry', startedAt: Date.now(), mode: replacement ? 'replace-last' : 'append' }
       })
       this.setData({
         lastQuestion: question,
@@ -476,9 +532,11 @@ const definition = {
         retrying: false,
         answerMode: false,
         assistantState: 'network-error',
+        previousTurns: this.presentPreviousTurns(this.data.messages, true),
         previewState: '',
         newTopicMode: false,
         history,
+        roundLimitReached: completedRounds(this.data.messages) >= MAX_ROUNDS && !replacement,
         showRecoveryActions: true,
         networkHint: '请检查网络或重试'
       })
@@ -511,11 +569,17 @@ const definition = {
       canSend: false,
       previousTurns: this.presentPreviousTurns(this.data.messages, true)
     })
+    const pendingTurn = { id: `local-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`, question, state: 'pending', startedAt: Date.now(), mode: replacement ? 'replace-last' : 'append' }
+    const pendingHistory = addHistoryEntry(this.data.history, this.data.activeConversationQuestion, 'network-error', {
+      id: this.data.activeConversationId, messages: this.data.messages, latestQuestion: question, pending: pendingTurn
+    })
+    this.setData({ history: pendingHistory, followUpQuestions: [], roundLimitReached: completedRounds(this.data.messages) >= MAX_ROUNDS && !replacement })
+    this.saveConversationState(question, '', pendingHistory)
     if (!this._assistantController) this._assistantController = assistantRuntime.createController()
     const submittingController = this._assistantController
     const result = await submittingController.submit({
       question,
-      messages: this.data.messages,
+      messages: requestMessages,
       profile: learningProfile.read()
     })
     if (this._isUnloaded || submittingController !== this._assistantController || !result) return false
@@ -539,7 +603,7 @@ const definition = {
       const messages = normalizeCompletedMessages(result.messages)
       const rounds = completedRounds(messages)
       const conversationQuestion = this.data.activeConversationQuestion || question
-      const history = addHistoryEntry(this.data.history, conversationQuestion, result.state, { messages, latestQuestion: question })
+      const history = addHistoryEntry(this.data.history, conversationQuestion, result.state, { id: this.data.activeConversationId, messages, latestQuestion: question, pending: null })
       this.setData({
         previewState: result.state,
         assistantState: result.state,
@@ -550,6 +614,7 @@ const definition = {
         completedRoundCount: rounds,
         roundLabel: `${rounds}/${MAX_ROUNDS}`,
         roundLimitReached: rounds >= MAX_ROUNDS,
+        followUpQuestions: response.follow_up_questions || [],
         responseAnswer: response.answer || '',
         responseBlocks: parseMarkdown(response.answer || ''),
         responseScope: response.applicable_scope || '',
@@ -607,6 +672,16 @@ const definition = {
 
   applyAssistantFailure(state, question, error) {
     const safeQuestion = boundedQuestion(question)
+    const currentEntry = this.data.history.find(item => item.id === this.data.activeConversationId)
+    const previousPending = currentEntry && currentEntry.pending
+    if (!this.data.activeConversationId) this.setData({ activeConversationId: newConversationId() })
+    const failedHistory = addHistoryEntry(this.data.history, this.data.activeConversationQuestion || safeQuestion, 'network-error', {
+      id: this.data.activeConversationId, messages: this.data.messages, latestQuestion: safeQuestion,
+      pending: { id: previousPending && previousPending.id || `local-${Date.now()}`,
+        mode: previousPending && previousPending.mode, question: safeQuestion, state: 'retry', startedAt: Date.now() }
+    })
+    this.setData({ history: failedHistory, followUpQuestions: [] })
+    this.saveConversationState(safeQuestion, '', failedHistory)
     this.setData({
       responseAnswer: '',
       responseBlocks: parseMarkdown(''),
@@ -631,6 +706,7 @@ const definition = {
     if (state === 'network-error') {
       const conversationQuestion = this.data.activeConversationQuestion || safeQuestion
       const history = addHistoryEntry(this.data.history, conversationQuestion, 'network-error', {
+        id: this.data.activeConversationId,
         messages: this.data.messages,
         latestQuestion: safeQuestion
       })
@@ -766,6 +842,7 @@ const definition = {
     const history = this.data.history.length
       ? normalizeHistory(this.data.history)
       : addHistoryEntry([], this.data.activeConversationQuestion || this.data.lastQuestion, fallbackState, {
+        id: this.data.activeConversationId,
         messages: this.data.messages,
         latestQuestion: this.data.lastQuestion
       })
@@ -775,6 +852,7 @@ const definition = {
       historySearch: '',
       historyGroups: buildHistoryGroups(history),
       historyActionQuestion: '',
+      historyActionId: '',
       historyRenameMode: false,
       historyRenameValue: '',
       canSaveHistoryRename: false,
@@ -789,6 +867,7 @@ const definition = {
       historySearch: '',
       historyGroups: [],
       historyActionQuestion: '',
+      historyActionId: '',
       historyRenameMode: false,
       historyRenameValue: '',
       canSaveHistoryRename: false,
@@ -803,6 +882,7 @@ const definition = {
       historySearch,
       historyGroups: buildHistoryGroups(this.data.history, historySearch),
       historyActionQuestion: '',
+      historyActionId: '',
       historyRenameMode: false,
       historyRenameValue: '',
       canSaveHistoryRename: false,
@@ -812,33 +892,37 @@ const definition = {
 
   selectHistory(event) {
     if (this._isUnloaded) return
-    const question = boundedQuestion(event && event.currentTarget && event.currentTarget.dataset.question)
     const history = normalizeHistory(this.data.history)
-    const item = history.find(entry => entry.question === question)
+    const item = findHistoryEntry(history, historyEventKey(event))
     if (!item) return
     this.resetAssistantRequest()
-    const answerMode = item.state === 'answer'
-    const exchange = lastCompletedExchange(item.messages)
+    const interrupted = item.pending
+    const answerMode = !interrupted && item.state === 'answer'
+    const exchange = interrupted ? null : lastCompletedExchange(item.messages)
     const rounds = completedRounds(item.messages)
     this.setData({
-      lastQuestion: exchange ? exchange.question : item.latestQuestion || item.question,
+      lastQuestion: interrupted ? interrupted.question : exchange ? exchange.question : item.latestQuestion || item.question,
+      activeConversationId: item.id,
       activeConversationQuestion: item.question,
-      draft: '',
-      canSend: false,
+      draft: interrupted ? interrupted.question : '',
+      canSend: Boolean(interrupted),
       focusInput: false,
       editingQuestion: false,
       editingQuestionValue: '',
       canSendEditedQuestion: false,
       focusQuestionEditor: false,
       previewMode: item.readOnly,
-      previewState: item.state,
+      previewState: interrupted ? '' : item.state,
       answerMode,
-      assistantState: item.state,
+      assistantState: interrupted ? 'service-error' : item.state,
+      recoveryTitle: interrupted ? '上次提问尚未完成' : '',
+      recoveryCopy: interrupted ? '问题已保留，请手动重试；未完成回答不会计入轮次。' : '',
+      followUpQuestions: exchange ? exchange.response.follow_up_questions || [] : [],
       messages: item.messages,
-      previousTurns: this.presentPreviousTurns(item.messages),
+      previousTurns: this.presentPreviousTurns(item.messages, Boolean(interrupted)),
       completedRoundCount: rounds,
       roundLabel: `${rounds}/${MAX_ROUNDS}`,
-      roundLimitReached: rounds >= MAX_ROUNDS,
+      roundLimitReached: rounds >= MAX_ROUNDS && (!interrupted || interrupted.mode !== 'replace-last'),
       responseAnswer: exchange ? exchange.response.content : '',
       responseBlocks: parseMarkdown(exchange ? exchange.response.content : ''),
       responseScope: exchange ? exchange.response.applicable_scope : '',
@@ -850,13 +934,14 @@ const definition = {
       historySearch: '',
       historyGroups: [],
       historyActionQuestion: '',
+      historyActionId: '',
       historyRenameMode: false,
       historyRenameValue: '',
       canSaveHistoryRename: false,
       focusHistoryRename: false,
       answerFeedback: '',
-      networkConnected: item.state !== 'network-error',
-      networkError: item.state === 'network-error',
+      networkConnected: Boolean(interrupted) || item.state !== 'network-error',
+      networkError: !interrupted && item.state === 'network-error',
       retrying: false,
       networkHint: answerMode || item.state === 'refusal' ? '' : '请检查网络或重试',
       showRecoveryActions: item.state !== 'answer',
@@ -867,12 +952,12 @@ const definition = {
 
   toggleHistoryPinByQuestion(question, notify = false) {
     if (this._isUnloaded) return false
-    const normalizedQuestion = boundedQuestion(question)
-    const current = normalizeHistory(this.data.history).find(item => item.question === normalizedQuestion)
+    const normalizedHistory = normalizeHistory(this.data.history)
+    const current = findHistoryEntry(normalizedHistory, question)
     if (!current) return false
     const pinned = !current.pinned
-    const history = normalizeHistory(this.data.history).map(item => (
-      item.question === normalizedQuestion ? { ...item, pinned } : item
+    const history = normalizedHistory.map(item => (
+      item.id === current.id ? { ...item, pinned } : item
     ))
     this.setData({
       history,
@@ -884,7 +969,7 @@ const definition = {
   },
 
   toggleHistoryPin(event) {
-    const question = event && event.currentTarget && event.currentTarget.dataset.question
+    const question = historyEventKey(event)
     const changed = this.toggleHistoryPinByQuestion(question)
     if (changed) this.closeHistoryActions()
     return changed
@@ -892,15 +977,15 @@ const definition = {
 
   openHistoryActions(event) {
     if (this._isUnloaded) return
-    const question = boundedQuestion(event && event.currentTarget && event.currentTarget.dataset.question)
-    const item = normalizeHistory(this.data.history).find(entry => entry.question === question)
+    const item = findHistoryEntry(normalizeHistory(this.data.history), historyEventKey(event))
     if (!item) return
-    if (this.data.historyActionQuestion === question && !this.data.historyRenameMode) {
+    if (this.data.historyActionId === item.id && !this.data.historyRenameMode) {
       this.closeHistoryActions()
       return
     }
     this.setData({
-      historyActionQuestion: question,
+      historyActionQuestion: item.question,
+      historyActionId: item.id,
       historyRenameMode: false,
       historyRenameValue: '',
       canSaveHistoryRename: false,
@@ -912,6 +997,7 @@ const definition = {
     if (this._isUnloaded) return
     this.setData({
       historyActionQuestion: '',
+      historyActionId: '',
       historyRenameMode: false,
       historyRenameValue: '',
       canSaveHistoryRename: false,
@@ -920,24 +1006,24 @@ const definition = {
   },
 
   chooseHistoryPin(event) {
-    const question = event && event.currentTarget && event.currentTarget.dataset.question
+    const question = historyEventKey(event)
     const changed = this.toggleHistoryPinByQuestion(question, true)
     if (changed) this.closeHistoryActions()
   },
 
   chooseHistoryDelete(event) {
-    const question = boundedQuestion(event && event.currentTarget && event.currentTarget.dataset.question)
+    const question = historyEventKey(event)
     this.closeHistoryActions()
     this.confirmDeleteHistory(question)
   },
 
   openHistoryRename(event) {
     if (this._isUnloaded) return
-    const question = boundedQuestion(event && event.currentTarget && event.currentTarget.dataset.question)
-    const item = normalizeHistory(this.data.history).find(entry => entry.question === question)
+    const item = findHistoryEntry(normalizeHistory(this.data.history), historyEventKey(event))
     if (!item) return
     this.setData({
-      historyActionQuestion: question,
+      historyActionQuestion: item.question,
+      historyActionId: item.id,
       historyRenameMode: true,
       historyRenameValue: item.title,
       canSaveHistoryRename: Boolean(item.title),
@@ -968,21 +1054,23 @@ const definition = {
 
   saveHistoryRename() {
     if (this._isUnloaded) return false
-    const question = boundedQuestion(this.data.historyActionQuestion)
+    const question = this.data.historyActionId || boundedQuestion(this.data.historyActionQuestion)
     const title = boundedHistoryTitle(this.data.historyRenameValue)
     if (!question || !title) {
       wx.showToast({ title: '会话名称不能为空', icon: 'none' })
       return false
     }
     const previousHistory = normalizeHistory(this.data.history)
-    if (!previousHistory.some(item => item.question === question)) return false
+    const target = findHistoryEntry(previousHistory, question)
+    if (!target) return false
     const history = previousHistory.map(item => (
-      item.question === question ? { ...item, title } : item
+      item.id === target.id ? { ...item, title } : item
     ))
     this.setData({
       history,
       historyGroups: buildHistoryGroups(history, this.data.historySearch),
       historyActionQuestion: '',
+      historyActionId: '',
       historyRenameMode: false,
       historyRenameValue: '',
       canSaveHistoryRename: false,
@@ -995,28 +1083,32 @@ const definition = {
 
   confirmDeleteHistory(question) {
     if (this._isUnloaded || typeof wx.showModal !== 'function') return
+    const account = conversationStorage.owner()
     wx.showModal({
       title: '删除这条会话？',
       content: '删除后无法从本机会话记录中恢复。',
       confirmText: '删除',
       confirmColor: '#B42318',
       success: result => {
-        if (!this._isUnloaded && result && result.confirm) this.deleteHistoryByQuestion(question)
+        if (!this._isUnloaded && account === conversationStorage.owner() && result && result.confirm) this.deleteHistoryByQuestion(question)
       }
     })
   },
 
   deleteHistoryByQuestion(question) {
     if (this._isUnloaded) return false
-    const normalizedQuestion = boundedQuestion(question)
     const previousHistory = normalizeHistory(this.data.history)
-    if (!previousHistory.some(item => item.question === normalizedQuestion)) return false
-    const history = previousHistory.filter(item => item.question !== normalizedQuestion)
-    if (boundedQuestion(this.data.activeConversationQuestion || this.data.lastQuestion) !== normalizedQuestion) {
+    const target = findHistoryEntry(previousHistory, question)
+    if (!target) return false
+    const history = previousHistory.filter(item => item.id !== target.id)
+    const active = this.data.activeConversationId ? this.data.activeConversationId === target.id
+      : boundedQuestion(this.data.activeConversationQuestion || this.data.lastQuestion) === target.question
+    if (!active) {
       this.setData({
         history,
         historyGroups: buildHistoryGroups(history, this.data.historySearch),
         historyActionQuestion: '',
+        historyActionId: '',
         historyRenameMode: false,
         historyRenameValue: '',
         canSaveHistoryRename: false,
@@ -1027,9 +1119,11 @@ const definition = {
       return true
     }
 
+    this.resetAssistantRequest()
     const stayOffline = this.data.networkError && this.data.previewState === 'network-error'
     this.setData({
       lastQuestion: '',
+      activeConversationId: '',
       activeConversationQuestion: '',
       draft: '',
       canSend: false,
@@ -1046,6 +1140,7 @@ const definition = {
       historySearch: '',
       historyGroups: [],
       historyActionQuestion: '',
+      historyActionId: '',
       historyRenameMode: false,
       historyRenameValue: '',
       canSaveHistoryRename: false,
@@ -1083,12 +1178,12 @@ const definition = {
     if (this._assistantController && typeof this._assistantController.cancel === 'function') this._assistantController.cancel()
     this._assistantController = assistantRuntime.createController()
     this._checkingNetwork = false
-    this.setData({ requestPending: false })
+    this.setData({ requestPending: false, followUpQuestions: [] })
   },
 
   saveConversationState(lastQuestion, draft, history) {
     if (this._conversationOwner === undefined) this._conversationOwner = conversationStorage.owner()
-    saveLocalState(this._conversationOwner, lastQuestion, draft, history)
+    saveLocalState(this._conversationOwner, lastQuestion, draft, history, this.data.activeConversationId)
   },
 
   syncConversationOwner(question = '') {
@@ -1116,11 +1211,13 @@ const definition = {
       this.data.history,
       this.data.activeConversationQuestion || this.data.lastQuestion,
       previousState,
-      { messages: this.data.messages, latestQuestion: this.data.lastQuestion }
+      { id: this.data.activeConversationId || findHistoryEntry(normalizeHistory(this.data.history), this.data.activeConversationQuestion || this.data.lastQuestion)?.id,
+        messages: this.data.messages, latestQuestion: this.data.lastQuestion }
     )
     const stayOffline = this.data.networkError && this.data.previewState === 'network-error'
     this.setData({
       lastQuestion: '',
+      activeConversationId: '',
       activeConversationQuestion: '',
       draft: '',
       canSend: false,
@@ -1137,6 +1234,7 @@ const definition = {
       historySearch: '',
       historyGroups: [],
       historyActionQuestion: '',
+      historyActionId: '',
       historyRenameMode: false,
       historyRenameValue: '',
       canSaveHistoryRename: false,
@@ -1187,16 +1285,10 @@ const definition = {
   },
 
   async regenerateAnswer() {
-    if (this._isUnloaded || this.data.requestPending || this.data.previewMode) return false
+    if (this._isUnloaded || this._checkingNetwork || this.data.requestPending || this.data.previewMode || this.syncConversationOwner()) return false
     const question = boundedQuestion(this.data.lastQuestion)
     if (!question) return false
-    const messages = normalizeCompletedMessages(this.data.messages)
-    const previousMessages = messages.length >= 2 ? messages.slice(0, -2) : []
-    const rounds = completedRounds(previousMessages)
     this.setData({
-      messages: previousMessages,
-      completedRoundCount: rounds,
-      roundLabel: `${rounds}/${MAX_ROUNDS}`,
       roundLimitReached: false,
       draft: question,
       canSend: true,
@@ -1210,9 +1302,9 @@ const definition = {
       responseFreshness: '',
       responseReason: '',
       responseCitations: [],
-      previousTurns: this.presentPreviousTurns(previousMessages, true)
+      previousTurns: this.presentPreviousTurns(this.data.messages, true)
     })
-    return this.sendQuestion()
+    return this.sendQuestion({ replaceLast: true })
   },
 
   rateAnswer(event) {
@@ -1285,7 +1377,7 @@ const definition = {
   },
 
   async submitEditedQuestion() {
-    if (this._isUnloaded) return false
+    if (this._isUnloaded || this._checkingNetwork || this.data.requestPending || this.syncConversationOwner()) return false
     const question = boundedQuestion(this.data.editingQuestionValue)
     if (!question) {
       wx.showToast({ title: '问题不能为空', icon: 'none' })
@@ -1310,7 +1402,12 @@ const definition = {
       return true
     }
 
-    if (!this.data.previewMode && this.data.previewState === 'refusal') {
+    if (!this.data.previewMode) {
+      const entry = this.data.history.find(item => item.id === this.data.activeConversationId)
+      const pending = entry && entry.pending
+      // Editing an unanswered follow-up keeps all completed pairs. Editing a
+      // completed answer uses the same staged replacement as regeneration.
+      const replaceLast = pending ? pending.mode === 'replace-last' : this.data.previewState !== 'refusal' && this.data.messages.length >= 2
       this.setData({
         editingQuestion: false,
         editingQuestionValue: '',
@@ -1321,36 +1418,7 @@ const definition = {
         draft: question,
         canSend: true
       })
-      return this.sendQuestion()
-    }
-
-    let connected = false
-    if (!this.data.previewMode) {
-      const networkType = await getNetworkType()
-      if (this._isUnloaded) return false
-      connected = hasConnection(networkType)
-    }
-    if (connected) {
-      const messages = normalizeCompletedMessages(this.data.messages)
-      const previousMessages = messages.length >= 2 ? messages.slice(0, -2) : []
-      const rounds = completedRounds(previousMessages)
-      this.setData({
-        editingQuestion: false,
-        editingQuestionValue: '',
-        canSendEditedQuestion: false,
-        focusQuestionEditor: false,
-        messages: previousMessages,
-        completedRoundCount: rounds,
-        roundLabel: `${rounds}/${MAX_ROUNDS}`,
-        roundLimitReached: false,
-        previewState: '',
-        assistantState: 'idle',
-        answerMode: false,
-        draft: question,
-        canSend: true,
-        previousTurns: this.presentPreviousTurns(previousMessages, true)
-      })
-      return this.sendQuestion()
+      return this.sendQuestion({ replaceLast })
     }
 
     this.setData({
@@ -1364,7 +1432,9 @@ const definition = {
       retrying: false,
       networkHint: '请检查网络或重试'
     })
-    const history = addHistoryEntry(this.data.history, question, 'network-error')
+    const history = addHistoryEntry(this.data.history, this.data.activeConversationQuestion || question, 'network-error', {
+      id: this.data.activeConversationId, messages: this.data.messages, latestQuestion: question
+    })
     this.setData({ history })
     this.saveConversationState(question, this.data.draft, history)
     return true

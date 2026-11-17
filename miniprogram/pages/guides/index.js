@@ -25,6 +25,8 @@ registerThemedPage({
   },
   openCampusMap() { navigation.openCampusMap() },
   openHinku,
+  openHandbook() { wx.navigateTo({ url: '/pages/guide-category/index?kind=handbook' }) },
+  openCppNotes() { wx.navigateTo({ url: '/pages/feishu-document/index?doc=cpp-notes' }) },
   openSearch() { navigation.openGuideSearch() },
   openAssistant() { navigation.openGuideAssistant() },
   openAssistantExample(event) {

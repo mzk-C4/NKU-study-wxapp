@@ -69,7 +69,7 @@ test('failed persistence never changes displayed preference and offers a retry m
 })
 test('every registered page owns theme lifecycle and page-meta; no independent system-theme CSS', () => {
   const app = JSON.parse(read('app.json'))
-  for (const route of app.pages) {
+  for (const route of [...app.pages, ...(app.subPackages || []).flatMap(group => group.pages.map(page => `${group.root}/${page}`))]) {
     assert.match(read(route + '.js'), /registerThemedPage\(/, route)
     const template = read(route + '.wxml')
     assert.match(template, /^<page-meta page-style="\{\{themePageStyle\}\}"/, route)

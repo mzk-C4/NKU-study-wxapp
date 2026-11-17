@@ -1,5 +1,6 @@
 const request = require('../../utils/request')
 const config = require('../../config')
+const { normalizeResponse } = require('../guide-assistant/response')
 
 const CATEGORY_DEFINITIONS = Object.freeze([
   Object.freeze({ value: 'course-study', label: '选课与修读', order: 1 }),
@@ -111,6 +112,12 @@ function mapSection(value, index) {
   return {
     id: text(raw.id) || `section-${index + 1}`,
     title: text(raw.title), body_format: text(raw.body_format) || 'markdown', body: text(raw.body),
+    ...(raw.render_format === 'feishu-html-v1' && typeof raw.body_html === 'string' ? {
+      render_format: 'feishu-html-v1', body_html: raw.body_html,
+      body_outline: (Array.isArray(raw.body_outline) ? raw.body_outline : []).map(item => ({
+        id: text(item && item.id), title: text(item && item.title), level: Number(item && item.level) || 2
+      })).filter(item => /^fs-heading-\d+$/.test(item.id) && item.title)
+    } : {}),
     source_ids: sourceIds, citation_ids: sourceIds
   }
 }
@@ -184,7 +191,7 @@ function buildAssistantRequest(input = {}) {
 }
 
 function mapAssistant(value, isReference) {
-  const raw = value && typeof value === 'object' ? value : {}
+  const raw = normalizeResponse(value)
   const refused = raw.refused === true
   const reason = text(raw.reason)
   return {
@@ -192,6 +199,7 @@ function mapAssistant(value, isReference) {
     reason: refused && REFUSAL_REASONS.has(reason) ? reason : '',
     guide_id: text(raw.guide_id), category: text(raw.category), answer: text(raw.answer),
     applicable_scope: text(raw.applicable_scope), freshness_notice: text(raw.freshness_notice),
+    answer_kind: raw.answer_kind, follow_up_questions: raw.follow_up_questions,
     citations: Array.isArray(raw.citations) ? raw.citations.map(item => assistantSource(item, isReference)).filter(item => item.id && item.title && item.url) : []
   }
 }
@@ -209,7 +217,8 @@ function createApi(client = request, options = {}) {
         .then(value => {
           const mapped = mapAssistant(value, isReference)
           const usable = mapped.citations.some(source => source.file_url || source.official_page_url)
-          if (!mapped.answer || (!mapped.refused && !usable) || (mapped.refused && !mapped.reason)) {
+          const conversational = ['conversation_summary', 'assistant_info'].includes(mapped.answer_kind)
+          if (!mapped.answer || (!mapped.refused && !conversational && !usable) || (mapped.refused && !mapped.reason)) {
             throw Object.assign(new Error('AI 服务暂时不可用，请稍后重试。'), { code: 'AI_UNAVAILABLE' })
           }
           return mapped

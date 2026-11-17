@@ -16,6 +16,15 @@ const LEGACY_TOPICS = Object.freeze({
   '学业拓展': 'study', 'academic-development': 'study',
   '规范与权益': 'life', 'rules-rights': 'life'
 })
+const KINDS = Object.freeze([
+  { value: '', label: '全部' },
+  { value: 'guide', label: '学校指南' },
+  { value: 'handbook', label: '生存手册' },
+  { value: 'cpp', label: 'C++ 笔记' },
+  { value: 'pdf', label: 'PDF 资料' }
+])
+function kindValue(value) { return KINDS.some(item => item.value === value) ? value : '' }
+function contentKind(item) { return /^cpp-notes-\d{3}$/.test(item.id) ? 'cpp' : item.content_type === 'student_experience' ? 'handbook' : item.kind }
 const SYNONYMS = [
   ['挂科', '不及格', '补考', '重修'],
   ['绩点', 'gpa', '平均学分绩点'],
@@ -33,7 +42,7 @@ function topicValue(value) {
 function topicsFor(item) {
   const text = item.title + ' ' + (item.summary || item.description || '')
   const topics = new Set()
-  if (item.kind === 'pdf') topics.add('senior')
+  if (item.kind === 'pdf' || item.content_type === 'student_experience') topics.add('senior')
   else topics.add(LEGACY_TOPICS[item.category_value || item.category] || 'study')
   if (/入学|新生|报到|注册|选课教程|健康地爬行/.test(text)) topics.add('freshman')
   if (/选课|课程|考试|成绩|学籍|毕业|学位|专业|辅修|科研|升学|推免|考研|竞赛|AI|学习/i.test(text)) topics.add('study')
@@ -43,7 +52,7 @@ function topicsFor(item) {
 function present(item, kind) {
   const result = { ...item, kind, key: kind + ':' + item.id,
     summary: item.summary || item.description || '',
-    sourceLabel: kind === 'pdf' ? '学生经验 · PDF' : '学校文件 · 指南'
+    sourceLabel: kind === 'pdf' ? '学生经验 · PDF' : /^cpp-notes-\d{3}$/.test(item.id) ? '学生笔记 · C++' : item.content_type === 'student_experience' ? '学生经验 · 生存手册' : '学校文件 · 指南'
   }
   result.topics = topicsFor(result)
   return result
@@ -88,7 +97,7 @@ function searchCatalog(items, query = '', options = {}) {
   const groups = queryGroups(query)
   return items.filter(item =>
     (!options.topic || item.topics.includes(options.topic)) &&
-    (!options.kind || item.kind === options.kind)
+    (!options.kind || contentKind(item) === options.kind)
   ).map((item, index) => {
     const title = normalizeSearchText(item.title)
     const summary = normalizeSearchText(item.summary)
@@ -112,4 +121,4 @@ function searchCatalog(items, query = '', options = {}) {
     summaryHtml: highlightText(item.summary, normalized, { allowScattered: false }).html
   }))
 }
-module.exports = { TOPICS, topicValue, documents, loadCatalog, searchCatalog, topicsFor, queryGroups }
+module.exports = { TOPICS, KINDS, topicValue, kindValue, documents, loadCatalog, searchCatalog, topicsFor, queryGroups }

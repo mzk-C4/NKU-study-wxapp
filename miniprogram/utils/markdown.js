@@ -61,13 +61,21 @@ function tableCells(cells, rowIndex) {
   return cells.map((cell, cellIndex) => ({ id: `cell-${rowIndex}-${cellIndex}`, runs: parseInlineRuns(cell) }))
 }
 
-function parseMarkdown(source) {
+function parseMarkdown(source, options = {}) {
   if (typeof source !== 'string') return []
   const lines = normalizeDisplayText(source).replace(/\r/g, '').split('\n')
   const blocks = []
   for (let index = 0; index < lines.length;) {
     const line = lines[index].trim()
     if (!line) { index += 1; continue }
+    const picture = options.allowImages && /^!\[([^\]]*)\]\(([^\s)]+)\)$/.exec(line)
+    if (picture) {
+      const src = validHttpsUrl(picture[2])
+      if (src) blocks.push({ type: 'image', src, alt: normalizeDisplayText(picture[1]) })
+      else blocks.push({ type: 'paragraph', runs: parseInlineRuns(picture[1]) })
+      index += 1
+      continue
+    }
     const headers = splitTableLine(line)
     if (headers.length > 1 && isTableDivider(lines[index + 1])) {
       const rows = []

@@ -3,6 +3,13 @@ const navigation = require('../../utils/navigation')
 const { createSourceOpener } = require('../../utils/source-opener')
 const BATCH_SIZE = 20
 function decode(value) { try { return decodeURIComponent(value || '') } catch (_) { return '' } }
+function categoryHeading(topic, kind) {
+  const info = catalog.TOPICS.find(item => item.value === topic)
+  if (info) return { title: info.label, description: info.description }
+  return kind === 'handbook'
+    ? { title: '生存手册', description: '计网、软件、人智大类的选课与成长经验。保留原作者署名和正文图片，重要事项请核对学校最新通知。' }
+    : { title: '全部指南', description: '学校文件与学生经验分别标注，重要事项以学校最新通知为准。' }
+}
 
 function createCatalogPage(mode) {
   return {
@@ -12,19 +19,19 @@ function createCatalogPage(mode) {
       openingDocumentId: '', title: mode === 'documents' ? 'PDF 学生资料' : mode === 'search' ? '搜索指南与资料' : '全部指南',
       description: '学校文件与学生经验分别标注，重要事项以学校最新通知为准。',
       suggestions: ['新生入学', '选课', '挂科怎么办', '成绩复核', '保研', '宿舍'],
-      kinds: [{ value: '', label: '全部' }, { value: 'guide', label: '学校指南' }, { value: 'pdf', label: 'PDF 资料' }]
+      kinds: catalog.KINDS
     },
     onLoad(options = {}) {
       this._isUnloaded = false
       this._requestId = 0
       this._sourceOpener = createSourceOpener()
       const topic = catalog.topicValue(decode(options.category))
-      const info = catalog.TOPICS.find(item => item.value === topic)
+      const kind = mode === 'documents' ? 'pdf' : catalog.kindValue(decode(options.kind))
       this.setData({
         topic: mode === 'category' ? topic : '',
         query: decode(options.q).slice(0, 80),
-        kind: mode === 'documents' ? 'pdf' : '',
-        ...(mode === 'category' && info ? { title: info.label, description: info.description } : {})
+        kind,
+        ...(mode === 'category' ? categoryHeading(topic, kind) : {})
       })
       return this.loadGuides()
     },
@@ -47,12 +54,13 @@ function createCatalogPage(mode) {
       } catch (_) {
         if (this._isUnloaded || requestId !== this._requestId) return
         this._items = catalog.documents()
-        this.setData({ loading: false, warning: '学校指南加载失败，当前仅显示已收录 PDF。可重试加载。' })
+        this.setData({ loading: false, warning: '在线指南与生存手册加载失败，当前仅有已收录 PDF 可供筛选。请重试加载。' })
         this.applySearch()
       }
     },
     retry() { return this.loadGuides() },
     openAssistant() { navigation.openGuideAssistant(this.data.query) },
+    openHandbookSource() { wx.navigateTo({ url: '/pages/feishu-document/index' }) },
     inputSearch(event) {
       this.setData({ query: String(event.detail.value || '').slice(0, 80) })
       clearTimeout(this._searchTimer)
@@ -63,11 +71,14 @@ function createCatalogPage(mode) {
     chooseSuggestion(event) { this.setData({ query: event.currentTarget.dataset.query }); this.confirmSearch() },
     chooseCategory(event) {
       const topic = catalog.topicValue(event.currentTarget.dataset.category)
-      const info = catalog.TOPICS.find(item => item.value === topic)
-      this.setData({ topic, ...(mode === 'category' ? { title: info ? info.label : '全部指南', description: info ? info.description : '浏览学校指南与学生经验。' } : {}) })
+      this.setData({ topic, ...(mode === 'category' ? categoryHeading(topic, this.data.kind) : {}) })
       this.confirmSearch()
     },
-    chooseKind(event) { this.setData({ kind: event.currentTarget.dataset.kind || '' }); this.confirmSearch() },
+    chooseKind(event) {
+      const kind = catalog.kindValue(event.currentTarget.dataset.kind)
+      this.setData({ kind, ...(mode === 'category' ? categoryHeading(this.data.topic, kind) : {}) })
+      this.confirmSearch()
+    },
     applySearch() {
       if (this._isUnloaded) return
       this._matches = catalog.searchCatalog(this._items || [], this.data.query, { topic: this.data.topic, kind: this.data.kind })

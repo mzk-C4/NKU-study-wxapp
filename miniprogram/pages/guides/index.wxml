@@ -10,8 +10,7 @@
     <image class="guide-logo" src="/assets/brand.png" mode="aspectFit"></image>
     <view class="guide-intro-main">
       <view class="guide-title">学习指南针</view>
-      <view class="guide-sub">从新生入学到校园生活，找到下一步方向</view>
-      <view class="guide-trust"><view class="shield-mark">✓</view><text>学生共建 · 重要事项以最新官方文件为准</text></view>
+      <view class="guide-sub">入学、学习、校园生活，一处查找</view>
     </view>
   </view>
 
@@ -27,7 +26,7 @@
         <view class="assistant-feature-title">指南针 AI</view>
         <view class="assistant-feature-copy">学习与生活问题，问问指南针</view>
       </view>
-      <view class="assistant-feature-action"><text>去提问</text><text aria-hidden="true">›</text></view>
+      <view class="assistant-feature-action" aria-hidden="true">›</view>
     </button>
 
     <view class="category-panel" aria-label="指南一级分类">
@@ -45,6 +44,12 @@
       </button>
     </view>
 
+    <button class="campus-map-entry" bindtap="openHandbook" hover-class="control--pressed" aria-label="打开生存手册，在小程序内阅读完整图文">
+      <view class="campus-map-symbol" aria-hidden="{{true}}">文</view>
+      <view class="campus-map-main"><view class="campus-map-title">NKU 计网 软件 人智大类生存手册</view><view class="campus-map-note">选课 · 专业分流 · 科研与升学</view></view>
+      <text class="pdf-entry-arrow" aria-hidden="{{true}}">›</text>
+    </button>
+
     <button class="campus-map-entry" bindtap="openCampusMap" hover-class="control--pressed" aria-label="打开校园地图">
       <view class="campus-map-symbol">⌖</view>
       <view class="campus-map-main"><view class="campus-map-title">校园地图</view><view class="campus-map-note">腾讯地图导航 · 2D / 3D 校园导览</view></view>
@@ -53,7 +58,13 @@
 
     <button class="campus-map-entry" bindtap="openHinku" hover-class="control--pressed" aria-label="校园服务，前往 HiNKU 小程序首页查询课表、班车、校园卡余额和电费，查看学校公告和预约场地">
       <view class="campus-map-symbol" aria-hidden="{{true}}">↗</view>
-      <view class="campus-map-main"><view class="campus-map-title">校园服务 · HiNKU</view><view class="campus-map-note">课表 · 班车 · 校园卡余额 · 电费</view><view class="campus-map-note">学校公告 · 场地预约 · 打开 HiNKU 首页</view></view>
+      <view class="campus-map-main"><view class="campus-map-title">校园服务 · HiNKU</view><view class="campus-map-note">课表 · 班车 · 余额与电费 · 场地预约</view></view>
+      <text class="pdf-entry-arrow" aria-hidden="{{true}}">›</text>
+    </button>
+
+    <button class="campus-map-entry" bindtap="openCppNotes" hover-class="control--pressed" aria-label="打开 C++ 笔记章节目录，可按章阅读或查看飞书原文">
+      <view class="campus-map-symbol" aria-hidden="{{true}}">↗</view>
+      <view class="campus-map-main"><view class="campus-map-title">C++ 笔记</view><view class="campus-map-note">按章阅读 · 编程学习与复习参考</view></view>
       <text class="pdf-entry-arrow" aria-hidden="{{true}}">›</text>
     </button>
 
@@ -61,8 +72,7 @@
       <view class="pdf-document-icon">PDF</view>
       <view class="pdf-entry-main">
         <view class="pdf-section-title">PDF 学生资料</view>
-        <view class="pdf-section-note">选课、科研与升学经验，进入资料库查找</view>
-        <view class="pdf-section-note">共 {{pdfCount}} 份 · 学生经验仅供参考</view>
+        <view class="pdf-section-note">{{pdfCount}} 份选课、科研与升学经验</view>
       </view>
       <text class="pdf-entry-arrow">›</text>
     </button>

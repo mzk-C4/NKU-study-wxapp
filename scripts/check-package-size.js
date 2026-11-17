@@ -32,6 +32,12 @@ const files = walk(miniRoot).map(file => ({
 const included = files.filter(file => !ignored(file.path))
 const excluded = files.filter(file => ignored(file.path))
 const bytes = included.reduce((sum, file) => sum + file.bytes, 0)
+const app = JSON.parse(fs.readFileSync(path.join(miniRoot, 'app.json'), 'utf8'))
+const packageRoots = (app.subPackages || []).map(group => normalize(group.root))
+const packageSizes = [
+  { name: '主包', bytes: included.filter(file => !packageRoots.some(prefix => file.path.startsWith(prefix + '/'))).reduce((sum, file) => sum + file.bytes, 0) },
+  ...packageRoots.map(prefix => ({ name: prefix, bytes: included.filter(file => file.path.startsWith(prefix + '/')).reduce((sum, file) => sum + file.bytes, 0) }))
+]
 const source = included.filter(file => /\.(?:js|json|wxml|wxss|svg)$/.test(file.path))
   .map(file => fs.readFileSync(file.absolute, 'utf8')).join('\n')
 const referencedExcluded = excluded.filter(file => /\.(?:png|jpe?g|webp|svg)$/.test(file.path) && source.includes(file.path))
@@ -39,8 +45,9 @@ if (referencedExcluded.length) {
   console.error('打包排除项仍被运行代码引用：' + referencedExcluded.map(file => file.path).join(', '))
   process.exit(1)
 }
-console.log(`小程序本地源码保守统计：${(bytes / 1024).toFixed(1)} KiB / ${LIMIT / 1024} KiB；已排除 ${(excluded.reduce((sum, file) => sum + file.bytes, 0) / 1024).toFixed(1)} KiB。微信编译后的实际包大小以开发者工具为准。`)
-if (bytes > LIMIT) {
-  console.error('源码预算超过2MiB，请排除旧稿或压缩资源后再上传。')
+for (const entry of packageSizes) console.log(`小程序源码 ${entry.name}：${(entry.bytes / 1024).toFixed(1)} KiB / ${LIMIT / 1024} KiB。`)
+console.log(`总计 ${(bytes / 1024).toFixed(1)} KiB；已排除 ${(excluded.reduce((sum, file) => sum + file.bytes, 0) / 1024).toFixed(1)} KiB。微信编译后的实际包大小以开发者工具为准。`)
+if (packageSizes.some(entry => entry.bytes > LIMIT) || bytes > 20 * 1024 * 1024) {
+  console.error('源码预算超过单包2MiB或总包20MiB，请调整分包或资源后再上传。')
   process.exit(1)
 }

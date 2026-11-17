@@ -56,6 +56,18 @@ test('returns empty blocks for empty or non-string input', () => {
   assert.deepEqual(parseMarkdown(null), [])
   assert.deepEqual(parseMarkdown(undefined), [])
 })
+
+test('guide images retain their source and reading order without enabling images in other readers', () => {
+  const source = '图前文字\n![课程表](https://nkustudy.top/guide-media/table.png)\n图后文字\n![](https://nkustudy.top/guide-media/chart.jpg)'
+  const blocks = parseMarkdown(source, { allowImages: true })
+  assert.deepEqual(blocks.map(block => block.type), ['paragraph', 'image', 'paragraph', 'image'])
+  assert.equal(blocks[1].src, 'https://nkustudy.top/guide-media/table.png')
+  assert.equal(blocks[1].alt, '课程表')
+  assert.equal(new Set(blocks.map(block => block.id)).size, blocks.length)
+  assert.equal(parseMarkdown(source).some(block => block.type === 'image'), false)
+  const unsafe = parseMarkdown('![说明](http://example.com/a.png)\n![说明](data:image/png;base64,AAAA)', { allowImages: true })
+  assert.equal(unsafe.some(block => block.type === 'image'), false)
+})
 test('parses headings, blockquotes, ordered lists and complete markdown tables', () => {
   const blocks = parseMarkdown([
     '# 标题',

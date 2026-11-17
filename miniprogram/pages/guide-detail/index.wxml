@@ -3,7 +3,7 @@
 <view class="detail-page">
   <view class="detail-nav" style="padding-top: {{statusBarHeight}}px;">
     <button class="detail-back" aria-label="返回上一页" hover-class="icon-pressed" bindtap="goBack"><view class="back-arrow"></view></button>
-    <view class="detail-nav-title">{{guide && guide.transfer ? '学习指南针' : '指南详情'}}</view>
+    <view class="detail-nav-title">{{guide && guide.transfer ? '学习指南针' : guide && guide.isCppNotes ? 'C++ 笔记' : guide && guide.contentType === 'student_experience' ? '生存手册' : '指南详情'}}</view>
     <view class="detail-nav-space" aria-hidden="true"></view>
   </view>
 
@@ -68,16 +68,17 @@
     </block>
 
     <block wx:else>
-    <view class="detail-hero">
+    <view class="detail-hero {{guide.richHtml ? 'handbook-hero' : ''}}">
       <view class="detail-watermark" aria-hidden="true"><view class="tower-spire"></view><view class="tower-roof"></view><view class="tower-body"></view><view class="tower-base"></view></view>
       <view class="detail-category detail-category--{{guide.categoryTone}}"><text>{{guide.categorySymbol}}</text><text>{{guide.category}}</text></view>
-      <view class="detail-title">{{guide.title}}</view>
-      <view class="detail-source-line"><view class="detail-source-mark">▣</view><text>来源：{{guide.source.title}}</text></view>
-      <view class="detail-source-meta"><view class="detail-document-number">{{guide.source.number}}</view><view class="detail-publisher">▣  {{guide.source.publisher}}</view></view>
-      <view class="detail-date-line"><text>▣  {{guide.updatedLabel}}</text><text>◉  原文阅读</text></view>
+      <view class="detail-title">{{guide.richHtml ? guide.readerTitle : guide.title}}</view>
+      <view class="detail-source-line" wx:if="{{!guide.richHtml}}"><view class="detail-source-mark">▣</view><text>来源：{{guide.source.title}}</text></view>
+      <view class="detail-source-meta" wx:if="{{!guide.richHtml}}"><view class="detail-document-number">{{guide.source.number}}</view><view class="detail-publisher">▣  {{guide.source.publisher}}</view></view>
+      <view class="handbook-byline" wx:if="{{guide.richHtml}}">{{guide.source.publisher}}</view>
+      <view class="detail-date-line"><text>{{guide.updatedLabel}}</text><text>{{guide.richHtml ? '学生共建 · 仅供参考' : '原文阅读'}}</text></view>
     </view>
 
-    <scroll-view class="detail-section-tabs" scroll-x enable-flex show-scrollbar="false" scroll-into-view="{{activeSectionTabId}}">
+    <scroll-view wx:if="{{!guide.richHtml}}" class="detail-section-tabs" scroll-x enable-flex show-scrollbar="false" scroll-into-view="{{activeSectionTabId}}">
       <view class="detail-section-tab-row">
         <button
           wx:for="{{guide.sections}}"
@@ -90,21 +91,33 @@
       </view>
     </scroll-view>
 
-    <view class="detail-reading">
-      <view class="detail-scope-card">
+    <view class="detail-reading {{guide.richHtml ? 'handbook-reading' : ''}}">
+      <view wx:if="{{guide.richHtml}}" class="handbook-toolbar">
+        <picker wx:if="{{guide.richOutline.length}}" mode="selector" range="{{guide.richOutline}}" range-key="title" bindchange="chooseHandbookHeading"><view class="handbook-toc">本文目录 · {{guide.richOutline.length}} 节 <text>⌄</text></view></picker>
+        <button class="handbook-original" bindtap="copySourceUrl">飞书原文 ↗</button>
+      </view>
+      <view wx:if="{{guide.richHtml}}" class="handbook-prose">
+        <mp-html id="handbook-reader" content="{{guide.richHtml}}" tag-style="{{readerTagStyle}}" container-style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Microsoft YaHei',sans-serif;font-size:13px;line-height:1.85;color:var(--nk-text,#282230);overflow-wrap:break-word" selectable="{{true}}" copy-link="{{false}}" preview-img="{{true}}" show-img-menu="{{true}}" scroll-table="{{true}}" set-title="{{false}}" use-anchor="{{true}}" bindlinktap="openReaderLink" />
+      </view>
+      <view class="detail-scope-card" wx:if="{{!guide.richHtml}}">
         <view class="detail-scope-icon">▣</view>
-        <view><view class="detail-scope-label">规范适用范围</view><view class="detail-scope-value">{{guide.scope}}</view></view>
+        <view><view class="detail-scope-label">{{guide.contentType === 'student_experience' ? '学生经验 · 阅读说明' : '规范适用范围'}}</view><view class="detail-scope-value">{{guide.scope}}</view></view>
       </view>
 
-      <view class="detail-section" id="{{item.anchorId}}" wx:for="{{guide.sections}}" wx:key="id">
+      <view wx:if="{{!guide.richHtml}}" class="detail-section" id="{{item.anchorId}}" wx:for="{{guide.sections}}" wx:key="id">
         <view class="detail-section-heading">{{item.ordinal}}、{{item.title}}</view>
         <view class="detail-section-body">
           <block wx:for="{{item.visibleBlocks}}" wx:key="id" wx:for-item="block">
             <view wx:if="{{block.type === 'heading'}}" class="markdown-heading"><block wx:for="{{block.runs}}" wx:key="id" wx:for-item="run"><rich-text wx:if="{{run.kind !== 'link'}}" nodes="{{run.html}}"></rich-text><button wx:else class="markdown-link" data-href="{{run.href}}" bindtap="openMarkdownLink">{{run.text}}</button></block></view>
             <view wx:elif="{{block.type === 'paragraph'}}" class="markdown-paragraph"><block wx:for="{{block.runs}}" wx:key="id" wx:for-item="run"><rich-text wx:if="{{run.kind !== 'link'}}" nodes="{{run.html}}"></rich-text><button wx:else class="markdown-link" data-href="{{run.href}}" bindtap="openMarkdownLink">{{run.text}}</button></block></view>
-            <view wx:elif="{{block.type === 'list-item'}}" class="markdown-list-item"><text>{{block.marker}}</text><view><block wx:for="{{block.runs}}" wx:key="id" wx:for-item="run"><rich-text nodes="{{run.html}}"></rich-text></block></view></view>
-            <view wx:elif="{{block.type === 'blockquote'}}" class="markdown-quote"><block wx:for="{{block.runs}}" wx:key="id" wx:for-item="run"><rich-text nodes="{{run.html}}"></rich-text></block></view>
-            <scroll-view wx:elif="{{block.type === 'table'}}" class="markdown-table-scroll" scroll-x><view class="markdown-table"><view class="markdown-table-row markdown-table-row--head"><view wx:for="{{block.headers}}" wx:key="id" class="markdown-table-cell"><block wx:for="{{item.runs}}" wx:key="id" wx:for-item="run"><rich-text nodes="{{run.html}}"></rich-text></block></view></view><view wx:for="{{block.rows}}" wx:key="id" class="markdown-table-row"><view wx:for="{{item.cells}}" wx:key="id" class="markdown-table-cell"><block wx:for="{{item.runs}}" wx:key="id" wx:for-item="run"><rich-text nodes="{{run.html}}"></rich-text></block></view></view></view></scroll-view>
+            <view wx:elif="{{block.type === 'list-item'}}" class="markdown-list-item"><text>{{block.marker}}</text><view><block wx:for="{{block.runs}}" wx:key="id" wx:for-item="run"><rich-text wx:if="{{run.kind !== 'link'}}" nodes="{{run.html}}"></rich-text><button wx:else class="markdown-link" data-href="{{run.href}}" bindtap="openMarkdownLink">{{run.text}}</button></block></view></view>
+            <view wx:elif="{{block.type === 'blockquote'}}" class="markdown-quote"><block wx:for="{{block.runs}}" wx:key="id" wx:for-item="run"><rich-text wx:if="{{run.kind !== 'link'}}" nodes="{{run.html}}"></rich-text><button wx:else class="markdown-link" data-href="{{run.href}}" bindtap="openMarkdownLink">{{run.text}}</button></block></view>
+            <view wx:elif="{{block.type === 'image'}}" class="markdown-figure">
+              <image wx:if="{{!imageErrors[block.src]}}" class="markdown-image" src="{{block.src}}" mode="widthFix" lazy-load show-menu-by-longpress aria-label="{{block.alt || '手册原图'}}" data-src="{{block.src}}" bindtap="previewGuideImage" bindload="measureSections" binderror="onGuideImageError"></image>
+              <view wx:else class="markdown-image-error"><text>图片加载失败</text><button data-src="{{block.src}}" bindtap="retryGuideImage">重新加载</button><button bindtap="copySourceUrl">查看原文</button></view>
+              <view class="markdown-image-hint" wx:if="{{!imageErrors[block.src]}}">手册原图 · 点击放大</view>
+            </view>
+            <scroll-view wx:elif="{{block.type === 'table'}}" class="markdown-table-scroll" scroll-x><view class="markdown-table"><view class="markdown-table-row markdown-table-row--head"><view wx:for="{{block.headers}}" wx:key="id" class="markdown-table-cell"><block wx:for="{{item.runs}}" wx:key="id" wx:for-item="run"><rich-text wx:if="{{run.kind !== 'link'}}" nodes="{{run.html}}"></rich-text><button wx:else class="markdown-link" data-href="{{run.href}}" bindtap="openMarkdownLink">{{run.text}}</button></block></view></view><view wx:for="{{block.rows}}" wx:key="id" class="markdown-table-row"><view wx:for="{{item.cells}}" wx:key="id" class="markdown-table-cell"><block wx:for="{{item.runs}}" wx:key="id" wx:for-item="run"><rich-text wx:if="{{run.kind !== 'link'}}" nodes="{{run.html}}"></rich-text><button wx:else class="markdown-link" data-href="{{run.href}}" bindtap="openMarkdownLink">{{run.text}}</button></block></view></view></view></scroll-view>
           </block>
         </view>
         <view class="detail-highlight" wx:if="{{item.highlights.length}}">
@@ -121,15 +134,15 @@
       </view>
 
       <view class="detail-source-card">
-        <view class="detail-source-card-head"><view class="detail-source-badge">▤</view><view><view class="detail-source-card-title">来源与验证</view><view class="detail-source-card-copy">本指南内容摘录自学校官方文件，便于阅读和核对。</view></view></view>
+        <view class="detail-source-card-head"><view class="detail-source-badge">▤</view><view><view class="detail-source-card-title">来源与验证</view><view class="detail-source-card-copy">{{guide.contentType === 'student_experience' ? '本指南为学生共建经验，保留原作者署名，具体要求以最新官方文件为准。' : '本指南内容摘录自学校官方文件，便于阅读和核对。'}}</view></view></view>
         <view class="detail-source-grid">
-          <view class="detail-source-field detail-source-field--wide"><text>文件名称</text><view>{{guide.source.title}}</view></view>
-          <view class="detail-source-field"><text>文号</text><view>{{guide.source.number}}</view></view>
-          <view class="detail-source-field"><text>发布单位</text><view>{{guide.source.publisher}}</view></view>
+          <view class="detail-source-field detail-source-field--wide"><text>{{guide.contentType === 'student_experience' ? '原文标题' : '文件名称'}}</text><view>{{guide.source.title}}</view></view>
+          <view class="detail-source-field"><text>{{guide.contentType === 'student_experience' ? '内容性质' : '文号'}}</text><view>{{guide.source.number}}</view></view>
+          <view class="detail-source-field"><text>{{guide.contentType === 'student_experience' ? '作者与贡献者' : '发布单位'}}</text><view>{{guide.source.publisher}}</view></view>
           <view class="detail-source-field" wx:if="{{guide.source.issuedDate}}"><text>发布日期</text><view>{{guide.source.issuedDate}}</view></view>
-          <view class="detail-source-field"><text>文件状态</text><view>{{guide.source.fileStatus}}</view></view>
+          <view class="detail-source-field"><text>{{guide.contentType === 'student_experience' ? '来源平台' : '文件状态'}}</text><view>{{guide.contentType === 'student_experience' ? '飞书文档' : guide.source.fileStatus}}</view></view>
         </view>
-        <button class="detail-source-open" hover-class="detail-source-open--pressed" bindtap="copySourceUrl">查看完整原文件 <text>↗</text></button>
+        <button class="detail-source-open" hover-class="detail-source-open--pressed" bindtap="copySourceUrl">{{guide.contentType === 'student_experience' ? '复制飞书原文链接' : '查看完整原文件'}} <text>↗</text></button>
       </view>
 
       <view class="detail-feedback"><text>本指南对你有帮助吗？</text><view class="feedback-buttons"><button class="feedback-button {{feedback === 'helpful' ? 'feedback-button--active' : ''}}" data-value="helpful" bindtap="rateGuide">有帮助</button><button class="feedback-button {{feedback === 'unhelpful' ? 'feedback-button--active' : ''}}" data-value="unhelpful" bindtap="rateGuide">没帮助</button></view></view>

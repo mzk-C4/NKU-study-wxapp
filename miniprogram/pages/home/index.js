@@ -170,7 +170,6 @@ registerThemedPage({
       else wx.switchTab({ url: slide.url })
     }
   },
-  openFeishuDocument() { wx.navigateTo({ url: '/pages/feishu-document/index' }) },
   openHinku,
   openUpdate(event) {
     const id = event.currentTarget.dataset.id

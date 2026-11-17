@@ -1,5 +1,8 @@
 {
   "navigationStyle": "custom",
+  "usingComponents": {
+    "mp-html": "./components/mp-html/index"
+  },
   "navigationBarTitleText": "指南详情",
   "backgroundColor": "#FFFEFC",
   "backgroundTextStyle": "dark"

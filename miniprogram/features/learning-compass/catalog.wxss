@@ -34,3 +34,4 @@
   background: var(--nk-surface, #FFFDF8);
   border-radius: 18rpx;
 }
+.catalog-original { margin: 20rpx 0 0; padding: 0; color: var(--nk-accent, #5D259C); background: transparent; font-size: 24rpx; line-height: 1.6; text-align: left; }

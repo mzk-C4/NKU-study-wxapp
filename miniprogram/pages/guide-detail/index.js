@@ -2,9 +2,10 @@ const { registerPage: registerThemedPage } = require('../../utils/theme')
 const publicApi = require('../../features/learning-compass/api')
 const navigation = require('../../utils/navigation')
 const { getCategoryInfo, cleanSourceText } = require('../../utils/learning-compass')
-const { parseMarkdown, normalizeDisplayText } = require('../../utils/markdown')
+const { parseMarkdown, normalizeDisplayText, validHttpsUrl } = require('../../utils/markdown')
 const { createSourceOpener } = require('../../utils/source-opener')
 const feedbackApi = require('../../utils/feedback-api')
+const readerTagStyle = require('./reader-style')
 
 const CHINESE_ORDINALS = Object.freeze(['一', '二', '三', '四', '五', '六', '七', '八'])
 const TRANSFER_GUIDE_ID = 'transfer-major-2026'
@@ -62,6 +63,7 @@ function sourceMeta(source) {
   const raw = source && typeof source === 'object' ? source : {}
   return {
     id: String(raw.id || ''),
+    isCppNotes: /^cpp-notes-\d{3}$/.test(String(raw.id || '')),
     title: String(raw.title || ''),
     url: String(raw.file_url || raw.url || ''),
     fileUrl: String(raw.file_url || ''),
@@ -166,15 +168,18 @@ function stableSectionId(value, index, seen) {
 
 function presentGuide(rawGuide) {
   const raw = rawGuide && typeof rawGuide === 'object' ? rawGuide : {}
+  const isStudentExperience = raw.content_type === 'student_experience'
   const category = String(raw.category || '')
   const categoryInfo = getCategoryInfo(category)
   const rawSections = Array.isArray(raw.sections) && raw.sections.length
     ? raw.sections
     : Array.isArray(raw.steps) ? raw.steps : []
+  const richSection = isStudentExperience && rawSections.find(section => section.render_format === 'feishu-html-v1' && section.body_html)
+  const richHtml = richSection ? richSection.body_html : ''
   const sectionIds = new Set()
   const sections = rawSections.map((section, index) => {
     const body = normalizeDisplayText(section && section.body).replace(/\r/g, '').trim()
-    const blocks = parseMarkdown(body)
+    const blocks = richHtml ? [] : parseMarkdown(body, { allowImages: isStudentExperience })
     const previewBlocks = blocks.slice(0, 3)
     const base = {
       id: stableSectionId(section && section.id, index, sectionIds),
@@ -189,7 +194,7 @@ function presentGuide(rawGuide) {
       sourceIds: Array.isArray(section && section.source_ids) ? section.source_ids.map(value => String(value || '').trim()).filter(Boolean) : [],
       highlights: []
     }
-    return withVisibleBlocks(base, index === 0)
+    return withVisibleBlocks(base, isStudentExperience || index === 0)
   })
   const source = Array.isArray(raw.sources) && raw.sources.length
     ? raw.sources[0]
@@ -197,12 +202,15 @@ function presentGuide(rawGuide) {
   const guide = {
     id: String(raw.id || ''),
     title: String(raw.title || ''),
+    readerTitle: String(raw.title || '').replace(/^生存手册\s*[·・]\s*/, ''),
+    richHtml,
+    richOutline: richSection ? richSection.body_outline || [] : [],
     category,
     categoryTone: categoryInfo.tone,
     categorySymbol: categoryInfo.symbol,
     summary: cleanSourceText(raw.summary, 180),
-    scope: String(raw.applicable_scope || '适用范围以相关学校文件为准'),
-    updatedLabel: raw.updated_at ? `更新于 ${String(raw.updated_at).slice(0, 10)}` : '内容来自已整理学校文件',
+    scope: String(raw.applicable_scope || (isStudentExperience ? '学生共建经验，仅供参考' : '适用范围以相关学校文件为准')),
+    updatedLabel: raw.updated_at ? `更新于 ${String(raw.updated_at).slice(0, 10)}` : isStudentExperience ? '内容来自学生共建手册' : '内容来自已整理学校文件',
     timeStatus: String(raw.time_status || ''),
     contentType: String(raw.content_type || 'standard'),
     source: sourceMeta(source),
@@ -255,7 +263,9 @@ registerThemedPage({
     feedbackSubmitting: false,
     feedbackStatus: '',
     feedbackTypes: [{ value: 'content', label: '内容错误' }, { value: 'outdated', label: '信息过期' }, { value: 'source', label: '来源问题' }, { value: 'layout', label: '排版问题' }, { value: 'other', label: '其他' }],
-    activeSectionTabId: ''
+    activeSectionTabId: '',
+    imageErrors: {},
+    readerTagStyle
   },
 
   onLoad(options = {}) {
@@ -290,7 +300,7 @@ registerThemedPage({
     }
     const requestId = (this._requestId || 0) + 1
     this._requestId = requestId
-    this.setData({ loading: true, error: '', unavailable: false, guide: null, activeSectionId: '' })
+    this.setData({ loading: true, error: '', unavailable: false, guide: null, activeSectionId: '', imageErrors: {} })
     try {
       const rawGuide = await publicApi.getGuide(id)
       if (this._isUnloaded || this._requestId !== requestId) return
@@ -402,7 +412,56 @@ registerThemedPage({
 
   copySourceUrl() {
     const guide = this.data.guide || {}
+    if (guide.contentType === 'student_experience') {
+      return copyLink(validHttpsUrl(guide.source && guide.source.officialPageUrl), '原文链接已复制')
+    }
     return openSourceFile(guide.source)
+  },
+
+  openMarkdownLink(event) {
+    const href = validHttpsUrl(event && event.currentTarget && event.currentTarget.dataset.href)
+    return copyLink(href, '链接已复制，请在浏览器打开')
+  },
+
+  openReaderLink(event) {
+    const href = validHttpsUrl(event && event.detail && event.detail.href)
+    const internal = /^https:\/\/nkustudy\.top\/guides\/(handbook-[a-z0-9]+)\/$/.exec(href)
+    if (internal) { navigation.openGuide(internal[1]); return true }
+    return copyLink(href, '链接已复制，请在浏览器打开')
+  },
+
+  chooseHandbookHeading(event) {
+    const index = Number(event && event.detail && event.detail.value)
+    const heading = this.data.guide && this.data.guide.richOutline[index]
+    const reader = typeof this.selectComponent === 'function' && this.selectComponent('#handbook-reader')
+    if (!heading || !reader) return
+    return reader.navigateTo(heading.id, -(this.data.statusBarHeight + 60)).catch(() => {
+      wx.showToast({ title: '目录暂时无法定位，请稍后重试', icon: 'none' })
+    })
+  },
+
+  previewGuideImage(event) {
+    const src = event && event.currentTarget && event.currentTarget.dataset.src
+    const guide = this.data.guide
+    const urls = [...new Set((guide && guide.sections || []).flatMap(section => section.blocks
+      .filter(block => block.type === 'image').map(block => block.src)))]
+    if (!urls.includes(src) || typeof wx.previewImage !== 'function') return false
+    wx.previewImage({ current: src, urls, fail() { wx.showToast({ title: '图片暂时无法打开，请重试', icon: 'none' }) } })
+    return true
+  },
+
+  onGuideImageError(event) {
+    const src = event && event.currentTarget && event.currentTarget.dataset.src
+    if (!src || this._isUnloaded) return
+    this.setData({ imageErrors: { ...this.data.imageErrors, [src]: true } }, () => this.measureSections())
+  },
+
+  retryGuideImage(event) {
+    const src = event && event.currentTarget && event.currentTarget.dataset.src
+    if (!src || this._isUnloaded) return
+    const imageErrors = { ...this.data.imageErrors }
+    delete imageErrors[src]
+    this.setData({ imageErrors })
   },
 
   rateGuide(event) {
