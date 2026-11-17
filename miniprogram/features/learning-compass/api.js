@@ -208,7 +208,13 @@ function createApi(client = request, options = {}) {
   const isReference = (options.apiProfile || config.apiProfile) === 'reference'
   return {
     getGuides(input) { return client.get('/guides', buildGuideQuery(input)).then(mapList) },
-    getGuide(id) { return client.get(`/guides/${encode(id)}`).then(value => mapDetail(value, isReference)) },
+    getGuide(id) {
+      try {
+        const preview = require('./cpp-preview').guide(id)
+        if (preview) return Promise.resolve(mapDetail(preview, isReference))
+      } catch (error) { return Promise.reject(error) }
+      return client.get(`/guides/${encode(id)}`).then(value => mapDetail(value, isReference))
+    },
     getGuideVariant(guideId, variantId) {
       return client.get(`/guides/${encode(guideId)}/variants/${encode(variantId)}`).then(value => mapVariant(value, isReference))
     },

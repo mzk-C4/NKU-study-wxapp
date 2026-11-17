@@ -12,7 +12,7 @@ registerThemedPage({
   onLoad(options = {}) {
     const documentKey = options.doc === 'cpp-notes' ? 'cpp-notes' : 'handbook'
     const document = documentInfo(documentKey)
-    this.setData({ documentKey, documentTitle: document.title, documentUrl: document.url })
+    this.setData({ documentKey, documentTitle: document.title, documentUrl: document.url, localCppPreview: documentKey === 'cpp-notes' && require('../../features/learning-compass/cpp-preview').enabled() })
     if (typeof wx.setNavigationBarTitle === 'function') wx.setNavigationBarTitle({ title: document.title })
     if (documentKey === 'cpp-notes') this.loadChapters()
   },

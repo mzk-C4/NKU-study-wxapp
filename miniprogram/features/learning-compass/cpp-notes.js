@@ -1,6 +1,8 @@
 const api = require('./api')
 const CHAPTER_ID = /^cpp-notes-\d{3}$/
 async function loadChapters(client = api) {
+  const preview = client === api && require('./cpp-preview').chapters()
+  if (preview) return preview
   const chapters = new Map()
   for (let page = 1; page <= 100; page++) {
     const result = await client.getGuides({ page, page_size: 100 })

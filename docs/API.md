@@ -281,3 +281,5 @@ request 合法域名为 `https://nkustudy.top`，downloadFile 合法域名为 `h
 ### C++ 笔记候选（2026-11-17，尚未上线）
 
 复用现有指南列表/详情接口和 `student_experience`、`feishu-html-v1`、`body_html`、`body_outline`，不增加端点。候选为63章 `cpp-notes-000` 至 `cpp-notes-062`，图片位于网站 `/guide-media/cpp-notes/`；客户端分页读取后按固定ID筛选。生产无章节时返回空目录并保留原文入口，不把本地候选当作生产事实。网站为唯一生产内容源。
+
+2026-11-18 本地预览修复：开发者工具可显式安装持久C++候选缓存，仅 develop/devtools 环境读取，按章访问不改变API端点或生产响应。重编译后可继续阅读，清缓存需重新装载。正式版、体验版与手机端仍依赖网站发布。详见 COLLABORATION_PLAN.md 同日记录。

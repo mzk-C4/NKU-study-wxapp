@@ -2,6 +2,7 @@
 <view class="page">
   <view class="document-kicker">{{documentKey === 'cpp-notes' ? '学习笔记 · 按章阅读' : '外部文档 · 保留原文'}}</view>
   <view class="document-title">{{documentTitle}}</view>
+  <view wx:if="{{localCppPreview}}" class="document-kicker">本地预览 · 尚未上线 · 重新编译后仍可阅读</view>
   <view class="document-intro">{{documentKey === 'cpp-notes' ? '按原文顺序阅读，保留代码、图表与作者署名。原始附件和最新修订可通过飞书原文查看。' : '生存手册图文已收录到学习指南针，此处保留飞书原文，便于核对最新内容和查看原始附件。'}}</view>
   <view wx:if="{{documentKey === 'cpp-notes'}}" class="notice section">作者：王昊成（小红书：秋来拾光），无所不能哈基咪。感谢作者分享！学习笔记仅供参考，请结合课程要求使用。</view>
   <view wx:else class="notice section">感谢参与本手册编写、整理与持续完善的各位学长！编写者署名与内容更新请以飞书原文为准。</view>
