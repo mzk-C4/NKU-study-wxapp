@@ -781,3 +781,15 @@ test('learning compass categories and assistant actions use the shared icon owne
     assert.match(assistantTemplate, new RegExp(`/assets/icons/${asset.replace('.', '\\.')}`))
   }
 })
+
+test('C++ rich guide selects its own native navigation title', async t => {
+  installWx(t)
+  replaceMethod(t, publicApi, 'getGuide', async () => guide('cpp-notes-003', {
+    title: 'C++ 笔记 · 数制转换', content_type: 'student_experience',
+    sections: [{ id: 'body', title: '正文', body: '代码', render_format: 'feishu-html-v1', body_html: '<pre><code>a &lt; b</code></pre>', body_outline: [] }]
+  }))
+  const page = createPage(detailDefinition)
+  await page.onLoad({ id: 'cpp-notes-003' })
+  assert.equal(page.data.guide.isCppNotes, true)
+  assert.equal(page.data.guide.richHtml, '<pre><code>a &lt; b</code></pre>')
+})

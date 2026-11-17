@@ -63,7 +63,6 @@ function sourceMeta(source) {
   const raw = source && typeof source === 'object' ? source : {}
   return {
     id: String(raw.id || ''),
-    isCppNotes: /^cpp-notes-\d{3}$/.test(String(raw.id || '')),
     title: String(raw.title || ''),
     url: String(raw.file_url || raw.url || ''),
     fileUrl: String(raw.file_url || ''),
@@ -201,6 +200,7 @@ function presentGuide(rawGuide) {
     : { title: raw.source_title, file_url: raw.source_url, location_label: '' }
   const guide = {
     id: String(raw.id || ''),
+    isCppNotes: /^cpp-notes-\d{3}$/.test(String(raw.id || '')),
     title: String(raw.title || ''),
     readerTitle: String(raw.title || '').replace(/^生存手册\s*[·・]\s*/, ''),
     richHtml,
