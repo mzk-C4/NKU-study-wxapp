@@ -1,0 +1,12 @@
+<view class="source-card" bindtap="onOpen">
+  <view class="sc-head">
+    <text class="sc-cat">{{source.category || '指南来源'}}</text>
+    <text class="sc-date" wx:if="{{source.updated_at}}">更新于 {{source.updated_at}}</text>
+  </view>
+  <view class="sc-title">{{source.title}}</view>
+  <view class="sc-snippet" wx:if="{{source.snippet}}">{{source.snippet}}</view>
+  <view class="sc-foot">
+    <text class="sc-copy" catchtap="onCopy">复制安全链接</text>
+    <text class="sc-open" catchtap="onOpen">查看原文 ›</text>
+  </view>
+</view>

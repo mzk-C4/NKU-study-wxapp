@@ -1,0 +1,32 @@
+<view class="page compass-home">
+  <!-- 顶部品牌区 -->
+  <view class="hero">
+    <view class="hero-badge">指南针 · AI</view>
+    <view class="hero-title">用指南回答你的问题</view>
+    <view class="hero-sub">基于学校公开指南，给出可核查出处的解答。最多连续 10 轮，整段返回。</view>
+  </view>
+
+  <!-- 主入口 -->
+  <view class="entry-card" bindtap="onStart">
+    <view class="entry-icon">🧭</view>
+    <view class="entry-main">
+      <view class="entry-title">开始向指南针提问</view>
+      <view class="entry-desc">选课、学籍、办事流程，随时来问</view>
+    </view>
+    <text class="entry-arrow">›</text>
+  </view>
+
+  <!-- 示例问题 -->
+  <view class="rule-title">试试这样问</view>
+  <view class="sg-list">
+    <view
+      class="sg-item"
+      wx:for="{{suggestions}}"
+      wx:key="*this"
+      data-q="{{item}}"
+      bindtap="onSuggestion"
+    >{{item}}</view>
+  </view>
+
+  <view class="tip">提示：资料不足时，指南针会说明并请你补充条件继续提问。</view>
+</view>

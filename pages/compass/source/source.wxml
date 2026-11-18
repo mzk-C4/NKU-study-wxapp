@@ -1,0 +1,17 @@
+<view class="page source-page">
+  <!-- 正常：web-view 打开原文 -->
+  <web-view
+    wx:if="{{url && !failed}}"
+    src="{{url}}"
+    binderror="onWebError"
+  ></web-view>
+
+  <!-- 失败回退：打开失败提示 + 安全链接复制 -->
+  <view wx:else class="fallback">
+    <view class="fb-icon">🔗</view>
+    <view class="fb-title">无法在此直接打开原文</view>
+    <view class="fb-desc">该来源需要在浏览器中打开。你可以复制安全链接，粘贴到浏览器查看。</view>
+    <view class="fb-url">{{url}}</view>
+    <button class="btn primary fb-copy" bindtap="onCopy">复制安全链接</button>
+  </view>
+</view>

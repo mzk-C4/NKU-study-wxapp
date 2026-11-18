@@ -1,0 +1,107 @@
+<view class="page chat-page {{theme==='dark' ? 'is-dark' : ''}} {{largeFont ? 'is-large' : ''}}">
+
+  <!-- 工具条：轮次 / 新话题 / 主题 / 字体 -->
+  <view class="toolbar">
+    <text class="round-ind">第 {{round}}/{{roundLimit}} 轮</text>
+    <view class="tb-actions">
+      <view class="tb-btn" bindtap="onNewTopic">新话题</view>
+      <view class="tb-btn" bindtap="onToggleTheme">{{theme==='light' ? '深色' : '浅色'}}</view>
+      <view class="tb-btn" bindtap="onToggleFont">{{largeFont ? '标准' : '大字'}}</view>
+    </view>
+  </view>
+
+  <!-- 轮次上限提示 -->
+  <view class="limit-banner" wx:if="{{reachLimit}}">已达 {{roundLimit}} 轮上限，开启新话题后可继续提问。</view>
+
+  <!-- 登录过期提示 -->
+  <view class="login-banner" wx:if="{{loginRequired}}">
+    <text class="login-text">登录已过期，请重新登录后继续。</text>
+    <view class="login-btn" bindtap="onLogin">去登录</view>
+  </view>
+
+  <!-- 消息区 -->
+  <scroll-view class="msg-scroll" scroll-y="true" scroll-into-view="{{scrollTo}}" scroll-with-animation="true">
+    <!-- 欢迎态 -->
+    <view class="welcome" wx:if="{{showWelcome}}">
+      <view class="welcome-title">你好，我是指南针</view>
+      <view class="welcome-sub">基于学校公开指南为你解答，答案均附出来源，资料不足时会说明。</view>
+      <view class="sg-list">
+        <view class="sg-item" wx:for="{{suggestions}}" wx:key="*this" data-q="{{item}}" bindtap="onSuggestion">{{item}}</view>
+      </view>
+    </view>
+
+    <!-- 消息列表 -->
+    <block wx:for="{{messages}}" wx:key="id" wx:for-item="item">
+      <!-- 用户消息 -->
+      <view class="msg user" wx:if="{{item.role==='user'}}">
+        <view class="bubble user-bubble">{{item.text}}</view>
+      </view>
+
+      <!-- AI 等待 -->
+      <view class="msg ai" wx:elif="{{item.status==='waiting'}}">
+        <view class="ai-avatar">🧭</view>
+        <view class="ai-body">
+          <view class="typing"><text class="dot"></text>指南针正在思考…</view>
+        </view>
+      </view>
+
+      <!-- AI 错误 -->
+      <view class="msg ai" wx:elif="{{item.status==='error'}}">
+        <view class="ai-avatar">🧭</view>
+        <view class="ai-body">
+          <view class="err-box">
+            <text class="err-text">{{item.errorMsg}}</text>
+            <view class="err-retry" data-q="{{item.question}}" bindtap="onRetry">重试</view>
+          </view>
+        </view>
+      </view>
+
+      <!-- AI 正常回答 -->
+      <view class="msg ai" wx:else>
+        <view class="ai-avatar">🧭</view>
+        <view class="ai-body">
+          <md-view nodes="{{item.nodes}}" large="{{largeFont}}" bind:linktap="onLinkTap"></md-view>
+
+          <view class="scope" wx:if="{{item.scope}}">
+            <text class="scope-label">适用范围</text>{{item.scope}}
+          </view>
+          <view class="timeliness" wx:if="{{item.timeliness}}">⏱ {{item.timeliness}}</view>
+
+          <view class="sources" wx:if="{{item.sources.length}}">
+            <view class="sources-title">引用来源</view>
+            <source-card
+              wx:for="{{item.sources}}"
+              wx:for-item="src"
+              wx:key="id"
+              source="{{src}}"
+              bind:open="onSourceOpen"
+              bind:copy="onSourceCopy"
+            ></source-card>
+          </view>
+        </view>
+      </view>
+    </block>
+
+    <view id="msg-bottom"></view>
+  </scroll-view>
+
+  <!-- 草稿提示 -->
+  <view class="draft-hint" wx:if="{{draftHint}}">
+    <text class="draft-text">已带入搜索词草稿，发送给指南针即可开始（不会自动发送）。</text>
+    <text class="draft-clear" bindtap="onClearDraft">清除</text>
+  </view>
+
+  <!-- 输入栏 -->
+  <view class="input-bar">
+    <textarea
+      class="input"
+      value="{{draft}}"
+      bindinput="onInput"
+      placeholder="向指南针提问…"
+      auto-height
+      maxlength="500"
+      disabled="{{waiting}}"
+    ></textarea>
+    <view class="send-btn {{waiting ? 'disabled' : ''}}" bindtap="onSend">发送</view>
+  </view>
+</view>
